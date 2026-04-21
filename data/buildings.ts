@@ -1091,10 +1091,6 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
-    "1100 Millecento": {
-      lines: { "01": 160, "02": 160, "03": 180, "04": 180, "05": 220 },
-      penthouse: false,
-    },
     "500 Brickell East": {
       lines: {
         "00": 160,
