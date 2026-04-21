@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 const PreppyLuxuryWidget = dynamic(
-  () => import("../PreppyLuxuryWidget_FINAL"),
+  () => import("../components/PreppyLuxuryWidget"),
   { ssr: false }
 );
 
