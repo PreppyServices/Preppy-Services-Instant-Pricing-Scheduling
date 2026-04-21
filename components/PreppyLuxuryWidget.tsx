@@ -207,10 +207,10 @@ export default function PreppyLuxuryWidget() {
   }, []);
 
   const filteredBuildings = React.useMemo(() => {
-    if (!buildingQuery.trim()) return buildings.slice(0, 12);
-    const q = buildingQuery.trim().toLowerCase();
-    return buildings.filter((n) => n.toLowerCase().includes(q)).slice(0, 10);
-  }, [buildingQuery, buildings]);
+  const q = buildingQuery.trim().toLowerCase();
+  if (!q) return buildings;
+  return buildings.filter((n) => n.toLowerCase().includes(q));
+}, [buildingQuery, buildings]);
 
   React.useEffect(() => {
     if (!didMount.current) { didMount.current = true; return; }
