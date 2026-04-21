@@ -398,26 +398,6 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
-    "Murano at Portofino": {
-      lines: {
-        "01": 450,
-        "02": 400,
-        "02M": 420,
-        "03": 400,
-        "04": 340,
-        "05": 220,
-        "06": 120,
-        "07": 220,
-        "08": 240,
-        "PH01": 450,
-        "PH04": 420,
-        "TH-01": 180,
-        "TH-02": 180,
-        "TH-03": 180,
-        "TH-04": 180
-      },
-      penthouse: false,
-    },
     "Murano Grande": {
       lines: {
         "01": 300,
