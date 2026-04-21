@@ -1909,21 +1909,6 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
-    "500 Brickell West": {
-      lines: {
-        "00": 160,
-        "01": 160,
-        "02": 160,
-        "03": 120,
-        "04": 120,
-        "05": 180,
-        "06": 120,
-        "07": 140,
-        "08": 120,
-        "10": 140
-      },
-      penthouse: false,
-    },
     "1100 Millecento": {
       lines: {
         "01": 220,
