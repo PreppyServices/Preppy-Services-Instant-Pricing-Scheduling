@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  pricing,
+  verifiedBuildings,
+  placeholderBuildings,
+  addOnPricing,
+  activePlaceholderBuildings,
+  verifiedBuildingSet,
+  safeMappedPricing,
+  provisionalBuildings,
+  researchStatus,
+} from "../data/buildings";
 /**
  * Preppy Services — Luxury Quote Widget
  * =====================================
