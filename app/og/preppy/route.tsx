@@ -2,510 +2,341 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-type Lang = "en" | "es" | "fr";
-
-type Copy = {
-  brandSub: string;
-  tagline: string;
-  services: string;
-  preparedFor: string;
-  residentPreview: string;
-  unitLabel: string;
-  insured: string;
-  region: string;
+export const alt = "Preppy Services personalized invitation";
+export const size = {
+  width: 1200,
+  height: 630,
 };
+export const contentType = "image/png";
 
-const COPY: Record<Lang, Copy> = {
-  en: {
-    brandSub: "Luxury Home Services",
-    tagline: "Your balcony, restored.",
-    services:
-      "Balcony Glass Cleaning  ·  Interior Paint  ·  Custom Project Requests",
-    preparedFor: "Prepared for",
-    residentPreview: "Resident Preview",
-    unitLabel: "Unit",
-    insured: "Fully Insured  ·  $2M Coverage",
-    region: "Miami  ·  Miami Beach",
-  },
-  es: {
-    brandSub: "Servicios de Lujo para el Hogar",
-    tagline: "Su balcón, restaurado.",
-    services:
-      "Limpieza de Cristal de Balcón  ·  Pintura Interior  ·  Solicitudes de Proyectos Especiales",
-    preparedFor: "Preparado para",
-    residentPreview: "Vista para Residentes",
-    unitLabel: "Unidad",
-    insured: "Totalmente Asegurado  ·  Cobertura $2M",
-    region: "Miami  ·  Miami Beach",
-  },
-  fr: {
-    brandSub: "Services de Luxe pour la Maison",
-    tagline: "Votre balcon, restauré.",
-    services:
-      "Nettoyage de Vitrage de Balcon  ·  Peinture Intérieure  ·  Demandes de Projets Personnalisés",
-    preparedFor: "Préparé pour",
-    residentPreview: "Aperçu Résident",
-    unitLabel: "Unité",
-    insured: "Entièrement Assuré  ·  Couverture 2M$",
-    region: "Miami  ·  Miami Beach",
-  },
-};
-
-const C = {
-  bg0: "#08131D",
-  bg1: "#0A2233",
-  bg2: "#030A11",
-  ivory: "#F5F1EA",
-  ivorySoft: "rgba(245,241,234,0.86)",
-  ivoryMuted: "rgba(245,241,234,0.70)",
-  ivoryFaint: "rgba(245,241,234,0.46)",
-  gold: "#D9B97C",
-  goldSoft: "rgba(217,185,124,0.92)",
-  goldBright: "#E8CEA0",
-  goldLine: "rgba(217,185,124,0.50)",
-  goldLineFaint: "rgba(217,185,124,0.18)",
-  goldGlow: "rgba(217,185,124,0.24)",
-};
-
-function getNameSize(name: string) {
-  if (name.length <= 14) return 90;
-  if (name.length <= 20) return 82;
-  if (name.length <= 26) return 74;
-  if (name.length <= 32) return 68;
-  return 62;
+function clean(value: string | null | undefined, fallback = ""): string {
+  if (!value) return fallback;
+  return value.replace(/\+/g, " ").trim();
 }
 
-function getBuildingSize(building: string) {
-  if (building.length <= 12) return 48;
-  if (building.length <= 18) return 44;
-  if (building.length <= 26) return 40;
-  return 36;
+function titleCase(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function getTaglineSize(text: string) {
-  if (text.length <= 18) return 118;
-  if (text.length <= 28) return 106;
-  return 96;
+function normalizeBuilding(value: string | null | undefined): string {
+  const raw = clean(value, "");
+  if (!raw) return "";
+  return titleCase(raw);
+}
+
+function getNameSize(name: string): number {
+  const len = name.length;
+
+  if (len >= 28) return 72;
+  if (len >= 22) return 80;
+  if (len >= 16) return 90;
+  return 98;
+}
+
+function getBuildingSize(building: string): number {
+  const len = building.length;
+
+  if (len >= 24) return 32;
+  if (len >= 18) return 38;
+  if (len >= 12) return 44;
+  return 48;
 }
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  const name = (searchParams.get("name") || "").trim().slice(0, 40);
-  const building = (searchParams.get("b") || searchParams.get("building") || "")
-    .trim()
-    .slice(0, 48);
-  const unit = (searchParams.get("unit") || "").trim().slice(0, 16);
-  const rawLang = (searchParams.get("lang") || "").toLowerCase().slice(0, 2);
+  const name = clean(searchParams.get("name"), "Preppy Client");
+  const building = normalizeBuilding(
+    searchParams.get("building") || searchParams.get("residence")
+  );
+  const unitRaw = clean(searchParams.get("unit"), "");
+  const unit = unitRaw ? `Unit ${unitRaw}` : "";
 
-  const lang: Lang = (["en", "es", "fr"].includes(rawLang) ? rawLang : "en") as Lang;
-  const c = COPY[lang];
-
-  const hasName = Boolean(name);
-  const hasBuilding = Boolean(building);
-  const hasUnit = Boolean(unit);
-  const hasPersonalized = hasName || hasBuilding || hasUnit;
-
-  const eyebrow = hasName
-    ? c.preparedFor
-    : hasBuilding || hasUnit
-      ? c.residentPreview
-      : "";
-
-  const unitLine = hasUnit ? `${c.unitLabel} ${unit}` : "";
-  const heroTagline = c.tagline;
+  const nameSize = getNameSize(name);
+  const buildingSize = getBuildingSize(building || "Private Residence");
 
   return new ImageResponse(
     (
       <div
         style={{
-          position: "relative",
           width: "1200px",
           height: "630px",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
+          position: "relative",
           overflow: "hidden",
-          color: C.ivory,
-          background: `radial-gradient(130% 100% at 18% -8%, ${C.bg1} 0%, ${C.bg0} 48%, ${C.bg2} 100%)`,
-          fontFamily: "Georgia, serif",
-          padding: "42px 60px 42px 60px",
+          background:
+            "linear-gradient(110deg, #0e1722 0%, #031326 40%, #01162d 100%)",
+          color: "#F6F3EC",
+          fontFamily:
+            'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         }}
       >
+        {/* Background glow left */}
         <div
           style={{
             position: "absolute",
-            top: "-160px",
-            left: "-120px",
-            width: "640px",
-            height: "640px",
-            borderRadius: "999px",
-            background: `radial-gradient(circle, ${C.goldGlow} 0%, rgba(217,185,124,0.10) 34%, rgba(217,185,124,0) 72%)`,
-            display: "flex",
-          }}
-        />
-
-        <div
-          style={{
-            position: "absolute",
-            right: "-180px",
-            bottom: "-220px",
-            width: "760px",
-            height: "760px",
-            borderRadius: "999px",
+            left: "-110px",
+            top: "-70px",
+            width: "620px",
+            height: "620px",
+            borderRadius: "9999px",
             background:
-              "radial-gradient(circle, rgba(28,101,128,0.22) 0%, rgba(28,101,128,0.08) 30%, rgba(28,101,128,0) 72%)",
-            display: "flex",
+              "radial-gradient(circle, rgba(199,165,103,0.28) 0%, rgba(199,165,103,0.18) 22%, rgba(199,165,103,0.08) 40%, rgba(199,165,103,0) 68%)",
           }}
         />
 
+        {/* Background glow right */}
         <div
           style={{
             position: "absolute",
-            left: "190px",
-            top: "106px",
-            width: "82px",
-            height: "82px",
-            borderRadius: "999px",
-            background: "rgba(0,0,0,0.26)",
-            display: "flex",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            right: "142px",
-            bottom: "108px",
-            width: "82px",
-            height: "82px",
-            borderRadius: "999px",
-            background: "rgba(0,0,0,0.26)",
-            display: "flex",
-          }}
-        />
-
-        <div
-          style={{
-            position: "absolute",
-            inset: "0",
-            display: "flex",
-            justifyContent: "space-between",
-            paddingLeft: "180px",
-            paddingRight: "180px",
-          }}
-        >
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              style={{
-                width: "1px",
-                height: "100%",
-                background: `linear-gradient(180deg, rgba(217,185,124,0) 0%, ${C.goldLineFaint} 10%, ${C.goldLineFaint} 90%, rgba(217,185,124,0) 100%)`,
-                display: "flex",
-              }}
-            />
-          ))}
-        </div>
-
-        <div
-          style={{
-            position: "absolute",
-            inset: "0",
+            right: "-110px",
+            bottom: "-90px",
+            width: "520px",
+            height: "520px",
+            borderRadius: "9999px",
             background:
-              "linear-gradient(180deg, rgba(255,255,255,0.015) 0%, rgba(0,0,0,0.16) 100%)",
-            display: "flex",
+              "radial-gradient(circle, rgba(51,111,144,0.22) 0%, rgba(51,111,144,0.12) 24%, rgba(51,111,144,0.05) 42%, rgba(51,111,144,0) 70%)",
           }}
         />
 
+        {/* Soft right wash */}
         <div
           style={{
-            zIndex: 2,
-            width: "100%",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "flex-start",
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.00) 38%, rgba(56,113,145,0.08) 72%, rgba(56,113,145,0.10) 100%)",
           }}
-        >
+        />
+
+        {/* Vertical grid lines */}
+        {Array.from({ length: 6 }).map((_, i) => (
           <div
+            key={i}
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "16px",
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              left: `${190 + i * 170}px`,
+              width: "1px",
+              background: "rgba(211, 191, 150, 0.12)",
             }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-              }}
-            >
-              <div
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  borderRadius: "999px",
-                  border: `1px solid ${C.goldLine}`,
-                  background: "rgba(6,17,26,0.52)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    fontStyle: "italic",
-                    fontSize: "38px",
-                    lineHeight: 1,
-                    color: C.goldBright,
-                    marginTop: "-4px",
-                  }}
-                >
-                  P
-                </div>
-              </div>
+          />
+        ))}
 
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    fontSize: "24px",
-                    lineHeight: 1.02,
-                    color: C.ivory,
-                    fontWeight: 400,
-                  }}
-                >
-                  Preppy Services
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    marginTop: "4px",
-                    fontSize: "10px",
-                    lineHeight: 1,
-                    letterSpacing: "3.4px",
-                    textTransform: "uppercase",
-                    color: C.gold,
-                    fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
-                  }}
-                >
-                  {c.brandSub}
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minWidth: "48px",
-                padding: "8px 12px",
-                borderRadius: "999px",
-                border: `1px solid ${C.goldLine}`,
-                background: "rgba(6,17,26,0.52)",
-                fontSize: "11px",
-                lineHeight: 1,
-                letterSpacing: "2.8px",
-                textTransform: "uppercase",
-                color: C.goldBright,
-                fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
-              }}
-            >
-              {lang.toUpperCase()}
-            </div>
-          </div>
-        </div>
-
+        {/* Top-right brand */}
         <div
           style={{
-            zIndex: 2,
-            flex: 1,
+            position: "absolute",
+            top: 42,
+            right: 52,
             display: "flex",
             alignItems: "center",
+            gap: 18,
           }}
         >
           <div
             style={{
-              width: "820px",
+              width: 52,
+              height: 52,
+              borderRadius: "9999px",
+              border: "2px solid rgba(198,165,104,0.55)",
+              color: "#D7BC84",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 34,
+              lineHeight: 1,
+              fontWeight: 400,
+            }}
+          >
+            P
+          </div>
+
+          <div
+            style={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "flex-start",
               justifyContent: "center",
             }}
           >
-            {hasPersonalized && eyebrow ? (
-              <div
-                style={{
-                  display: "flex",
-                  marginBottom: "20px",
-                  fontSize: "24px",
-                  lineHeight: 1,
-                  letterSpacing: "6px",
-                  textTransform: "uppercase",
-                  color: C.goldBright,
-                  fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
-                  fontWeight: 500,
-                }}
-              >
-                {eyebrow}
-              </div>
-            ) : null}
-
-            {hasPersonalized ? (
-              <div
-                style={{
-                  width: "820px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                }}
-              >
-                {hasBuilding ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "820px",
-                      marginBottom: "16px",
-                      fontSize: `${getBuildingSize(building)}px`,
-                      lineHeight: 1.02,
-                      letterSpacing: "1.8px",
-                      textTransform: "uppercase",
-                      color: C.goldSoft,
-                      fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {building}
-                  </div>
-                ) : null}
-
-                {hasName ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "820px",
-                      marginBottom: hasUnit ? "14px" : "0px",
-                      fontSize: `${getNameSize(name)}px`,
-                      lineHeight: 0.96,
-                      letterSpacing: "-1.5px",
-                      color: C.ivory,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {name}
-                  </div>
-                ) : null}
-
-                {hasUnit ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "820px",
-                      fontSize: "34px",
-                      lineHeight: 1.04,
-                      letterSpacing: "-0.4px",
-                      color: C.ivorySoft,
-                      fontWeight: 400,
-                    }}
-                  >
-                    {unitLine}
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  width: "820px",
-                  fontSize: `${getTaglineSize(heroTagline)}px`,
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  lineHeight: 0.95,
-                  letterSpacing: "-2px",
-                  color: C.ivory,
-                }}
-              >
-                {heroTagline}
-              </div>
-            )}
-
             <div
               style={{
-                display: "flex",
-                marginTop: "28px",
-                width: "300px",
-                height: "1px",
-                background: `linear-gradient(90deg, rgba(217,185,124,0) 0%, ${C.goldLine} 30%, ${C.goldLine} 70%, rgba(217,185,124,0) 100%)`,
-              }}
-            />
-
-            <div
-              style={{
-                display: "flex",
-                marginTop: "18px",
-                width: "980px",
-                fontSize: "16px",
-                lineHeight: 1.25,
-                letterSpacing: "2.2px",
-                textTransform: "uppercase",
-                color: C.ivoryMuted,
-                fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
+                fontSize: 34,
+                lineHeight: 1,
+                fontWeight: 500,
+                color: "#F6F3EC",
+                letterSpacing: "-0.02em",
               }}
             >
-              {c.services}
+              Preppy Services
             </div>
+            <div
+              style={{
+                marginTop: 6,
+                fontSize: 13,
+                lineHeight: 1,
+                letterSpacing: "0.26em",
+                textTransform: "uppercase",
+                color: "#C6A56A",
+              }}
+            >
+              Luxury Home Services
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginLeft: 8,
+              minWidth: 56,
+              height: 36,
+              padding: "0 14px",
+              borderRadius: 9999,
+              border: "1.5px solid rgba(198,165,104,0.50)",
+              color: "#D7BC84",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 16,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+            }}
+          >
+            EN
           </div>
         </div>
 
+        {/* Main content */}
         <div
           style={{
-            zIndex: 2,
+            position: "absolute",
+            left: 70,
+            top: 165,
+            width: 780,
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingTop: "18px",
-            borderTop: `1px solid ${C.goldLineFaint}`,
-            fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
+            flexDirection: "column",
           }}
         >
           <div
             style={{
-              display: "flex",
-              fontSize: "13px",
-              lineHeight: 1,
-              letterSpacing: "5px",
+              fontSize: 24,
+              letterSpacing: "0.24em",
               textTransform: "uppercase",
-              color: C.goldBright,
+              color: "#D7BC84",
+              fontWeight: 500,
             }}
           >
-            {c.region}
+            Prepared For
           </div>
 
           <div
             style={{
-              display: "flex",
-              fontSize: "13px",
-              lineHeight: 1,
-              letterSpacing: "5px",
-              textTransform: "uppercase",
-              color: C.ivoryFaint,
+              marginTop: 22,
+              fontSize: nameSize,
+              lineHeight: 0.98,
+              letterSpacing: "-0.045em",
+              color: "#F6F3EC",
+              fontWeight: 400,
+              maxWidth: 760,
             }}
           >
-            {c.insured}
+            {name}
           </div>
+
+          <div
+            style={{
+              marginTop: 18,
+              fontSize: buildingSize,
+              lineHeight: 1.04,
+              letterSpacing: "-0.02em",
+              color: "#D7BC84",
+              fontWeight: 500,
+              maxWidth: 700,
+            }}
+          >
+            {building || "Private Residence"}
+          </div>
+
+          {unit ? (
+            <div
+              style={{
+                marginTop: 12,
+                fontSize: 30,
+                lineHeight: 1.05,
+                color: "#F6F3EC",
+                fontWeight: 400,
+                maxWidth: 500,
+              }}
+            >
+              {unit}
+            </div>
+          ) : null}
+
+          <div
+            style={{
+              marginTop: 54,
+              fontSize: 22,
+              lineHeight: 1.2,
+              letterSpacing: "0.13em",
+              textTransform: "uppercase",
+              color: "rgba(246,243,236,0.82)",
+              fontWeight: 400,
+            }}
+          >
+            Balcony Glass Cleaning · Interior Paint · Custom Project Requests
+          </div>
+        </div>
+
+        {/* Bottom rule */}
+        <div
+          style={{
+            position: "absolute",
+            left: 70,
+            right: 70,
+            bottom: 92,
+            height: "1px",
+            background: "rgba(211, 191, 150, 0.24)",
+          }}
+        />
+
+        {/* Bottom left */}
+        <div
+          style={{
+            position: "absolute",
+            left: 70,
+            bottom: 46,
+            fontSize: 18,
+            letterSpacing: "0.26em",
+            textTransform: "uppercase",
+            color: "#D7BC84",
+          }}
+        >
+          Miami · Miami Beach
+        </div>
+
+        {/* Bottom right */}
+        <div
+          style={{
+            position: "absolute",
+            right: 70,
+            bottom: 46,
+            fontSize: 18,
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            color: "rgba(246,243,236,0.42)",
+          }}
+        >
+          Fully Insured · $2M Coverage
         </div>
       </div>
     ),
     {
-      width: 1200,
-      height: 630,
+      ...size,
     }
   );
 }
