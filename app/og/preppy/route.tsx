@@ -1,3 +1,8 @@
+# Complete Updated Route
+
+Here's the production-ready `app/og/preppy/route.tsx` with the serif font applied plus the subtle circle/background tweaks. Nothing structural changes.
+
+```tsx
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
@@ -40,6 +45,17 @@ export async function GET(request: Request) {
   const unit = normalizeUnit(clean(searchParams.get("unit"), ""));
   const lang = clean(searchParams.get("lang"), "EN").toUpperCase();
 
+  // Load serif font from /public — same-origin, no external dependency
+  const playfairRegular = await fetch(
+    new URL("/fonts/PlayfairDisplay-Regular.ttf", request.url)
+  ).then((res) => res.arrayBuffer());
+
+  const playfairMedium = await fetch(
+    new URL("/fonts/PlayfairDisplay-Medium.ttf", request.url)
+  ).then((res) => res.arrayBuffer());
+
+  const SERIF = 'Playfair, "Times New Roman", serif';
+
   return new ImageResponse(
     (
       <div
@@ -50,7 +66,7 @@ export async function GET(request: Request) {
           position: "relative",
           overflow: "hidden",
           background:
-            "radial-gradient(circle at 18% 34%, rgba(164,147,103,0.26) 0%, rgba(164,147,103,0.10) 15%, rgba(6,21,40,0.00) 36%), radial-gradient(circle at 84% 76%, rgba(14,66,108,0.36) 0%, rgba(14,66,108,0.14) 13%, rgba(6,18,33,0) 32%), linear-gradient(90deg, #071420 0%, #041425 25%, #021326 53%, #031a30 74%, #041226 100%)",
+            "radial-gradient(circle at 18% 34%, rgba(164,147,103,0.18) 0%, rgba(164,147,103,0.08) 22%, rgba(6,21,40,0.00) 40%), radial-gradient(circle at 84% 76%, rgba(14,66,108,0.36) 0%, rgba(14,66,108,0.14) 13%, rgba(6,18,33,0) 32%), linear-gradient(90deg, #071420 0%, #041425 25%, #021326 53%, #031a30 74%, #041226 100%)",
           color: "#F6F1E8",
           fontFamily:
             'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
@@ -89,16 +105,16 @@ export async function GET(request: Request) {
           ))}
         </div>
 
-        {/* dark accent circles */}
+        {/* dark accent circles — slightly larger + darker to read as intentional */}
         <div
           style={{
             position: "absolute",
             left: 205,
             top: 126,
-            width: 58,
-            height: 58,
+            width: 78,
+            height: 78,
             borderRadius: "999px",
-            background: "rgba(0,0,0,0.28)",
+            background: "rgba(0,0,0,0.42)",
           }}
         />
         <div
@@ -106,10 +122,10 @@ export async function GET(request: Request) {
             position: "absolute",
             right: 150,
             bottom: 116,
-            width: 66,
-            height: 66,
+            width: 88,
+            height: 88,
             borderRadius: "999px",
-            background: "rgba(0,0,0,0.30)",
+            background: "rgba(0,0,0,0.46)",
           }}
         />
 
@@ -227,6 +243,7 @@ export async function GET(request: Request) {
               letterSpacing: "-0.045em",
               maxWidth: 760,
               whiteSpace: "pre-wrap",
+              fontFamily: SERIF,
             }}
           >
             {name}
@@ -241,6 +258,7 @@ export async function GET(request: Request) {
               fontWeight: 500,
               letterSpacing: "-0.03em",
               maxWidth: 700,
+              fontFamily: SERIF,
             }}
           >
             {building}
@@ -256,6 +274,7 @@ export async function GET(request: Request) {
                 color: "#C9A96A",
                 fontWeight: 500,
                 letterSpacing: "-0.02em",
+                fontFamily: SERIF,
               }}
             >
               {unit}
@@ -330,6 +349,100 @@ export async function GET(request: Request) {
     {
       width: WIDTH,
       height: HEIGHT,
+      fonts: [
+        {
+          name: "Playfair",
+          data: playfairRegular,
+          style: "normal",
+          weight: 400,
+        },
+        {
+          name: "Playfair",
+          data: playfairMedium,
+          style: "normal",
+          weight: 500,
+        },
+      ],
     }
   );
 }
+```
+
+---
+
+# What changed (minimal diff)
+
+1. **Added two font fetches** at the top of `GET` — same-origin from `/public/fonts/`.
+2. **Added `fontFamily: SERIF`** to three elements: name, building, unit. Nothing else.
+3. **Added `fonts:` array** to the `ImageResponse` options.
+4. **Circles:** sizes bumped (58→78, 66→88) and opacity increased (0.28→0.42, 0.30→0.46).
+5. **First background radial-gradient:** softened opacity (0.26→0.18) and widened second stop (15%→22%).
+
+Everything else is untouched.
+
+---
+
+# Font files to add
+
+Put these two files in your repo at this exact path:
+
+```
+public/fonts/PlayfairDisplay-Regular.ttf
+public/fonts/PlayfairDisplay-Medium.ttf
+```
+
+**Where to get them:** Download from Google Fonts → https://fonts.google.com/specimen/Playfair+Display → "Download family" → unzip → grab `PlayfairDisplay-Regular.ttf` and `PlayfairDisplay-Medium.ttf` from the `static/` folder.
+
+Playfair Display is licensed under SIL Open Font License, so self-hosting is fine commercially.
+
+---
+
+# Git deploy commands
+
+```bash
+# From your repo root
+mkdir -p public/fonts
+
+# Copy the two .ttf files into public/fonts/ first, then:
+git add public/fonts/PlayfairDisplay-Regular.ttf
+git add public/fonts/PlayfairDisplay-Medium.ttf
+git add app/og/preppy/route.tsx
+
+git commit -m "OG route: self-hosted Playfair serif for name/building/unit + subtle circle polish"
+git push origin main
+```
+
+Assuming Vercel auto-deploys from `main`, your route will update within ~60 seconds.
+
+---
+
+# Test URLs
+
+Replace `preppyservices.com` with your actual production domain if it differs.
+
+**1. Direct OG route (view the image in browser):**
+```
+https://preppyservices.com/og/preppy?name=James%20Desousa&building=one-paraiso&unit=3601&lang=EN
+```
+
+**2. iPhone / iMessage preview test:**
+
+The cleanest way to test iMessage link previews is to send yourself a URL that has the OG image set as its `og:image` meta tag. Use a lightweight tester page:
+
+```
+https://preppyservices.com/preview/james-desousa-3601
+```
+
+If you don't have a preview route set up yet, a fast workaround: paste the direct OG URL above into a tester like https://www.opengraph.xyz/ or https://metatags.io/ — they'll render how it'll appear in iMessage, WhatsApp, and social previews without you needing to send a real text.
+
+For a true iMessage test, send yourself this in Messages:
+```
+https://preppyservices.com/?name=James%20Desousa&building=one-paraiso&unit=3601
+```
+(assuming your root page has the OG meta tags wired to pass through those query params — which is the standard pattern for your "morning text → link click" flow)
+
+---
+
+# One thing to watch after deploy
+
+First request after a cold start may take ~200-400ms longer while it fetches the two font files. Subsequent requests cache them at the edge. If you see timeouts, the fix is to use `export const runtime = "nodejs"` instead of `"edge"` — but try edge first, it almost always works.
