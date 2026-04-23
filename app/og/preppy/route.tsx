@@ -65,16 +65,16 @@ const C = {
 };
 
 function getNameSize(name: string) {
-  if (name.length <= 16) return 88;
-  if (name.length <= 24) return 80;
-  if (name.length <= 32) return 72;
-  return 66;
+  if (name.length <= 16) return 84;
+  if (name.length <= 24) return 76;
+  if (name.length <= 32) return 68;
+  return 62;
 }
 
 function getBuildingSize(building: string) {
-  if (building.length <= 18) return 36;
-  if (building.length <= 28) return 32;
-  return 28;
+  if (building.length <= 16) return 34;
+  if (building.length <= 24) return 30;
+  return 26;
 }
 
 function getTaglineSize(text: string) {
@@ -314,7 +314,7 @@ export async function GET(req: Request) {
                 <div
                   style={{
                     fontSize: getBuildingSize(building),
-                    letterSpacing: 2.4,
+                    letterSpacing: 2.6,
                     textTransform: "uppercase",
                     color: C.goldBright,
                     fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -337,7 +337,7 @@ export async function GET(req: Request) {
                     fontWeight: 500,
                     letterSpacing: -1.8,
                     display: "flex",
-                    marginBottom: hasUnit ? 16 : 0,
+                    marginBottom: hasUnit ? 14 : 0,
                     maxWidth: 920,
                   }}
                 >
@@ -348,11 +348,11 @@ export async function GET(req: Request) {
               {hasUnit ? (
                 <div
                   style={{
-                    fontSize: 30,
+                    fontSize: 28,
                     lineHeight: 1.05,
-                    color: C.gold,
+                    color: C.ivoryMuted,
                     fontWeight: 400,
-                    letterSpacing: 1.2,
+                    letterSpacing: 0.8,
                     display: "flex",
                   }}
                 >
