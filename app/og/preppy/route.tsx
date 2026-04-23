@@ -3,7 +3,6 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const contentType = "image/png";
 
 type Lang = "en" | "es" | "fr";
 
