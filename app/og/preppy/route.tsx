@@ -6,6 +6,12 @@ export const dynamic = "force-dynamic";
 const WIDTH = 1200;
 const HEIGHT = 630;
 
+// Gold system — three tiers for metallic depth
+const GOLD_HERO = "#D4B57E";      // building name — the champagne-brass
+const GOLD_LABEL = "#B89968";     // kicker, footer, brand marks
+const GOLD_DEEP = "#8A7244";      // borders, deepest accents
+const IVORY = "#F2EBDD";          // name — warm ivory, not white
+
 function clean(value: string | null, fallback = "") {
   if (!value) return fallback;
   try {
@@ -40,7 +46,7 @@ export async function GET(request: Request) {
   const unit = normalizeUnit(clean(searchParams.get("unit"), ""));
   const lang = clean(searchParams.get("lang"), "EN").toUpperCase();
 
-  // Load serif font from /public — same-origin, no external dependency
+  // Self-hosted serif — same origin, no external dep
   const playfairRegular = await fetch(
     new URL("/fonts/PlayfairDisplay-Regular.ttf", request.url)
   ).then((res) => res.arrayBuffer());
@@ -60,32 +66,50 @@ export async function GET(request: Request) {
           display: "flex",
           position: "relative",
           overflow: "hidden",
+          // Deeper, more cinematic base — single considered gradient
           background:
-            "radial-gradient(circle at 18% 34%, rgba(164,147,103,0.18) 0%, rgba(164,147,103,0.08) 22%, rgba(6,21,40,0.00) 40%), radial-gradient(circle at 84% 76%, rgba(14,66,108,0.36) 0%, rgba(14,66,108,0.14) 13%, rgba(6,18,33,0) 32%), linear-gradient(90deg, #071420 0%, #041425 25%, #021326 53%, #031a30 74%, #041226 100%)",
-          color: "#F6F1E8",
+            "linear-gradient(110deg, #030b18 0%, #05101f 30%, #061426 55%, #04182c 78%, #030d1c 100%)",
+          color: IVORY,
           fontFamily:
             'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         }}
       >
-        {/* soft rings / atmosphere */}
+        {/* Left bloom — soft, diffuse, behind the name */}
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            left: -120,
+            top: 60,
+            width: 820,
+            height: 620,
             background:
-              "radial-gradient(circle at 20% 34%, rgba(169,149,109,0.12) 0%, rgba(169,149,109,0.09) 14%, rgba(0,0,0,0) 36%), radial-gradient(circle at 84% 76%, rgba(38,91,136,0.22) 0%, rgba(38,91,136,0.12) 12%, rgba(0,0,0,0) 28%)",
+              "radial-gradient(ellipse at center, rgba(176,148,92,0.14) 0%, rgba(176,148,92,0.07) 28%, rgba(176,148,92,0.02) 52%, rgba(0,0,0,0) 72%)",
+            filter: "blur(2px)",
           }}
         />
 
-        {/* vertical guide lines */}
+        {/* Right ambient glow — quieter, cooler, more atmospheric */}
+        <div
+          style={{
+            position: "absolute",
+            right: -80,
+            bottom: -60,
+            width: 680,
+            height: 540,
+            background:
+              "radial-gradient(ellipse at center, rgba(36,82,128,0.26) 0%, rgba(36,82,128,0.12) 32%, rgba(36,82,128,0.04) 58%, rgba(0,0,0,0) 78%)",
+          }}
+        />
+
+        {/* Subtle architectural guide lines — whisper soft */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             display: "flex",
             justifyContent: "space-between",
-            padding: "0 188px 0 188px",
-            opacity: 0.16,
+            padding: "0 188px",
+            opacity: 0.06,
           }}
         >
           {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -94,37 +118,47 @@ export async function GET(request: Request) {
               style={{
                 width: 1,
                 height: "100%",
-                background: "rgba(255,255,255,0.22)",
+                background: "rgba(212,181,126,0.5)",
               }}
             />
           ))}
         </div>
 
-        {/* dark accent circles — slightly larger + darker to read as intentional */}
+        {/* Dark accent voids — soft radial falloff, not flat discs */}
         <div
           style={{
             position: "absolute",
-            left: 205,
-            top: 126,
-            width: 78,
-            height: 78,
-            borderRadius: "999px",
-            background: "rgba(0,0,0,0.42)",
+            left: 195,
+            top: 112,
+            width: 110,
+            height: 110,
+            background:
+              "radial-gradient(circle at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.38) 35%, rgba(0,0,0,0.15) 68%, rgba(0,0,0,0) 85%)",
           }}
         />
         <div
           style={{
             position: "absolute",
-            right: 150,
-            bottom: 116,
-            width: 88,
-            height: 88,
-            borderRadius: "999px",
-            background: "rgba(0,0,0,0.46)",
+            right: 135,
+            bottom: 95,
+            width: 130,
+            height: 130,
+            background:
+              "radial-gradient(circle at center, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.40) 38%, rgba(0,0,0,0.16) 70%, rgba(0,0,0,0) 88%)",
           }}
         />
 
-        {/* brand block */}
+        {/* Cinematic inner vignette — four edges softly darkened */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28) 100%)",
+          }}
+        />
+
+        {/* Brand lockup — top right */}
         <div
           style={{
             position: "absolute",
@@ -137,17 +171,18 @@ export async function GET(request: Request) {
         >
           <div
             style={{
-              width: 52,
-              height: 52,
+              width: 50,
+              height: 50,
               borderRadius: "999px",
-              border: "2px solid rgba(185,157,101,0.58)",
+              border: `1.5px solid ${GOLD_DEEP}`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#C9A96A",
-              fontSize: 34,
-              fontWeight: 300,
+              color: GOLD_HERO,
+              fontSize: 32,
+              fontWeight: 400,
               lineHeight: 1,
+              fontFamily: SERIF,
             }}
           >
             P
@@ -162,22 +197,22 @@ export async function GET(request: Request) {
           >
             <div
               style={{
-                fontSize: 33,
-                fontWeight: 500,
-                color: "#F4EEE5",
-                letterSpacing: "-0.02em",
+                fontSize: 30,
+                fontWeight: 400,
+                color: "#EDE5D4",
+                letterSpacing: "-0.015em",
               }}
             >
               Preppy Services
             </div>
             <div
               style={{
-                marginTop: 6,
-                fontSize: 13,
-                letterSpacing: "0.24em",
+                marginTop: 8,
+                fontSize: 11,
+                letterSpacing: "0.32em",
                 textTransform: "uppercase",
-                color: "#B89658",
-                fontWeight: 600,
+                color: GOLD_LABEL,
+                fontWeight: 500,
               }}
             >
               Luxury Home Services
@@ -186,42 +221,42 @@ export async function GET(request: Request) {
 
           <div
             style={{
-              marginLeft: 10,
-              minWidth: 52,
-              height: 34,
+              marginLeft: 12,
+              minWidth: 50,
+              height: 32,
               borderRadius: 999,
-              border: "2px solid rgba(185,157,101,0.50)",
+              border: `1.5px solid ${GOLD_DEEP}`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               padding: "0 16px",
-              color: "#D7B978",
-              fontSize: 16,
-              fontWeight: 700,
-              letterSpacing: "0.18em",
+              color: GOLD_LABEL,
+              fontSize: 14,
+              fontWeight: 600,
+              letterSpacing: "0.22em",
             }}
           >
             {lang}
           </div>
         </div>
 
-        {/* main content */}
+        {/* Main content block */}
         <div
           style={{
             position: "absolute",
             left: 70,
             top: 188,
-            width: 760,
+            width: 780,
             display: "flex",
             flexDirection: "column",
           }}
         >
           <div
             style={{
-              fontSize: 28,
-              letterSpacing: "0.28em",
+              fontSize: 22,
+              letterSpacing: "0.38em",
               textTransform: "uppercase",
-              color: "#D2B173",
+              color: GOLD_LABEL,
               fontWeight: 500,
             }}
           >
@@ -230,13 +265,13 @@ export async function GET(request: Request) {
 
           <div
             style={{
-              marginTop: 26,
-              fontSize: 76,
-              lineHeight: 0.98,
-              color: "#F8F5EF",
+              marginTop: 30,
+              fontSize: 84,
+              lineHeight: 0.96,
+              color: IVORY,
               fontWeight: 400,
-              letterSpacing: "-0.045em",
-              maxWidth: 760,
+              letterSpacing: "-0.035em",
+              maxWidth: 780,
               whiteSpace: "pre-wrap",
               fontFamily: SERIF,
             }}
@@ -246,13 +281,13 @@ export async function GET(request: Request) {
 
           <div
             style={{
-              marginTop: 20,
-              fontSize: 46,
-              lineHeight: 1.05,
-              color: "#C9A96A",
+              marginTop: 24,
+              fontSize: 50,
+              lineHeight: 1.02,
+              color: GOLD_HERO,
               fontWeight: 500,
-              letterSpacing: "-0.03em",
-              maxWidth: 700,
+              letterSpacing: "-0.025em",
+              maxWidth: 720,
               fontFamily: SERIF,
             }}
           >
@@ -266,9 +301,9 @@ export async function GET(request: Request) {
                 marginLeft: 4,
                 fontSize: 30,
                 lineHeight: 1.1,
-                color: "#C9A96A",
-                fontWeight: 500,
-                letterSpacing: "-0.02em",
+                color: GOLD_LABEL,
+                fontWeight: 400,
+                letterSpacing: "-0.015em",
                 fontFamily: SERIF,
               }}
             >
@@ -277,7 +312,7 @@ export async function GET(request: Request) {
           ) : null}
         </div>
 
-        {/* services line */}
+        {/* Services line */}
         <div
           style={{
             position: "absolute",
@@ -286,18 +321,18 @@ export async function GET(request: Request) {
             bottom: 112,
             display: "flex",
             alignItems: "center",
-            fontSize: 18,
+            fontSize: 15,
             lineHeight: 1.25,
-            letterSpacing: "0.13em",
+            letterSpacing: "0.22em",
             textTransform: "uppercase",
-            color: "rgba(245,238,229,0.84)",
+            color: "rgba(237,229,212,0.78)",
             fontWeight: 500,
           }}
         >
           Balcony Glass Cleaning · Interior Paint · Custom Home Maintenance Plans
         </div>
 
-        {/* divider */}
+        {/* Divider — center-weighted gradient line for editorial finish */}
         <div
           style={{
             position: "absolute",
@@ -305,20 +340,21 @@ export async function GET(request: Request) {
             right: 70,
             bottom: 62,
             height: 1,
-            background: "rgba(187,159,101,0.30)",
+            background:
+              "linear-gradient(90deg, rgba(184,153,104,0) 0%, rgba(184,153,104,0.38) 22%, rgba(212,181,126,0.55) 50%, rgba(184,153,104,0.38) 78%, rgba(184,153,104,0) 100%)",
           }}
         />
 
-        {/* footer */}
+        {/* Footer */}
         <div
           style={{
             position: "absolute",
             left: 70,
-            bottom: 18,
-            fontSize: 16,
-            letterSpacing: "0.24em",
+            bottom: 20,
+            fontSize: 13,
+            letterSpacing: "0.34em",
             textTransform: "uppercase",
-            color: "#C9A96A",
+            color: GOLD_LABEL,
             fontWeight: 600,
           }}
         >
@@ -329,11 +365,11 @@ export async function GET(request: Request) {
           style={{
             position: "absolute",
             right: 70,
-            bottom: 18,
-            fontSize: 16,
-            letterSpacing: "0.22em",
+            bottom: 20,
+            fontSize: 13,
+            letterSpacing: "0.30em",
             textTransform: "uppercase",
-            color: "rgba(236,232,223,0.56)",
+            color: "rgba(184,153,104,0.72)",
             fontWeight: 600,
           }}
         >
