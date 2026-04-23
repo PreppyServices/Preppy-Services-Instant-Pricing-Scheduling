@@ -76,10 +76,10 @@ function getNameSize(name: string) {
 }
 
 function getBuildingSize(building: string) {
-  if (building.length <= 12) return 46;
-  if (building.length <= 18) return 42;
-  if (building.length <= 26) return 38;
-  return 34;
+  if (building.length <= 12) return 48;
+  if (building.length <= 18) return 44;
+  if (building.length <= 26) return 40;
+  return 36;
 }
 
 function getTaglineSize(text: string) {
@@ -113,7 +113,6 @@ export async function GET(req: Request) {
       : "";
 
   const unitLine = hasUnit ? `${c.unitLabel} ${unit}` : "";
-
   const heroTagline = c.tagline;
 
   return new ImageResponse(
