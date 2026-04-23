@@ -19,7 +19,7 @@ const COPY: Record<Lang, Copy> = {
   en: {
     brandSub: "Luxury Home Services",
     tagline: "Your balcony, restored.",
-    services: "Balcony Glass  ·  Interior Paint  ·  Custom Jobs",
+    services: "Balcony Glass Cleaning  ·  Interior Paint  ·  Custom Project Requests",
     preparedFor: "Prepared for",
     residentPreview: "Resident Preview",
     unitLabel: "Unit",
@@ -29,7 +29,7 @@ const COPY: Record<Lang, Copy> = {
   es: {
     brandSub: "Servicios de Lujo para el Hogar",
     tagline: "Su balcón, restaurado.",
-    services: "Cristal de Balcón  ·  Pintura Interior  ·  Trabajos a Medida",
+    services: "Limpieza de Cristal de Balcón  ·  Pintura Interior  ·  Solicitudes de Proyectos Especiales",
     preparedFor: "Preparado para",
     residentPreview: "Vista para Residentes",
     unitLabel: "Unidad",
@@ -39,7 +39,7 @@ const COPY: Record<Lang, Copy> = {
   fr: {
     brandSub: "Services de Luxe pour la Maison",
     tagline: "Votre balcon, restauré.",
-    services: "Vitrage de Balcon  ·  Peinture Intérieure  ·  Travaux sur Mesure",
+    services: "Nettoyage de Vitrage de Balcon  ·  Peinture Intérieure  ·  Demandes de Projets Personnalisés",
     preparedFor: "Préparé pour",
     residentPreview: "Aperçu Résident",
     unitLabel: "Unité",
@@ -63,16 +63,16 @@ const C = {
 };
 
 function getNameSize(name: string) {
-  if (name.length <= 16) return 102;
-  if (name.length <= 24) return 92;
-  if (name.length <= 32) return 82;
-  return 74;
+  if (name.length <= 16) return 92;
+  if (name.length <= 24) return 84;
+  if (name.length <= 32) return 76;
+  return 70;
 }
 
 function getDetailSize(text: string) {
-  if (text.length <= 18) return 58;
-  if (text.length <= 30) return 52;
-  return 46;
+  if (text.length <= 18) return 50;
+  if (text.length <= 30) return 46;
+  return 42;
 }
 
 export async function GET(req: Request) {
@@ -281,7 +281,7 @@ export async function GET(req: Request) {
             flex: 1,
             marginTop: 10,
             marginBottom: 22,
-            maxWidth: 900,
+            maxWidth: 920,
           }}
         >
           {hasPersonalized && eyebrow ? (
@@ -305,8 +305,8 @@ export async function GET(req: Request) {
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-start",
-              gap: 6,
-              maxWidth: 900,
+              gap: 2,
+              maxWidth: 920,
             }}
           >
             {heroLines.map((line, i) => {
@@ -330,7 +330,7 @@ export async function GET(req: Request) {
                     lineHeight: isTagline ? 0.95 : 1.02,
                     letterSpacing: isTagline ? -2 : -1,
                     color: C.ivory,
-                    maxWidth: 900,
+                    maxWidth: 920,
                   }}
                 >
                   {line.text}
@@ -352,13 +352,13 @@ export async function GET(req: Request) {
           <div
             style={{
               marginTop: 20,
-              fontSize: 20,
-              letterSpacing: 3,
+              fontSize: 18,
+              letterSpacing: 2.5,
               textTransform: "uppercase",
               color: C.ivoryMuted,
               fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
               display: "flex",
-              maxWidth: 920,
+              maxWidth: 1040,
             }}
           >
             {c.services}
