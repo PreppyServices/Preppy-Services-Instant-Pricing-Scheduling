@@ -2,13 +2,6 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt = "Preppy Services personalized invitation";
-export const size = {
-  width: 1200,
-  height: 630,
-};
-export const contentType = "image/png";
-
 function clean(value: string | null | undefined, fallback = ""): string {
   if (!value) return fallback;
   return value.replace(/\+/g, " ").trim();
@@ -31,34 +24,39 @@ function normalizeBuilding(value: string | null | undefined): string {
 
 function getNameSize(name: string): number {
   const len = name.length;
-
-  if (len >= 28) return 72;
-  if (len >= 22) return 80;
-  if (len >= 16) return 90;
-  return 98;
+  if (len >= 34) return 62;
+  if (len >= 28) return 68;
+  if (len >= 22) return 78;
+  if (len >= 16) return 88;
+  return 96;
 }
 
 function getBuildingSize(building: string): number {
   const len = building.length;
+  if (len >= 30) return 26;
+  if (len >= 24) return 30;
+  if (len >= 18) return 36;
+  if (len >= 12) return 42;
+  return 46;
+}
 
-  if (len >= 24) return 32;
-  if (len >= 18) return 38;
-  if (len >= 12) return 44;
-  return 48;
+function getUnitSize(unit: string): number {
+  return unit.length >= 14 ? 26 : 30;
 }
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  const name = clean(searchParams.get("name"), "Preppy Client");
+  const name = clean(searchParams.get("name"), "Preppy Client").slice(0, 44);
   const building = normalizeBuilding(
-    searchParams.get("building") || searchParams.get("residence")
-  );
-  const unitRaw = clean(searchParams.get("unit"), "");
+    searchParams.get("building") || searchParams.get("residence") || searchParams.get("b")
+  ).slice(0, 54);
+  const unitRaw = clean(searchParams.get("unit"), "").slice(0, 18);
   const unit = unitRaw ? `Unit ${unitRaw}` : "";
 
   const nameSize = getNameSize(name);
   const buildingSize = getBuildingSize(building || "Private Residence");
+  const unitSize = getUnitSize(unit || "Unit 0000");
 
   return new ImageResponse(
     (
@@ -70,27 +68,25 @@ export async function GET(req: Request) {
           position: "relative",
           overflow: "hidden",
           background:
-            "linear-gradient(110deg, #0e1722 0%, #031326 40%, #01162d 100%)",
+            "linear-gradient(110deg, #0B1722 0%, #041629 42%, #02172F 100%)",
           color: "#F6F3EC",
           fontFamily:
             'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         }}
       >
-        {/* Background glow left */}
         <div
           style={{
             position: "absolute",
-            left: "-110px",
-            top: "-70px",
-            width: "620px",
-            height: "620px",
+            left: "-120px",
+            top: "-80px",
+            width: "650px",
+            height: "650px",
             borderRadius: "9999px",
             background:
-              "radial-gradient(circle, rgba(199,165,103,0.28) 0%, rgba(199,165,103,0.18) 22%, rgba(199,165,103,0.08) 40%, rgba(199,165,103,0) 68%)",
+              "radial-gradient(circle, rgba(199,165,103,0.28) 0%, rgba(199,165,103,0.18) 22%, rgba(199,165,103,0.08) 40%, rgba(199,165,103,0) 70%)",
           }}
         />
 
-        {/* Background glow right */}
         <div
           style={{
             position: "absolute",
@@ -100,11 +96,10 @@ export async function GET(req: Request) {
             height: "520px",
             borderRadius: "9999px",
             background:
-              "radial-gradient(circle, rgba(51,111,144,0.22) 0%, rgba(51,111,144,0.12) 24%, rgba(51,111,144,0.05) 42%, rgba(51,111,144,0) 70%)",
+              "radial-gradient(circle, rgba(51,111,144,0.22) 0%, rgba(51,111,144,0.12) 24%, rgba(51,111,144,0.05) 42%, rgba(51,111,144,0) 72%)",
           }}
         />
 
-        {/* Soft right wash */}
         <div
           style={{
             position: "absolute",
@@ -114,7 +109,6 @@ export async function GET(req: Request) {
           }}
         />
 
-        {/* Vertical grid lines */}
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
@@ -124,33 +118,55 @@ export async function GET(req: Request) {
               bottom: 0,
               left: `${190 + i * 170}px`,
               width: "1px",
-              background: "rgba(211, 191, 150, 0.12)",
+              background: "rgba(211, 191, 150, 0.10)",
             }}
           />
         ))}
 
-        {/* Top-right brand */}
         <div
           style={{
             position: "absolute",
-            top: 42,
-            right: 52,
+            left: 200,
+            top: 120,
+            width: 86,
+            height: 86,
+            borderRadius: "9999px",
+            background: "rgba(0,0,0,0.24)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            right: 155,
+            bottom: 118,
+            width: 86,
+            height: 86,
+            borderRadius: "9999px",
+            background: "rgba(0,0,0,0.24)",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            top: 40,
+            right: 48,
             display: "flex",
             alignItems: "center",
-            gap: 18,
+            gap: 16,
           }}
         >
           <div
             style={{
-              width: 52,
-              height: 52,
+              width: 48,
+              height: 48,
               borderRadius: "9999px",
-              border: "2px solid rgba(198,165,104,0.55)",
+              border: "1.5px solid rgba(198,165,104,0.55)",
               color: "#D7BC84",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 34,
+              fontSize: 32,
               lineHeight: 1,
               fontWeight: 400,
             }}
@@ -167,7 +183,7 @@ export async function GET(req: Request) {
           >
             <div
               style={{
-                fontSize: 34,
+                fontSize: 30,
                 lineHeight: 1,
                 fontWeight: 500,
                 color: "#F6F3EC",
@@ -179,9 +195,9 @@ export async function GET(req: Request) {
             <div
               style={{
                 marginTop: 6,
-                fontSize: 13,
+                fontSize: 12,
                 lineHeight: 1,
-                letterSpacing: "0.26em",
+                letterSpacing: "0.24em",
                 textTransform: "uppercase",
                 color: "#C6A56A",
               }}
@@ -192,18 +208,18 @@ export async function GET(req: Request) {
 
           <div
             style={{
-              marginLeft: 8,
-              minWidth: 56,
-              height: 36,
-              padding: "0 14px",
+              marginLeft: 6,
+              minWidth: 52,
+              height: 34,
+              padding: "0 12px",
               borderRadius: 9999,
               border: "1.5px solid rgba(198,165,104,0.50)",
               color: "#D7BC84",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 16,
-              letterSpacing: "0.14em",
+              fontSize: 15,
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
             }}
           >
@@ -211,13 +227,12 @@ export async function GET(req: Request) {
           </div>
         </div>
 
-        {/* Main content */}
         <div
           style={{
             position: "absolute",
-            left: 70,
-            top: 165,
-            width: 780,
+            left: 68,
+            top: 160,
+            width: 790,
             display: "flex",
             flexDirection: "column",
           }}
@@ -238,11 +253,11 @@ export async function GET(req: Request) {
             style={{
               marginTop: 22,
               fontSize: nameSize,
-              lineHeight: 0.98,
+              lineHeight: 0.97,
               letterSpacing: "-0.045em",
               color: "#F6F3EC",
               fontWeight: 400,
-              maxWidth: 760,
+              maxWidth: 780,
             }}
           >
             {name}
@@ -252,11 +267,11 @@ export async function GET(req: Request) {
             style={{
               marginTop: 18,
               fontSize: buildingSize,
-              lineHeight: 1.04,
-              letterSpacing: "-0.02em",
+              lineHeight: 1.06,
+              letterSpacing: "-0.015em",
               color: "#D7BC84",
               fontWeight: 500,
-              maxWidth: 700,
+              maxWidth: 720,
             }}
           >
             {building || "Private Residence"}
@@ -266,11 +281,11 @@ export async function GET(req: Request) {
             <div
               style={{
                 marginTop: 12,
-                fontSize: 30,
+                fontSize: unitSize,
                 lineHeight: 1.05,
                 color: "#F6F3EC",
                 fontWeight: 400,
-                maxWidth: 500,
+                maxWidth: 520,
               }}
             >
               {unit}
@@ -280,38 +295,37 @@ export async function GET(req: Request) {
           <div
             style={{
               marginTop: 54,
-              fontSize: 22,
+              fontSize: 21,
               lineHeight: 1.2,
-              letterSpacing: "0.13em",
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
-              color: "rgba(246,243,236,0.82)",
+              color: "rgba(246,243,236,0.80)",
               fontWeight: 400,
+              maxWidth: 980,
             }}
           >
             Balcony Glass Cleaning · Interior Paint · Custom Project Requests
           </div>
         </div>
 
-        {/* Bottom rule */}
         <div
           style={{
             position: "absolute",
-            left: 70,
-            right: 70,
+            left: 68,
+            right: 68,
             bottom: 92,
             height: "1px",
-            background: "rgba(211, 191, 150, 0.24)",
+            background: "rgba(211, 191, 150, 0.22)",
           }}
         />
 
-        {/* Bottom left */}
         <div
           style={{
             position: "absolute",
-            left: 70,
+            left: 68,
             bottom: 46,
             fontSize: 18,
-            letterSpacing: "0.26em",
+            letterSpacing: "0.24em",
             textTransform: "uppercase",
             color: "#D7BC84",
           }}
@@ -319,14 +333,13 @@ export async function GET(req: Request) {
           Miami · Miami Beach
         </div>
 
-        {/* Bottom right */}
         <div
           style={{
             position: "absolute",
-            right: 70,
+            right: 68,
             bottom: 46,
             fontSize: 18,
-            letterSpacing: "0.22em",
+            letterSpacing: "0.20em",
             textTransform: "uppercase",
             color: "rgba(246,243,236,0.42)",
           }}
@@ -336,7 +349,8 @@ export async function GET(req: Request) {
       </div>
     ),
     {
-      ...size,
+      width: 1200,
+      height: 630,
     }
   );
 }
