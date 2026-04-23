@@ -29,7 +29,8 @@ const COPY: Record<Lang, Copy> = {
   es: {
     brandSub: "Servicios de Lujo para el Hogar",
     tagline: "Su balcón, restaurado.",
-    services: "Limpieza de Cristal de Balcón  ·  Pintura Interior  ·  Solicitudes de Proyectos Especiales",
+    services:
+      "Limpieza de Cristal de Balcón  ·  Pintura Interior  ·  Solicitudes de Proyectos Especiales",
     preparedFor: "Preparado para",
     residentPreview: "Vista para Residentes",
     unitLabel: "Unidad",
@@ -39,7 +40,8 @@ const COPY: Record<Lang, Copy> = {
   fr: {
     brandSub: "Services de Luxe pour la Maison",
     tagline: "Votre balcon, restauré.",
-    services: "Nettoyage de Vitrage de Balcon  ·  Peinture Intérieure  ·  Demandes de Projets Personnalisés",
+    services:
+      "Nettoyage de Vitrage de Balcon  ·  Peinture Intérieure  ·  Demandes de Projets Personnalisés",
     preparedFor: "Préparé pour",
     residentPreview: "Aperçu Résident",
     unitLabel: "Unité",
@@ -53,7 +55,7 @@ const C = {
   bg1: "#0D2233",
   bg2: "#050E15",
   ivory: "#F5F1EA",
-  ivoryMuted: "rgba(245,241,234,0.74)",
+  ivoryMuted: "rgba(245,241,234,0.76)",
   ivoryFaint: "rgba(245,241,234,0.48)",
   gold: "#D9B97C",
   goldBright: "#EBD4A0",
@@ -63,16 +65,22 @@ const C = {
 };
 
 function getNameSize(name: string) {
-  if (name.length <= 16) return 92;
-  if (name.length <= 24) return 84;
-  if (name.length <= 32) return 76;
-  return 70;
+  if (name.length <= 16) return 88;
+  if (name.length <= 24) return 80;
+  if (name.length <= 32) return 72;
+  return 66;
 }
 
-function getDetailSize(text: string) {
-  if (text.length <= 18) return 50;
-  if (text.length <= 30) return 46;
-  return 42;
+function getBuildingSize(building: string) {
+  if (building.length <= 18) return 36;
+  if (building.length <= 28) return 32;
+  return 28;
+}
+
+function getTaglineSize(text: string) {
+  if (text.length <= 18) return 126;
+  if (text.length <= 28) return 112;
+  return 100;
 }
 
 export async function GET(req: Request) {
@@ -98,16 +106,6 @@ export async function GET(req: Request) {
     : hasBuilding || hasUnit
       ? c.residentPreview
       : "";
-
-  const unitLine = hasUnit ? `${c.unitLabel} ${unit}` : "";
-
-  const heroLines = hasPersonalized
-    ? [
-        hasName ? { text: name, kind: "name" as const } : null,
-        unitLine ? { text: unitLine, kind: "detail" as const } : null,
-        hasBuilding ? { text: building, kind: "detail" as const } : null,
-      ].filter(Boolean) as { text: string; kind: "name" | "detail" }[]
-    : [{ text: c.tagline, kind: "tagline" as const }];
 
   return new ImageResponse(
     (
@@ -189,66 +187,67 @@ export async function GET(req: Request) {
 
         <div
           style={{
+            position: "absolute",
+            top: 42,
+            right: 56,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            zIndex: 2,
+            gap: 14,
+            zIndex: 3,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 44,
+              height: 44,
+              borderRadius: 999,
+              border: `1px solid ${C.goldLine}`,
+              background: "rgba(9,22,32,0.45)",
+            }}
+          >
             <div
               style={{
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: 32,
+                lineHeight: 1,
+                color: C.goldBright,
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 72,
-                height: 72,
-                borderRadius: 999,
-                border: `1px solid ${C.goldLine}`,
-                background: "rgba(9,22,32,0.55)",
+                marginTop: -3,
               }}
             >
-              <div
-                style={{
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  fontSize: 56,
-                  lineHeight: 1,
-                  color: C.goldBright,
-                  display: "flex",
-                  marginTop: -6,
-                }}
-              >
-                P
-              </div>
+              P
             </div>
+          </div>
 
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div
-                style={{
-                  fontSize: 38,
-                  fontWeight: 400,
-                  letterSpacing: 0.5,
-                  color: C.ivory,
-                  lineHeight: 1.05,
-                  display: "flex",
-                }}
-              >
-                Preppy Services
-              </div>
-              <div
-                style={{
-                  marginTop: 4,
-                  fontSize: 14,
-                  letterSpacing: 5,
-                  textTransform: "uppercase",
-                  color: C.gold,
-                  fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
-                  display: "flex",
-                }}
-              >
-                {c.brandSub}
-              </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 400,
+                letterSpacing: 0.2,
+                color: C.ivory,
+                lineHeight: 1.02,
+                display: "flex",
+              }}
+            >
+              Preppy Services
+            </div>
+            <div
+              style={{
+                marginTop: 2,
+                fontSize: 10,
+                letterSpacing: 3.5,
+                textTransform: "uppercase",
+                color: C.gold,
+                fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
+                display: "flex",
+              }}
+            >
+              {c.brandSub}
             </div>
           </div>
 
@@ -257,12 +256,12 @@ export async function GET(req: Request) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "8px 18px",
+              padding: "6px 12px",
               borderRadius: 999,
               border: `1px solid ${C.goldLine}`,
-              background: "rgba(9,22,32,0.55)",
-              fontSize: 14,
-              letterSpacing: 5,
+              background: "rgba(9,22,32,0.45)",
+              fontSize: 10,
+              letterSpacing: 3.5,
               textTransform: "uppercase",
               color: C.goldBright,
               fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -279,16 +278,16 @@ export async function GET(req: Request) {
             justifyContent: "center",
             zIndex: 2,
             flex: 1,
-            marginTop: 10,
+            marginTop: 34,
             marginBottom: 22,
-            maxWidth: 920,
+            maxWidth: 980,
           }}
         >
           {hasPersonalized && eyebrow ? (
             <div
               style={{
-                fontSize: 16,
-                letterSpacing: 5,
+                fontSize: 21,
+                letterSpacing: 5.5,
                 textTransform: "uppercase",
                 color: C.gold,
                 fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -300,44 +299,83 @@ export async function GET(req: Request) {
             </div>
           ) : null}
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              gap: 2,
-              maxWidth: 920,
-            }}
-          >
-            {heroLines.map((line, i) => {
-              const isTagline = line.kind === "tagline";
-              const isName = line.kind === "name";
-
-              const fontSize = isTagline
-                ? 126
-                : isName
-                  ? getNameSize(line.text)
-                  : getDetailSize(line.text);
-
-              return (
+          {hasPersonalized ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                justifyContent: "center",
+                maxWidth: 980,
+                zIndex: 2,
+              }}
+            >
+              {hasBuilding ? (
                 <div
-                  key={`${line.text}-${i}`}
                   style={{
+                    fontSize: getBuildingSize(building),
+                    letterSpacing: 2.4,
+                    textTransform: "uppercase",
+                    color: C.goldBright,
+                    fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
                     display: "flex",
-                    fontSize,
-                    fontStyle: isTagline ? "italic" : "normal",
-                    fontWeight: isName ? 500 : 400,
-                    lineHeight: isTagline ? 0.95 : 1.02,
-                    letterSpacing: isTagline ? -2 : -1,
-                    color: C.ivory,
+                    marginBottom: 14,
+                    lineHeight: 1.05,
                     maxWidth: 920,
                   }}
                 >
-                  {line.text}
+                  {building}
                 </div>
-              );
-            })}
-          </div>
+              ) : null}
+
+              {hasName ? (
+                <div
+                  style={{
+                    fontSize: getNameSize(name),
+                    lineHeight: 0.96,
+                    color: C.ivory,
+                    fontWeight: 500,
+                    letterSpacing: -1.8,
+                    display: "flex",
+                    marginBottom: hasUnit ? 16 : 0,
+                    maxWidth: 920,
+                  }}
+                >
+                  {name}
+                </div>
+              ) : null}
+
+              {hasUnit ? (
+                <div
+                  style={{
+                    fontSize: 30,
+                    lineHeight: 1.05,
+                    color: C.gold,
+                    fontWeight: 400,
+                    letterSpacing: 1.2,
+                    display: "flex",
+                  }}
+                >
+                  {c.unitLabel} {unit}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                fontSize: getTaglineSize(c.tagline),
+                fontStyle: "italic",
+                fontWeight: 400,
+                lineHeight: 0.95,
+                letterSpacing: -2,
+                color: C.ivory,
+                maxWidth: 920,
+              }}
+            >
+              {c.tagline}
+            </div>
+          )}
 
           <div
             style={{
