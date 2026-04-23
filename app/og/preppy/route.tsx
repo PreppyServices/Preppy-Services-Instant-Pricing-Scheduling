@@ -1,350 +1,452 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const dynamic = "force-dynamic";
 
-function normalizeText(value: string | null, fallback = "") {
-  if (!value) return fallback;
-  return decodeURIComponent(value).replace(/\+/g, " ").replace(/\s+/g, " ").trim();
+type Lang = "en" | "es" | "fr";
+
+type Copy = {
+  brandSub: string;
+  tagline: string;
+  services: string;
+  preparedFor: string;
+  residentPreview: string;
+  unitLabel: string;
+  insured: string;
+  region: string;
+};
+
+const COPY: Record<Lang, Copy> = {
+  en: {
+    brandSub: "Luxury Home Services",
+    tagline: "Your balcony, restored.",
+    services: "BALCONY GLASS CLEANING  ·  INTERIOR PAINT  ·  CUSTOM PROJECT REQUESTS",
+    preparedFor: "PREPARED FOR",
+    residentPreview: "RESIDENT PREVIEW",
+    unitLabel: "Unit",
+    insured: "FULLY INSURED  ·  $2M COVERAGE",
+    region: "MIAMI  ·  MIAMI BEACH",
+  },
+  es: {
+    brandSub: "Servicios de Lujo para el Hogar",
+    tagline: "Su balcón, restaurado.",
+    services: "LIMPIEZA DE CRISTAL DE BALCÓN  ·  PINTURA INTERIOR  ·  SOLICITUDES DE PROYECTOS ESPECIALES",
+    preparedFor: "PREPARADO PARA",
+    residentPreview: "VISTA PARA RESIDENTES",
+    unitLabel: "Unidad",
+    insured: "TOTALMENTE ASEGURADO  ·  COBERTURA $2M",
+    region: "MIAMI  ·  MIAMI BEACH",
+  },
+  fr: {
+    brandSub: "Services de Luxe pour la Maison",
+    tagline: "Votre balcon, restauré.",
+    services: "NETTOYAGE DE VITRAGE DE BALCON  ·  PEINTURE INTÉRIEURE  ·  DEMANDES DE PROJETS PERSONNALISÉS",
+    preparedFor: "PRÉPARÉ POUR",
+    residentPreview: "APERÇU RÉSIDENT",
+    unitLabel: "Unité",
+    insured: "ENTIÈREMENT ASSURÉ  ·  COUVERTURE 2M$",
+    region: "MIAMI  ·  MIAMI BEACH",
+  },
+};
+
+const C = {
+  bgBase: "#03101B",
+  bgDeep: "#041727",
+  bgNight: "#020B14",
+  navyGlow: "rgba(15, 56, 86, 0.58)",
+  navyGlowSoft: "rgba(19, 71, 104, 0.26)",
+  orbDark: "rgba(0,0,0,0.34)",
+  ivory: "#F6F1E8",
+  ivorySoft: "rgba(246,241,232,0.76)",
+  ivoryFaint: "rgba(246,241,232,0.48)",
+  gold: "#D7B77A",
+  goldBright: "#E3C88F",
+  goldSoft: "rgba(215,183,122,0.82)",
+  goldLine: "rgba(215,183,122,0.24)",
+  goldLineStrong: "rgba(215,183,122,0.44)",
+};
+
+function getNameSize(name: string) {
+  if (name.length <= 16) return 82;
+  if (name.length <= 24) return 74;
+  if (name.length <= 32) return 68;
+  return 62;
 }
 
-function titleCase(value: string) {
-  return value
-    .toLowerCase()
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+function getBuildingSize(building: string) {
+  if (building.length <= 16) return 56;
+  if (building.length <= 26) return 50;
+  return 44;
 }
 
-function formatName(value: string) {
-  return titleCase(value);
+function getUnitSize(unitLine: string) {
+  if (unitLine.length <= 14) return 38;
+  return 34;
 }
 
-function formatBuilding(value: string) {
-  return titleCase(value).toUpperCase();
-}
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
 
-function formatUnit(value: string) {
-  const clean = value.trim();
-  if (!clean) return "";
-  if (/^unit\s+/i.test(clean)) return clean.replace(/^unit\s+/i, "Unit ");
-  return `Unit ${clean}`;
-}
+  const name = (searchParams.get("name") || "").trim().slice(0, 36);
+  const building = (searchParams.get("b") || searchParams.get("building") || "")
+    .trim()
+    .slice(0, 48);
+  const unit = (searchParams.get("unit") || "").trim().slice(0, 12);
+  const rawLang = (searchParams.get("lang") || "").toLowerCase().slice(0, 2);
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  const lang: Lang = (["en", "es", "fr"].includes(rawLang) ? rawLang : "en") as Lang;
+  const copy = COPY[lang];
 
-  const rawName = normalizeText(searchParams.get("name"), "Valued Resident");
-  const rawBuilding = normalizeText(searchParams.get("building"), "Private Residence");
-  const rawUnit = normalizeText(searchParams.get("unit"), "");
-  const lang = normalizeText(searchParams.get("lang"), "EN").toUpperCase();
+  const hasName = Boolean(name);
+  const hasBuilding = Boolean(building);
+  const hasUnit = Boolean(unit);
+  const hasPersonalized = hasName || hasBuilding || hasUnit;
 
-  const name = formatName(rawName);
-  const building = formatBuilding(rawBuilding);
-  const unit = formatUnit(rawUnit);
+  const eyebrow =
+    hasName || hasBuilding || hasUnit
+      ? hasName
+        ? copy.preparedFor
+        : copy.residentPreview
+      : "";
 
-  const gold = "#D4B06A";
-  const warmGold = "#E1C487";
-  const white = "#F4F1EA";
-  const softWhite = "rgba(244, 241, 234, 0.88)";
-  const muted = "rgba(244, 241, 234, 0.70)";
-  const line = "rgba(212, 176, 106, 0.18)";
-  const tealGlow = "rgba(34, 138, 155, 0.18)";
+  const unitLine = hasUnit ? `${copy.unitLabel} ${unit}` : "";
+
+  const heroName = hasName ? name : copy.tagline;
+  const heroBuilding = hasBuilding ? building : "";
+  const heroUnit = unitLine;
+
+  const heroNameSize = hasName ? getNameSize(heroName) : 96;
+  const heroBuildingSize = getBuildingSize(heroBuilding);
+  const heroUnitSize = getUnitSize(heroUnit);
 
   return new ImageResponse(
     (
       <div
         style={{
-          width: 1200,
-          height: 630,
           position: "relative",
+          width: "100%",
+          height: "100%",
           display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: "44px 56px 40px 56px",
           overflow: "hidden",
-          background:
-            "linear-gradient(110deg, #0f2032 0%, #031226 45%, #02101f 100%)",
-          color: white,
-          fontFamily:
-            'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          color: C.ivory,
+          background: `radial-gradient(120% 110% at 20% 0%, ${C.bgDeep} 0%, ${C.bgBase} 42%, ${C.bgNight} 100%)`,
+          fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
         }}
       >
-        {/* Background glows */}
+        {/* background glow left */}
         <div
           style={{
             position: "absolute",
-            left: -110,
-            top: -40,
-            width: 520,
-            height: 520,
-            borderRadius: 9999,
-            background:
-              "radial-gradient(circle, rgba(212,176,106,0.24) 0%, rgba(212,176,106,0.10) 34%, rgba(212,176,106,0.04) 54%, rgba(212,176,106,0) 74%)",
+            top: -90,
+            left: -120,
+            width: 620,
+            height: 620,
+            borderRadius: "50%",
+            background: `radial-gradient(circle, rgba(215,183,122,0.15) 0%, rgba(215,183,122,0.10) 18%, rgba(24,43,60,0.20) 45%, rgba(0,0,0,0) 72%)`,
+            display: "flex",
           }}
         />
+
+        {/* dark left orb */}
         <div
           style={{
             position: "absolute",
-            right: -150,
+            top: 118,
+            left: 206,
+            width: 96,
+            height: 96,
+            borderRadius: "50%",
+            background: C.orbDark,
+            display: "flex",
+          }}
+        />
+
+        {/* right glow */}
+        <div
+          style={{
+            position: "absolute",
+            right: -120,
             bottom: -120,
-            width: 520,
-            height: 520,
-            borderRadius: 9999,
-            background:
-              "radial-gradient(circle, rgba(54,138,170,0.16) 0%, rgba(54,138,170,0.10) 34%, rgba(54,138,170,0.04) 56%, rgba(54,138,170,0) 76%)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: 175,
-            top: 120,
-            width: 74,
-            height: 74,
-            borderRadius: 9999,
-            background: "rgba(0,0,0,0.26)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            right: 175,
-            bottom: 118,
-            width: 74,
-            height: 74,
-            borderRadius: 9999,
-            background: "rgba(0,0,0,0.28)",
+            width: 620,
+            height: 620,
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${C.navyGlow} 0%, ${C.navyGlowSoft} 24%, rgba(7,30,48,0.12) 42%, rgba(0,0,0,0) 70%)`,
+            display: "flex",
           }}
         />
 
-        {/* Vertical guide lines */}
-        {[180, 350, 520, 690, 860, 1030].map((x) => (
-          <div
-            key={x}
-            style={{
-              position: "absolute",
-              left: x,
-              top: 0,
-              width: 1,
-              height: 630,
-              background: "rgba(255,255,255,0.10)",
-            }}
-          />
-        ))}
-
-        {/* Top-right brand lockup */}
+        {/* dark right orb */}
         <div
           style={{
             position: "absolute",
-            right: 58,
-            top: 42,
+            right: 188,
+            bottom: 122,
+            width: 96,
+            height: 96,
+            borderRadius: "50%",
+            background: "rgba(0,0,0,0.30)",
+            display: "flex",
+          }}
+        />
+
+        {/* vertical grid lines */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            justifyContent: "space-between",
+            paddingLeft: 210,
+            paddingRight: 210,
+          }}
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: 1,
+                background: `linear-gradient(180deg, rgba(215,183,122,0) 0%, ${C.goldLine} 22%, ${C.goldLine} 78%, rgba(215,183,122,0) 100%)`,
+                display: "flex",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* top right brand */}
+        <div
+          style={{
+            position: "absolute",
+            top: 34,
+            right: 54,
             display: "flex",
             alignItems: "center",
             gap: 18,
+            zIndex: 3,
           }}
         >
           <div
             style={{
-              width: 50,
-              height: 50,
-              borderRadius: 9999,
-              border: `2px solid rgba(212,176,106,0.55)`,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            <div
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: 999,
+                border: `1px solid ${C.goldLineStrong}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(4,18,30,0.36)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 40,
+                  lineHeight: 1,
+                  color: C.goldBright,
+                  fontWeight: 400,
+                  display: "flex",
+                  marginTop: -3,
+                }}
+              >
+                P
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 28,
+                  lineHeight: 1.05,
+                  fontWeight: 500,
+                  color: C.ivory,
+                  display: "flex",
+                }}
+              >
+                Preppy Services
+              </div>
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: 10,
+                  letterSpacing: 4.2,
+                  textTransform: "uppercase",
+                  color: C.gold,
+                  display: "flex",
+                }}
+              >
+                {copy.brandSub}
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: "7px 16px",
+              borderRadius: 999,
+              border: `1px solid ${C.goldLineStrong}`,
+              color: C.goldBright,
+              fontSize: 12,
+              letterSpacing: 4,
+              textTransform: "uppercase",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: gold,
-              fontSize: 28,
-              fontWeight: 500,
-              lineHeight: 1,
+              background: "rgba(4,18,30,0.30)",
             }}
           >
-            P
+            {lang.toUpperCase()}
           </div>
+        </div>
+
+        {/* main content */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            flex: 1,
+            maxWidth: 860,
+            paddingTop: 102,
+            paddingBottom: 22,
+          }}
+        >
+          {hasPersonalized && eyebrow ? (
+            <div
+              style={{
+                fontSize: 18,
+                letterSpacing: 6,
+                textTransform: "uppercase",
+                color: C.goldBright,
+                display: "flex",
+                marginBottom: 20,
+              }}
+            >
+              {eyebrow}
+            </div>
+          ) : null}
 
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 3,
+              alignItems: "flex-start",
+              maxWidth: 860,
             }}
           >
             <div
               style={{
-                fontSize: 33,
-                lineHeight: 1,
-                fontWeight: 500,
-                color: white,
-                letterSpacing: -0.5,
-              }}
-            >
-              Preppy Services
-            </div>
-            <div
-              style={{
-                fontSize: 14,
-                lineHeight: 1,
-                color: gold,
-                letterSpacing: 4,
-                textTransform: "uppercase",
-                fontWeight: 500,
-              }}
-            >
-              Luxury Home Services
-            </div>
-          </div>
-
-          <div
-            style={{
-              marginLeft: 6,
-              minWidth: 58,
-              height: 36,
-              borderRadius: 9999,
-              border: `2px solid rgba(212,176,106,0.45)`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: gold,
-              fontSize: 16,
-              fontWeight: 600,
-              letterSpacing: 2,
-              paddingLeft: 12,
-              paddingRight: 12,
-            }}
-          >
-            {lang}
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div
-          style={{
-            position: "absolute",
-            left: 66,
-            top: 182,
-            width: 760,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 34,
-              lineHeight: 1,
-              color: warmGold,
-              letterSpacing: 7,
-              textTransform: "uppercase",
-              fontWeight: 500,
-              marginBottom: 26,
-            }}
-          >
-            Prepared For
-          </div>
-
-          <div
-            style={{
-              fontSize: 56,
-              lineHeight: 1.04,
-              color: warmGold,
-              letterSpacing: 1.2,
-              textTransform: "uppercase",
-              fontWeight: 500,
-              marginBottom: 24,
-              maxWidth: 740,
-            }}
-          >
-            {building}
-          </div>
-
-          <div
-            style={{
-              fontSize: 102,
-              lineHeight: 0.98,
-              color: white,
-              fontWeight: 400,
-              letterSpacing: -2.4,
-              marginBottom: 18,
-              maxWidth: 920,
-            }}
-          >
-            {name}
-          </div>
-
-          {unit ? (
-            <div
-              style={{
-                fontSize: 40,
-                lineHeight: 1,
-                color: softWhite,
+                display: "flex",
+                fontSize: heroNameSize,
+                lineHeight: 0.96,
+                letterSpacing: -2.5,
                 fontWeight: 400,
-                letterSpacing: -0.4,
+                color: C.ivory,
+                maxWidth: 860,
               }}
             >
-              {unit}
+              {heroName}
             </div>
-          ) : null}
+
+            {heroBuilding ? (
+              <div
+                style={{
+                  display: "flex",
+                  marginTop: 16,
+                  fontSize: heroBuildingSize,
+                  lineHeight: 1,
+                  letterSpacing: -0.8,
+                  color: C.goldBright,
+                  fontWeight: 400,
+                  maxWidth: 760,
+                }}
+              >
+                {heroBuilding}
+              </div>
+            ) : null}
+
+            {heroUnit ? (
+              <div
+                style={{
+                  display: "flex",
+                  marginTop: 12,
+                  marginLeft: 10,
+                  fontSize: heroUnitSize,
+                  lineHeight: 1,
+                  letterSpacing: -0.4,
+                  color: C.gold,
+                  fontWeight: 400,
+                }}
+              >
+                {heroUnit}
+              </div>
+            ) : null}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              marginTop: 54,
+              maxWidth: 980,
+              fontSize: 16,
+              lineHeight: 1.35,
+              letterSpacing: 2.2,
+              textTransform: "uppercase",
+              color: C.ivorySoft,
+            }}
+          >
+            {copy.services}
+          </div>
         </div>
 
-        {/* Services line */}
+        {/* footer */}
         <div
           style={{
-            position: "absolute",
-            left: 66,
-            right: 200,
-            bottom: 138,
+            position: "relative",
+            zIndex: 2,
             display: "flex",
             alignItems: "center",
-            color: muted,
-            fontSize: 22,
-            lineHeight: 1.25,
-            fontWeight: 500,
-            letterSpacing: 2.4,
-            textTransform: "uppercase",
+            justifyContent: "space-between",
+            paddingTop: 18,
+            borderTop: `1px solid ${C.goldLine}`,
           }}
         >
-          Balcony Glass Cleaning • Interior Paint • Custom Project Requests
-        </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 12,
+              letterSpacing: 5,
+              textTransform: "uppercase",
+              color: C.goldBright,
+            }}
+          >
+            {copy.region}
+          </div>
 
-        {/* Bottom divider */}
-        <div
-          style={{
-            position: "absolute",
-            left: 66,
-            right: 66,
-            bottom: 72,
-            height: 1,
-            background: line,
-          }}
-        />
-
-        {/* Footer left */}
-        <div
-          style={{
-            position: "absolute",
-            left: 66,
-            bottom: 28,
-            color: gold,
-            fontSize: 17,
-            fontWeight: 500,
-            letterSpacing: 5,
-            textTransform: "uppercase",
-          }}
-        >
-          Miami • Miami Beach
-        </div>
-
-        {/* Footer right */}
-        <div
-          style={{
-            position: "absolute",
-            right: 66,
-            bottom: 28,
-            color: "rgba(244,241,234,0.52)",
-            fontSize: 17,
-            fontWeight: 500,
-            letterSpacing: 5,
-            textTransform: "uppercase",
-          }}
-        >
-          Fully Insured • $2M Coverage
+          <div
+            style={{
+              display: "flex",
+              fontSize: 12,
+              letterSpacing: 5,
+              textTransform: "uppercase",
+              color: C.ivoryFaint,
+            }}
+          >
+            {copy.insured}
+          </div>
         </div>
       </div>
     ),
