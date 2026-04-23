@@ -61,10 +61,6 @@ type BuildingStatus = "raw" | "researched" | "mapped" | "priced" | "verified";
 type ServiceType = "glass" | "painting" | "custom";
 type Lang = "en" | "es" | "fr";
 
-// ---------------------------------------------------------------------------
-// I18N — flat translator. No framework. English keys are byte-identical to
-// prior copy, so existing English UX is unchanged. Vars use {name} syntax.
-// ---------------------------------------------------------------------------
 const I18N: Record<Lang, Record<string, string>> = {
   en: {
     "brand.title": "Preppy Services",
@@ -75,7 +71,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.glass.title": "Balcony Glass",
     "service.glass.sub": "Detailing",
     "service.painting.title": "Interior Paint",
-    "service.painting.sub": "Consultation",
+    "service.painting.sub": "Quote",
     "service.custom.title": "Custom Job",
     "service.custom.sub": "Text & photos",
     "badge.glass": "Balcony Glass Detailing",
@@ -111,7 +107,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.directHeadline": "Send your details — we'll reply with a tailored quote.",
     "price.directSub": "Photos, floor plan, scope — whatever you have.",
     "price.private": "Private consultation",
-    "price.reserveHeadline": "Reserve your 15-minute consultation",
+    "price.reserveHeadline": "Discuss your project on-site.",
+    "price.reserveSub": "Finalize details, get quote and coordinate scheduling.",
     "price.residenceFinalizing": "This residence is being finalized for line-specific pricing.",
     "price.textPrivate": "Text us for a private quote.",
     "price.selectResidenceFirst": "Select your residence and unit line to view pricing",
@@ -120,7 +117,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.estimated": "Estimated total",
     "cta.sendImessage": "Send via iMessage",
     "cta.checkAvailability": "Check Availability",
-    "cta.reserveConsultation": "Reserve Consultation",
+    "cta.reserveConsultation": "Reserve On-Site Walkthrough",
     "cta.textSendPhoto": "Text us · Send a photo",
     "trust.whiteGlove": "White Glove",
     "trust.whiteGlove.sub": "Service",
@@ -143,7 +140,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.glass.title": "Cristal de Balcón",
     "service.glass.sub": "Detallado",
     "service.painting.title": "Pintura Interior",
-    "service.painting.sub": "Consulta",
+    "service.painting.sub": "Cotizar",
     "service.custom.title": "Trabajo a Medida",
     "service.custom.sub": "Mensaje y fotos",
     "badge.glass": "Detallado de Cristal de Balcón",
@@ -179,7 +176,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.directHeadline": "Envíenos los detalles — responderemos con una cotización personalizada.",
     "price.directSub": "Fotos, plano, alcance — lo que tenga.",
     "price.private": "Consulta privada",
-    "price.reserveHeadline": "Reserve su consulta de 15 minutos",
+    "price.reserveHeadline": "Converse sobre su proyecto en sitio.",
+    "price.reserveSub": "Finalize detalles, reciba una cotización y coordine la programación.",
     "price.residenceFinalizing": "Esta residencia está siendo finalizada para precios por línea.",
     "price.textPrivate": "Escríbanos para una cotización privada.",
     "price.selectResidenceFirst": "Seleccione residencia y línea de unidad para ver precios",
@@ -188,7 +186,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.estimated": "Total estimado",
     "cta.sendImessage": "Enviar por iMessage",
     "cta.checkAvailability": "Ver Disponibilidad",
-    "cta.reserveConsultation": "Reservar Consulta",
+    "cta.reserveConsultation": "Reservar Visita en Sitio",
     "cta.textSendPhoto": "Escríbanos · Envíe una foto",
     "trust.whiteGlove": "Guante Blanco",
     "trust.whiteGlove.sub": "Servicio",
@@ -211,7 +209,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.glass.title": "Verre de Balcon",
     "service.glass.sub": "Détaillage",
     "service.painting.title": "Peinture Intérieure",
-    "service.painting.sub": "Consultation",
+    "service.painting.sub": "Devis",
     "service.custom.title": "Travail Sur Mesure",
     "service.custom.sub": "Message et photos",
     "badge.glass": "Détaillage du Verre de Balcon",
@@ -247,7 +245,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.directHeadline": "Envoyez vos détails — nous répondrons avec un devis sur mesure.",
     "price.directSub": "Photos, plan, portée — tout ce que vous avez.",
     "price.private": "Consultation privée",
-    "price.reserveHeadline": "Réservez votre consultation de 15 minutes",
+    "price.reserveHeadline": "Discutez de votre projet sur place.",
+    "price.reserveSub": "Finalisez les détails, obtenez un devis et coordonnez la planification.",
     "price.residenceFinalizing": "Cette résidence est en cours de finalisation pour les tarifs par ligne.",
     "price.textPrivate": "Écrivez-nous pour un devis privé.",
     "price.selectResidenceFirst": "Sélectionnez votre résidence et ligne d'unité pour voir les tarifs",
@@ -256,7 +255,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.estimated": "Total estimé",
     "cta.sendImessage": "Envoyer via iMessage",
     "cta.checkAvailability": "Vérifier la Disponibilité",
-    "cta.reserveConsultation": "Réserver la Consultation",
+    "cta.reserveConsultation": "Réserver la Visite sur Place",
     "cta.textSendPhoto": "Écrivez-nous · Envoyez une photo",
     "trust.whiteGlove": "Gant Blanc",
     "trust.whiteGlove.sub": "Service",
@@ -281,18 +280,6 @@ function translate(key: string, lang: Lang, vars?: Record<string, string | numbe
   );
 }
 
-// ---------------------------------------------------------------------------
-// UNIT → LINE RESOLVER — CONSERVATIVE. Fallback to line picker when uncertain.
-//
-//   1. Exact unit-as-line match (e.g. Missoni Baia uses keys like "3803").
-//   2. PH / UPH / LPH / TH / TS / TOWNHOME / PENTHOUSE prefixes never derive.
-//   3. Pure-digit units of length 3–5 try last-two-digits rule — but only if
-//      the derived key is itself 2 pure digits AND exists in the building.
-//   4. Short pure-digit units (1–2 digits) that match a zero-padded line are
-//      treated as the line directly.
-//   5. Anything else: return { line: "", source: "none" } so the widget
-//      falls back to the existing line picker — existing UX preserved.
-// ---------------------------------------------------------------------------
 function resolveUnitToLine(
   unit: string | null | undefined,
   buildingName: string
@@ -332,8 +319,8 @@ export default function PreppyLuxuryWidget() {
     visible: (delay = 0) => ({
       opacity: 1,
       y: 0,
-      transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }
-    })
+      transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] },
+    }),
   };
 
   const heroReveal = {
@@ -342,8 +329,8 @@ export default function PreppyLuxuryWidget() {
       opacity: 1,
       filter: "blur(0px)",
       color: "#0D1B24",
-      transition: { duration: 1.35, delay, ease: [0.19, 1, 0.22, 1] }
-    })
+      transition: { duration: 1.35, delay, ease: [0.19, 1, 0.22, 1] },
+    }),
   };
 
   React.useEffect(() => {
@@ -352,7 +339,8 @@ export default function PreppyLuxuryWidget() {
     const link = document.createElement("link");
     link.id = "preppy-cormorant";
     link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap";
     document.head.appendChild(link);
   }, []);
 
@@ -371,7 +359,8 @@ export default function PreppyLuxuryWidget() {
       return { g: 9, n: 99999, s: label };
     };
     return [...labels].sort((a, b) => {
-      const A = parseLabel(a), B = parseLabel(b);
+      const A = parseLabel(a);
+      const B = parseLabel(b);
       if (A.g !== B.g) return A.g - B.g;
       if (A.n !== B.n) return A.n - B.n;
       return A.s.localeCompare(B.s);
@@ -394,15 +383,19 @@ export default function PreppyLuxuryWidget() {
         lang: "en" as Lang,
       };
     }
+
     const p = new URLSearchParams(window.location.search);
     const rawB = p.get("b") || p.get("building");
     let matchedB: string | null = null;
+
     if (rawB) {
       const norm = rawB.trim().toLowerCase();
       matchedB = buildings.find((n) => n.toLowerCase() === norm) || null;
     }
+
     const rawLine = p.get("line") || p.get("l") || "";
-    let resolvedLine = matchedB && rawLine && pricing[matchedB]?.lines[rawLine] !== undefined ? rawLine : "";
+    let resolvedLine =
+      matchedB && rawLine && pricing[matchedB]?.lines[rawLine] !== undefined ? rawLine : "";
     let lineSource: "none" | "url" | "exact" | "last2" = resolvedLine ? "url" : "none";
 
     const rawUnit = p.get("unit") || p.get("u");
@@ -417,9 +410,8 @@ export default function PreppyLuxuryWidget() {
     const intP = p.get("interior");
     const rawLang = (p.get("lang") || "").toLowerCase().slice(0, 2);
     const navLang =
-      typeof navigator !== "undefined"
-        ? navigator.language.slice(0, 2).toLowerCase()
-        : "en";
+      typeof navigator !== "undefined" ? navigator.language.slice(0, 2).toLowerCase() : "en";
+
     const pickedLang: Lang = (
       ["en", "es", "fr"].includes(rawLang)
         ? rawLang
@@ -451,7 +443,9 @@ export default function PreppyLuxuryWidget() {
   const [serviceType, setServiceType] = React.useState<ServiceType>(resolvedService);
   const [building, setBuilding] = React.useState<string>(initialParams.building || buildings[0] || "");
   const [unitLine, setUnitLine] = React.useState<string>(initialParams.line);
-  const [lineSource, setLineSource] = React.useState<"none" | "url" | "exact" | "last2">(initialParams.lineSource);
+  const [lineSource, setLineSource] = React.useState<"none" | "url" | "exact" | "last2">(
+    initialParams.lineSource
+  );
   const [lang, setLang] = React.useState<Lang>(initialParams.lang);
   const [includeInterior, setIncludeInterior] = React.useState<boolean>(initialParams.interior);
   const [customDescription, setCustomDescription] = React.useState<string>("");
@@ -492,6 +486,7 @@ export default function PreppyLuxuryWidget() {
         setShowBuildingDropdown(false);
       }
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -502,7 +497,6 @@ export default function PreppyLuxuryWidget() {
     return buildings.filter((n) => n.toLowerCase().includes(q));
   }, [buildingQuery, buildings]);
 
-  // On initial load and on building change, attempt re-derivation from unit.
   React.useEffect(() => {
     setIncludeInterior(false);
 
@@ -585,7 +579,9 @@ export default function PreppyLuxuryWidget() {
   }, [leadId, customerName, building, unitLine, unitNumber, serviceType, total, includeInterior, lang]);
 
   const hasPersonalization = !!(customerName || unitNumber);
-  const personalizationLabel = [customerName, unitNumber ? `Unit ${unitNumber}` : null].filter(Boolean).join(" · ");
+  const personalizationLabel = [customerName, unitNumber ? `Unit ${unitNumber}` : null]
+    .filter(Boolean)
+    .join(" · ");
   const statusKey =
     researchStatus[building] === "verified"
       ? "status.verified"
@@ -601,7 +597,8 @@ export default function PreppyLuxuryWidget() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[360px]"
         style={{
-          background: "radial-gradient(60% 70% at 50% 0%, rgba(197,165,114,0.14) 0%, rgba(197,165,114,0) 72%)",
+          background:
+            "radial-gradient(60% 70% at 50% 0%, rgba(197,165,114,0.14) 0%, rgba(197,165,114,0) 72%)",
         }}
       />
 
@@ -632,29 +629,9 @@ export default function PreppyLuxuryWidget() {
           <motion.div
             initial="hidden"
             animate="visible"
-            custom={0.25}
-            variants={fadeUp}
-            aria-hidden="true"
-            className="mb-2 text-[26px] leading-none"
-            style={{
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontStyle: "italic",
-              fontWeight: 400,
-              background: "linear-gradient(135deg, #C5A572 0%, #A8884E 50%, #C5A572 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              textShadow: "0 1px 0 rgba(197,165,114,0.1)",
-            }}
-          >
-            P
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            animate="visible"
             custom={0.45}
             variants={heroReveal}
-            className="mt-1 text-5xl md:text-6xl leading-none"
+            className="text-5xl md:text-6xl leading-none"
             style={{
               fontFamily: "'Cormorant Garamond', Georgia, serif",
               fontWeight: 300,
@@ -669,7 +646,7 @@ export default function PreppyLuxuryWidget() {
             animate="visible"
             custom={1.05}
             variants={heroReveal}
-            className="mt-3 text-[22px] md:text-2xl font-medium tracking-tight text-[#243740]"
+            className="mt-2.5 text-[22px] md:text-2xl font-medium tracking-tight text-[#243740]"
           >
             {t("brand.subtitle")}
           </motion.div>
@@ -679,7 +656,7 @@ export default function PreppyLuxuryWidget() {
             animate="visible"
             custom={1.45}
             variants={fadeUp}
-            className="mt-3 text-[12px] md:text-sm uppercase tracking-[0.24em] text-[#5B6870]"
+            className="mt-2.5 text-[12px] md:text-sm uppercase tracking-[0.24em] text-[#5B6870]"
           >
             {t("brand.insured")}
           </motion.div>
@@ -693,14 +670,27 @@ export default function PreppyLuxuryWidget() {
             variants={fadeUp}
             className="mb-5 rounded-2xl border border-[#EAE1D7] bg-white/90 px-4 py-3 text-center shadow-[0_4px_18px_rgba(13,27,36,0.05)]"
           >
-            <div className="text-[11px] uppercase tracking-[0.22em] text-[#5A6972]">{t("preparedFor")}</div>
-            <div className="mt-1 text-[16px] font-medium tracking-tight text-[#0D1B24]">{personalizationLabel}</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-[#5A6972]">
+              {t("preparedFor")}
+            </div>
+            <div className="mt-1 text-[16px] font-medium tracking-tight text-[#0D1B24]">
+              {personalizationLabel}
+            </div>
           </motion.div>
         )}
 
         <div className="overflow-hidden rounded-[28px] border border-[#E8E0D6] bg-white shadow-[0_12px_40px_rgba(13,27,36,0.08)]">
-          <div className="h-1.5 bg-gradient-to-r from-[#0D1B24] via-[#0F7C82] to-[#123F52]" />
-          <div className="h-px bg-gradient-to-r from-transparent via-[#C5A572] to-transparent opacity-70" />
+          <div className="relative h-2 overflow-hidden">
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(90deg, #A77C3B 0%, #C8A76A 16%, #F2E5BE 32%, #C5A572 50%, #8F6A34 68%, #D8BC85 84%, #A77C3B 100%)",
+              }}
+            />
+            <div className="absolute inset-x-0 bottom-0 h-px bg-white/40" />
+          </div>
+          <div className="h-px bg-gradient-to-r from-transparent via-[#E7D6AE] to-transparent opacity-90" />
 
           <div className="p-5 md:p-6">
             <div className="space-y-5">
@@ -736,10 +726,18 @@ export default function PreppyLuxuryWidget() {
                             : "border-[#E6DED4] bg-[#FBFAF8] hover:border-[#D8CEBF]"
                         }`}
                       >
-                        <div className={`text-[14px] font-semibold tracking-tight ${active ? "text-[#0D1B24]" : "text-[#4A5A64]"}`}>
+                        <div
+                          className={`text-[14px] font-semibold tracking-tight ${
+                            active ? "text-[#0D1B24]" : "text-[#4A5A64]"
+                          }`}
+                        >
                           {s.label}
                         </div>
-                        <div className={`mt-0.5 text-[10px] uppercase tracking-[0.18em] ${active ? "text-[#0F7C82]" : "text-[#8B9399]"}`}>
+                        <div
+                          className={`mt-0.5 text-[10px] uppercase tracking-[0.18em] ${
+                            active ? "text-[#0F7C82]" : "text-[#8B9399]"
+                          }`}
+                        >
                           {s.sub}
                         </div>
                       </button>
@@ -950,8 +948,11 @@ export default function PreppyLuxuryWidget() {
                     <div className="text-[13px] uppercase tracking-[0.22em] text-[#6B7880]">
                       {t("price.private")}
                     </div>
-                    <div className="mt-2 text-[24px] font-semibold tracking-tight">
+                    <div className="mt-2 text-[24px] font-semibold tracking-tight leading-tight">
                       {t("price.reserveHeadline")}
+                    </div>
+                    <div className="mt-2 text-[14px] leading-relaxed text-[#5E6C75]">
+                      {t("price.reserveSub")}
                     </div>
                   </div>
                 ) : !hasLines ? (
