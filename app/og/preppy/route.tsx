@@ -60,19 +60,19 @@ const C = {
   ivoryMuted: "rgba(245,241,234,0.70)",
   ivoryFaint: "rgba(245,241,234,0.46)",
   gold: "#D9B97C",
-  goldSoft: "rgba(217,185,124,0.90)",
+  goldSoft: "rgba(217,185,124,0.92)",
   goldBright: "#E8CEA0",
   goldLine: "rgba(217,185,124,0.50)",
   goldLineFaint: "rgba(217,185,124,0.18)",
-  goldGlow: "rgba(217,185,124,0.26)",
+  goldGlow: "rgba(217,185,124,0.24)",
 };
 
 function getNameSize(name: string) {
-  if (name.length <= 14) return 94;
-  if (name.length <= 20) return 86;
-  if (name.length <= 26) return 78;
-  if (name.length <= 32) return 72;
-  return 66;
+  if (name.length <= 14) return 90;
+  if (name.length <= 20) return 82;
+  if (name.length <= 26) return 74;
+  if (name.length <= 32) return 68;
+  return 62;
 }
 
 function getBuildingSize(building: string) {
@@ -83,9 +83,9 @@ function getBuildingSize(building: string) {
 }
 
 function getTaglineSize(text: string) {
-  if (text.length <= 18) return 122;
-  if (text.length <= 28) return 110;
-  return 98;
+  if (text.length <= 18) return 118;
+  if (text.length <= 28) return 106;
+  return 96;
 }
 
 export async function GET(req: Request) {
@@ -112,64 +112,62 @@ export async function GET(req: Request) {
       ? c.residentPreview
       : "";
 
-  const primaryTagline = c.tagline;
   const unitLine = hasUnit ? `${c.unitLabel} ${unit}` : "";
+
+  const heroTagline = c.tagline;
 
   return new ImageResponse(
     (
       <div
         style={{
           position: "relative",
-          width: "100%",
-          height: "100%",
+          width: "1200px",
+          height: "630px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          padding: "42px 60px 42px 60px",
           overflow: "hidden",
           color: C.ivory,
           background: `radial-gradient(130% 100% at 18% -8%, ${C.bg1} 0%, ${C.bg0} 48%, ${C.bg2} 100%)`,
           fontFamily: "Georgia, serif",
+          padding: "42px 60px 42px 60px",
         }}
       >
-        {/* warm glow top left */}
         <div
           style={{
             position: "absolute",
-            top: -160,
-            left: -120,
-            width: 640,
-            height: 640,
-            borderRadius: 999,
+            top: "-160px",
+            left: "-120px",
+            width: "640px",
+            height: "640px",
+            borderRadius: "999px",
             background: `radial-gradient(circle, ${C.goldGlow} 0%, rgba(217,185,124,0.10) 34%, rgba(217,185,124,0) 72%)`,
             display: "flex",
           }}
         />
 
-        {/* subtle teal-like depth on right, kept dark */}
         <div
           style={{
             position: "absolute",
-            right: -180,
-            bottom: -220,
-            width: 760,
-            height: 760,
-            borderRadius: 999,
+            right: "-180px",
+            bottom: "-220px",
+            width: "760px",
+            height: "760px",
+            borderRadius: "999px",
             background:
               "radial-gradient(circle, rgba(28,101,128,0.22) 0%, rgba(28,101,128,0.08) 30%, rgba(28,101,128,0) 72%)",
             display: "flex",
           }}
         />
 
-        {/* dark focus discs */}
         <div
           style={{
             position: "absolute",
-            left: 190,
-            top: 106,
-            width: 82,
-            height: 82,
-            borderRadius: 999,
+            left: "190px",
+            top: "106px",
+            width: "82px",
+            height: "82px",
+            borderRadius: "999px",
             background: "rgba(0,0,0,0.26)",
             display: "flex",
           }}
@@ -177,32 +175,31 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            right: 142,
-            bottom: 108,
-            width: 82,
-            height: 82,
-            borderRadius: 999,
+            right: "142px",
+            bottom: "108px",
+            width: "82px",
+            height: "82px",
+            borderRadius: "999px",
             background: "rgba(0,0,0,0.26)",
             display: "flex",
           }}
         />
 
-        {/* vertical guides */}
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            inset: "0",
             display: "flex",
             justifyContent: "space-between",
-            paddingLeft: 180,
-            paddingRight: 180,
+            paddingLeft: "180px",
+            paddingRight: "180px",
           }}
         >
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
               style={{
-                width: 1,
+                width: "1px",
                 height: "100%",
                 background: `linear-gradient(180deg, rgba(217,185,124,0) 0%, ${C.goldLineFaint} 10%, ${C.goldLineFaint} 90%, rgba(217,185,124,0) 100%)`,
                 display: "flex",
@@ -214,14 +211,13 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            inset: "0",
             background:
               "linear-gradient(180deg, rgba(255,255,255,0.015) 0%, rgba(0,0,0,0.16) 100%)",
             display: "flex",
           }}
         />
 
-        {/* brand, smaller and quieter */}
         <div
           style={{
             zIndex: 2,
@@ -235,30 +231,36 @@ export async function GET(req: Request) {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 16,
+              gap: "16px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+              }}
+            >
               <div
                 style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: 999,
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "999px",
                   border: `1px solid ${C.goldLine}`,
                   background: "rgba(6,17,26,0.52)",
+                  display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  display: "flex",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
                     fontStyle: "italic",
-                    fontSize: 38,
+                    fontSize: "38px",
                     lineHeight: 1,
                     color: C.goldBright,
-                    marginTop: -4,
+                    marginTop: "-4px",
                   }}
                 >
                   P
@@ -274,7 +276,7 @@ export async function GET(req: Request) {
                 <div
                   style={{
                     display: "flex",
-                    fontSize: 26,
+                    fontSize: "24px",
                     lineHeight: 1.02,
                     color: C.ivory,
                     fontWeight: 400,
@@ -285,10 +287,10 @@ export async function GET(req: Request) {
                 <div
                   style={{
                     display: "flex",
-                    marginTop: 4,
-                    fontSize: 11,
+                    marginTop: "4px",
+                    fontSize: "10px",
                     lineHeight: 1,
-                    letterSpacing: 3.6,
+                    letterSpacing: "3.4px",
                     textTransform: "uppercase",
                     color: C.gold,
                     fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -304,14 +306,14 @@ export async function GET(req: Request) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                minWidth: 50,
+                minWidth: "48px",
                 padding: "8px 12px",
-                borderRadius: 999,
+                borderRadius: "999px",
                 border: `1px solid ${C.goldLine}`,
                 background: "rgba(6,17,26,0.52)",
-                fontSize: 11,
+                fontSize: "11px",
                 lineHeight: 1,
-                letterSpacing: 2.8,
+                letterSpacing: "2.8px",
                 textTransform: "uppercase",
                 color: C.goldBright,
                 fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
@@ -322,157 +324,154 @@ export async function GET(req: Request) {
           </div>
         </div>
 
-        {/* hero block */}
         <div
           style={{
             zIndex: 2,
             flex: 1,
             display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            maxWidth: 900,
-            marginTop: 4,
-            marginBottom: 18,
+            alignItems: "center",
           }}
         >
-          {hasPersonalized && eyebrow ? (
-            <div
-              style={{
-                display: "flex",
-                marginBottom: 18,
-                fontSize: 21,
-                lineHeight: 1,
-                letterSpacing: 6,
-                textTransform: "uppercase",
-                color: C.goldBright,
-                fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
-                fontWeight: 500,
-              }}
-            >
-              {eyebrow}
-            </div>
-          ) : null}
-
-          {hasPersonalized ? (
-            <>
-              {hasBuilding ? (
-                <div
-                  style={{
-                    display: "flex",
-                    marginBottom: 16,
-                    maxWidth: 780,
-                    fontSize: getBuildingSize(building),
-                    lineHeight: 1.02,
-                    letterSpacing: 1.8,
-                    textTransform: "uppercase",
-                    color: C.goldSoft,
-                    fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
-                    fontWeight: 500,
-                  }}
-                >
-                  {building}
-                </div>
-              ) : null}
-
-              {hasName ? (
-                <div
-                  style={{
-                    display: "flex",
-                    maxWidth: 900,
-                    fontSize: getNameSize(name),
-                    lineHeight: 0.96,
-                    letterSpacing: -1.5,
-                    color: C.ivory,
-                    fontWeight: 500,
-                    marginBottom: hasUnit ? 12 : 0,
-                  }}
-                >
-                  {name}
-                </div>
-              ) : hasBuilding ? null : hasUnit ? (
-                <div
-                  style={{
-                    display: "flex",
-                    maxWidth: 760,
-                    fontSize: 54,
-                    lineHeight: 1,
-                    letterSpacing: -0.8,
-                    color: C.ivory,
-                    fontWeight: 500,
-                  }}
-                >
-                  {unitLine}
-                </div>
-              ) : null}
-
-              {hasUnit ? (
-                <div
-                  style={{
-                    display: "flex",
-                    maxWidth: 760,
-                    fontSize: 34,
-                    lineHeight: 1.04,
-                    letterSpacing: -0.4,
-                    color: C.ivorySoft,
-                    fontWeight: 400,
-                  }}
-                >
-                  {unitLine}
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                maxWidth: 900,
-                fontSize: getTaglineSize(primaryTagline),
-                fontStyle: "italic",
-                fontWeight: 400,
-                lineHeight: 0.95,
-                letterSpacing: -2,
-                color: C.ivory,
-              }}
-            >
-              {primaryTagline}
-            </div>
-          )}
-
           <div
             style={{
+              width: "820px",
               display: "flex",
-              marginTop: 28,
-              width: 300,
-              height: 1,
-              background: `linear-gradient(90deg, rgba(217,185,124,0) 0%, ${C.goldLine} 30%, ${C.goldLine} 70%, rgba(217,185,124,0) 100%)`,
-            }}
-          />
-
-          <div
-            style={{
-              display: "flex",
-              marginTop: 18,
-              maxWidth: 980,
-              fontSize: 16,
-              lineHeight: 1.25,
-              letterSpacing: 2.2,
-              textTransform: "uppercase",
-              color: C.ivoryMuted,
-              fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              justifyContent: "center",
             }}
           >
-            {c.services}
+            {hasPersonalized && eyebrow ? (
+              <div
+                style={{
+                  display: "flex",
+                  marginBottom: "20px",
+                  fontSize: "24px",
+                  lineHeight: 1,
+                  letterSpacing: "6px",
+                  textTransform: "uppercase",
+                  color: C.goldBright,
+                  fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
+                  fontWeight: 500,
+                }}
+              >
+                {eyebrow}
+              </div>
+            ) : null}
+
+            {hasPersonalized ? (
+              <div
+                style={{
+                  width: "820px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                }}
+              >
+                {hasBuilding ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      width: "820px",
+                      marginBottom: "16px",
+                      fontSize: `${getBuildingSize(building)}px`,
+                      lineHeight: 1.02,
+                      letterSpacing: "1.8px",
+                      textTransform: "uppercase",
+                      color: C.goldSoft,
+                      fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {building}
+                  </div>
+                ) : null}
+
+                {hasName ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      width: "820px",
+                      marginBottom: hasUnit ? "14px" : "0px",
+                      fontSize: `${getNameSize(name)}px`,
+                      lineHeight: 0.96,
+                      letterSpacing: "-1.5px",
+                      color: C.ivory,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {name}
+                  </div>
+                ) : null}
+
+                {hasUnit ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      width: "820px",
+                      fontSize: "34px",
+                      lineHeight: 1.04,
+                      letterSpacing: "-0.4px",
+                      color: C.ivorySoft,
+                      fontWeight: 400,
+                    }}
+                  >
+                    {unitLine}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  width: "820px",
+                  fontSize: `${getTaglineSize(heroTagline)}px`,
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  lineHeight: 0.95,
+                  letterSpacing: "-2px",
+                  color: C.ivory,
+                }}
+              >
+                {heroTagline}
+              </div>
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                marginTop: "28px",
+                width: "300px",
+                height: "1px",
+                background: `linear-gradient(90deg, rgba(217,185,124,0) 0%, ${C.goldLine} 30%, ${C.goldLine} 70%, rgba(217,185,124,0) 100%)`,
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                marginTop: "18px",
+                width: "980px",
+                fontSize: "16px",
+                lineHeight: 1.25,
+                letterSpacing: "2.2px",
+                textTransform: "uppercase",
+                color: C.ivoryMuted,
+                fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
+              }}
+            >
+              {c.services}
+            </div>
           </div>
         </div>
 
-        {/* footer */}
         <div
           style={{
             zIndex: 2,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingTop: 18,
+            paddingTop: "18px",
             borderTop: `1px solid ${C.goldLineFaint}`,
             fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
           }}
@@ -480,9 +479,9 @@ export async function GET(req: Request) {
           <div
             style={{
               display: "flex",
-              fontSize: 13,
+              fontSize: "13px",
               lineHeight: 1,
-              letterSpacing: 5,
+              letterSpacing: "5px",
               textTransform: "uppercase",
               color: C.goldBright,
             }}
@@ -493,9 +492,9 @@ export async function GET(req: Request) {
           <div
             style={{
               display: "flex",
-              fontSize: 13,
+              fontSize: "13px",
               lineHeight: 1,
-              letterSpacing: 5,
+              letterSpacing: "5px",
               textTransform: "uppercase",
               color: C.ivoryFaint,
             }}
