@@ -134,9 +134,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.title": "Choose your appointment",
     "sched.loading": "Loading available times…",
     "sched.none": "No open times in the next two weeks. Text us and we'll place you.",
+    "sched.confirmTitle": "Confirm your appointment",
     "sched.namePlaceholder": "Your name",
-    "sched.emailPlaceholder": "Email (optional)",
-    "sched.phonePlaceholder": "Phone (optional)",
+    "sched.phonePlaceholder": "Phone",
+    "sched.emailPlaceholder": "Email",
+    "sched.unitPlaceholder": "Full unit / apt number",
+    "sched.notesPlaceholder": "Notes or access instructions (optional)",
     "sched.signNote": "By confirming you reserve this time. No charge today.",
     "sched.reserve": "Confirm & Reserve",
     "sched.reserving": "Reserving…",
@@ -144,7 +147,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.retry": "Try again",
     "sched.afterHoursNote": "☾ Evening appointment, by arrangement.",
     "sched.successTitle": "You're booked",
-    "sched.successBody": "We'll text a confirmation and a tracking link when your crew is on the way.",
+    "sched.successBody": "We'll text you a confirmation and a tracking link shortly.",
+    "sched.successConfirm": "We'll confirm your appointment shortly.",
     "sched.takenMsg": "That time was just taken. Here are fresh times.",
     "sched.errorMsg": "Could not reserve. Please try again, or text us.",
     "sched.close": "Close",
@@ -220,9 +224,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.title": "Elija su cita",
     "sched.loading": "Cargando horarios disponibles…",
     "sched.none": "No hay horarios en las próximas dos semanas. Escríbanos y lo ubicamos.",
+    "sched.confirmTitle": "Confirme su cita",
     "sched.namePlaceholder": "Su nombre",
-    "sched.emailPlaceholder": "Correo (opcional)",
-    "sched.phonePlaceholder": "Teléfono (opcional)",
+    "sched.phonePlaceholder": "Teléfono",
+    "sched.emailPlaceholder": "Correo",
+    "sched.unitPlaceholder": "Unidad / número de apto",
+    "sched.notesPlaceholder": "Notas o instrucciones de acceso (opcional)",
     "sched.signNote": "Al confirmar, reserva este horario. Sin cargo hoy.",
     "sched.reserve": "Confirmar y Reservar",
     "sched.reserving": "Reservando…",
@@ -230,7 +237,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.retry": "Reintentar",
     "sched.afterHoursNote": "☾ Cita nocturna, por acuerdo.",
     "sched.successTitle": "Reservado",
-    "sched.successBody": "Le enviaremos una confirmación y un enlace de seguimiento cuando su equipo esté en camino.",
+    "sched.successBody": "Le enviaremos una confirmación y un enlace de seguimiento en breve.",
+    "sched.successConfirm": "Confirmaremos su cita en breve.",
     "sched.takenMsg": "Ese horario se acaba de ocupar. Aquí hay nuevos horarios.",
     "sched.errorMsg": "No se pudo reservar. Intente de nuevo o escríbanos.",
     "sched.close": "Cerrar",
@@ -306,9 +314,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.title": "Choisissez votre rendez-vous",
     "sched.loading": "Chargement des horaires…",
     "sched.none": "Aucun créneau dans les deux prochaines semaines. Écrivez-nous.",
+    "sched.confirmTitle": "Confirmez votre rendez-vous",
     "sched.namePlaceholder": "Votre nom",
-    "sched.emailPlaceholder": "E-mail (facultatif)",
-    "sched.phonePlaceholder": "Téléphone (facultatif)",
+    "sched.phonePlaceholder": "Téléphone",
+    "sched.emailPlaceholder": "E-mail",
+    "sched.unitPlaceholder": "Unité / numéro d'appartement",
+    "sched.notesPlaceholder": "Notes ou instructions d'accès (facultatif)",
     "sched.signNote": "En confirmant, vous réservez ce créneau. Sans frais aujourd'hui.",
     "sched.reserve": "Confirmer et Réserver",
     "sched.reserving": "Réservation…",
@@ -316,7 +327,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.retry": "Réessayer",
     "sched.afterHoursNote": "☾ Rendez-vous en soirée, sur arrangement.",
     "sched.successTitle": "C'est réservé",
-    "sched.successBody": "Nous vous enverrons une confirmation et un lien de suivi lorsque votre équipe sera en route.",
+    "sched.successBody": "Nous vous enverrons une confirmation et un lien de suivi sous peu.",
+    "sched.successConfirm": "Nous confirmerons votre rendez-vous sous peu.",
     "sched.takenMsg": "Ce créneau vient d'être pris. Voici de nouveaux horaires.",
     "sched.errorMsg": "Réservation impossible. Réessayez ou écrivez-nous.",
     "sched.close": "Fermer",
@@ -589,6 +601,8 @@ export default function PreppyLuxuryWidget() {
     "idle"
   );
   const [confirmedLabel, setConfirmedLabel] = React.useState<string>("");
+  const [fullUnit, setFullUnit] = React.useState<string>("");
+  const [notes, setNotes] = React.useState<string>("");
 
   const currentBuilding = pricing[building];
   const hasLines = currentBuilding ? Object.keys(currentBuilding.lines).length > 0 : false;
@@ -731,32 +745,52 @@ export default function PreppyLuxuryWidget() {
     setBookState("idle");
     setChosenSlot(null);
     setSigner((prev) => prev || customerName || "");
+    setFullUnit((prev) => prev || unitNumber || "");
     handleBookingClick();
     loadSlots();
-  }, [customerName, handleBookingClick, loadSlots]);
+  }, [customerName, unitNumber, handleBookingClick, loadSlots]);
+
+  // Required-contact validation before a residential booking is allowed.
+  const phoneDigits = contactPhone.replace(/\D/g, "");
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail.trim());
+  const canBook =
+    !!chosenSlot &&
+    signer.trim().length >= 2 &&
+    phoneDigits.length >= 10 &&
+    emailOk &&
+    fullUnit.trim().length >= 1;
 
   const reserveSlot = React.useCallback(async () => {
-    if (!chosenSlot || signer.trim().length < 2) return;
+    if (!chosenSlot || !canBook) return;
     setBookState("booking");
+    const name = signer.trim();
+    const unit = fullUnit.trim();
+    const note = notes.trim();
+    const email = contactEmail.trim();
+    const phone = contactPhone.trim();
+    // Rich service/plan string — packs every operational field the engine
+    // surfaces (it has no separate unit/line/price/notes columns).
     const svc =
-      serviceType === "glass"
-        ? "Balcony glass cleaning" +
-          (unitLine ? " · line " + unitLine : "") +
-          (total ? " · $" + total : "")
-        : "Residential service";
+      (serviceType === "glass" ? "Balcony glass cleaning" : "Residential service") +
+      (building ? " · " + building : "") +
+      (unitLine ? " · line " + unitLine : "") +
+      (unit ? " · Unit " + unit : "") +
+      (total ? " · $" + total : "") +
+      (note ? " · Notes: " + note : "");
+    const addr = [building, unit ? "Unit " + unit : ""].filter(Boolean).join(" · ");
     const p = new URLSearchParams();
     p.set("mode", "book");
     p.set("type", "residential");
     p.set("start", chosenSlot.start);
-    const who = customerName || building || "";
-    if (who) p.set("name", who);
+    if (building) p.set("business", building);
+    p.set("name", name);
+    p.set("contact", name);
+    p.set("email", email);
+    p.set("phone", phone);
+    if (addr) p.set("address", addr);
     p.set("plan", svc);
     p.set("service", svc);
-    const addr = [building, unitNumber ? "Unit " + unitNumber : ""].filter(Boolean).join(", ");
-    if (addr) p.set("address", addr);
-    if (contactEmail.trim()) p.set("email", contactEmail.trim());
-    if (contactPhone.trim()) p.set("phone", contactPhone.trim());
-    p.set("signer", signer.trim());
+    p.set("signer", name);
     p.set("signedType", "typed");
     if (leadId) p.set("lead", leadId);
     try {
@@ -776,13 +810,14 @@ export default function PreppyLuxuryWidget() {
     }
   }, [
     chosenSlot,
+    canBook,
     signer,
+    fullUnit,
+    notes,
     serviceType,
+    building,
     unitLine,
     total,
-    customerName,
-    building,
-    unitNumber,
     contactEmail,
     contactPhone,
     leadId,
@@ -1351,7 +1386,7 @@ export default function PreppyLuxuryWidget() {
                 </div>
                 <div className="mt-2 text-[15px] font-medium text-[#0D1B24]">{confirmedLabel}</div>
                 <div className="mt-2 text-[13px] leading-relaxed text-[#5E6C75]">
-                  {t("sched.successBody")}
+                  {contactPhone.trim() ? t("sched.successBody") : t("sched.successConfirm")}
                 </div>
                 <button
                   type="button"
@@ -1460,35 +1495,63 @@ export default function PreppyLuxuryWidget() {
                   </div>
                 ) : (
                   <div className="mt-4 space-y-3">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-[#8B9399]">
+                      {t("sched.confirmTitle")}
+                    </div>
                     <div className="rounded-xl bg-[#FAF8F4] px-3 py-2 text-[14px] font-medium text-[#0D1B24]">
                       {chosenSlot.label}
+                      {(building || total) && (
+                        <span className="font-normal text-[#6B7880]">
+                          {"  ·  "}
+                          {[building, total ? "$" + total : ""].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
                     </div>
                     <input
                       value={signer}
                       onChange={(e) => setSigner(e.target.value)}
                       placeholder={t("sched.namePlaceholder")}
-                      className="w-full rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
-                    />
-                    <input
-                      value={contactEmail}
-                      onChange={(e) => setContactEmail(e.target.value)}
-                      type="email"
-                      placeholder={t("sched.emailPlaceholder")}
+                      autoComplete="name"
                       className="w-full rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
                     />
                     <input
                       value={contactPhone}
                       onChange={(e) => setContactPhone(e.target.value)}
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       placeholder={t("sched.phonePlaceholder")}
                       className="w-full rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
+                    />
+                    <input
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder={t("sched.emailPlaceholder")}
+                      className="w-full rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
+                    />
+                    <input
+                      value={fullUnit}
+                      onChange={(e) => setFullUnit(e.target.value)}
+                      inputMode="numeric"
+                      placeholder={t("sched.unitPlaceholder")}
+                      className="w-full rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
+                    />
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={2}
+                      placeholder={t("sched.notesPlaceholder")}
+                      className="w-full resize-none rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
                     />
                     <div className="text-[12px] leading-relaxed text-[#8B9399]">
                       {t("sched.signNote")}
                     </div>
                     <button
                       type="button"
-                      disabled={bookState === "booking" || signer.trim().length < 2}
+                      disabled={bookState === "booking" || !canBook}
                       onClick={reserveSlot}
                       className="w-full rounded-2xl bg-[#103845] px-5 py-3.5 text-[16px] font-semibold text-white transition hover:bg-[#123F4D] disabled:opacity-50"
                     >
