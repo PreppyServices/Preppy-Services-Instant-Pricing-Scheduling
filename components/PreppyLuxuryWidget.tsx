@@ -131,6 +131,23 @@ const I18N: Record<Lang, Record<string, string>> = {
     "support.sub": "For penthouses, custom layouts, or buildings still being mapped. Send photos for a faster quote.",
     "support.copy": "Copy Number",
     "support.close": "Close",
+    "sched.title": "Choose your appointment",
+    "sched.loading": "Loading available times…",
+    "sched.none": "No open times in the next two weeks. Text us and we'll place you.",
+    "sched.namePlaceholder": "Your name",
+    "sched.emailPlaceholder": "Email (optional)",
+    "sched.phonePlaceholder": "Phone (optional)",
+    "sched.signNote": "By confirming you reserve this time. No charge today.",
+    "sched.reserve": "Confirm & Reserve",
+    "sched.reserving": "Reserving…",
+    "sched.back": "Back to times",
+    "sched.retry": "Try again",
+    "sched.afterHoursNote": "☾ Evening appointment, by arrangement.",
+    "sched.successTitle": "You're booked",
+    "sched.successBody": "We'll text a confirmation and a tracking link when your crew is on the way.",
+    "sched.takenMsg": "That time was just taken. Here are fresh times.",
+    "sched.errorMsg": "Could not reserve. Please try again, or text us.",
+    "sched.close": "Close",
   },
   es: {
     "brand.title": "Preppy Services",
@@ -200,6 +217,23 @@ const I18N: Record<Lang, Record<string, string>> = {
     "support.sub": "Para penthouses, diseños a medida o edificios en mapeo. Envíe fotos para una cotización más rápida.",
     "support.copy": "Copiar Número",
     "support.close": "Cerrar",
+    "sched.title": "Elija su cita",
+    "sched.loading": "Cargando horarios disponibles…",
+    "sched.none": "No hay horarios en las próximas dos semanas. Escríbanos y lo ubicamos.",
+    "sched.namePlaceholder": "Su nombre",
+    "sched.emailPlaceholder": "Correo (opcional)",
+    "sched.phonePlaceholder": "Teléfono (opcional)",
+    "sched.signNote": "Al confirmar, reserva este horario. Sin cargo hoy.",
+    "sched.reserve": "Confirmar y Reservar",
+    "sched.reserving": "Reservando…",
+    "sched.back": "Volver a horarios",
+    "sched.retry": "Reintentar",
+    "sched.afterHoursNote": "☾ Cita nocturna, por acuerdo.",
+    "sched.successTitle": "Reservado",
+    "sched.successBody": "Le enviaremos una confirmación y un enlace de seguimiento cuando su equipo esté en camino.",
+    "sched.takenMsg": "Ese horario se acaba de ocupar. Aquí hay nuevos horarios.",
+    "sched.errorMsg": "No se pudo reservar. Intente de nuevo o escríbanos.",
+    "sched.close": "Cerrar",
   },
   fr: {
     "brand.title": "Preppy Services",
@@ -269,6 +303,23 @@ const I18N: Record<Lang, Record<string, string>> = {
     "support.sub": "Pour les penthouses, agencements sur mesure ou bâtiments en cours de cartographie. Envoyez des photos pour un devis plus rapide.",
     "support.copy": "Copier le Numéro",
     "support.close": "Fermer",
+    "sched.title": "Choisissez votre rendez-vous",
+    "sched.loading": "Chargement des horaires…",
+    "sched.none": "Aucun créneau dans les deux prochaines semaines. Écrivez-nous.",
+    "sched.namePlaceholder": "Votre nom",
+    "sched.emailPlaceholder": "E-mail (facultatif)",
+    "sched.phonePlaceholder": "Téléphone (facultatif)",
+    "sched.signNote": "En confirmant, vous réservez ce créneau. Sans frais aujourd'hui.",
+    "sched.reserve": "Confirmer et Réserver",
+    "sched.reserving": "Réservation…",
+    "sched.back": "Retour aux horaires",
+    "sched.retry": "Réessayer",
+    "sched.afterHoursNote": "☾ Rendez-vous en soirée, sur arrangement.",
+    "sched.successTitle": "C'est réservé",
+    "sched.successBody": "Nous vous enverrons une confirmation et un lien de suivi lorsque votre équipe sera en route.",
+    "sched.takenMsg": "Ce créneau vient d'être pris. Voici de nouveaux horaires.",
+    "sched.errorMsg": "Réservation impossible. Réessayez ou écrivez-nous.",
+    "sched.close": "Fermer",
   },
 };
 
@@ -312,6 +363,68 @@ function resolveUnitToLine(
   }
 
   return { line: "", source: "none" };
+}
+
+// ── Shared scheduling engine (Apps Script). One calendar: info@preprock.com. ──
+// JSONP because Apps Script sends no CORS headers, so a cross-origin fetch response
+// is unreadable; a script-tag callback lets the widget READ ok / slot_taken.
+function preppyJsonp(url: string, timeoutMs = 12000): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      reject(new Error("no-window"));
+      return;
+    }
+    const cb = "__preppySched_" + Math.random().toString(36).slice(2);
+    const sep = url.includes("?") ? "&" : "?";
+    const script = document.createElement("script");
+    let settled = false;
+    const cleanup = () => {
+      try {
+        delete (window as any)[cb];
+      } catch {
+        /* ignore */
+      }
+      if (script.parentNode) script.parentNode.removeChild(script);
+    };
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("timeout"));
+    }, timeoutMs);
+    (window as any)[cb] = (data: any) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      cleanup();
+      reject(new Error("script-error"));
+    };
+    script.src = url + sep + "callback=" + cb + "&_=" + Date.now();
+    document.body.appendChild(script);
+  });
+}
+
+type SchedSlot = { start: string; label: string; afterHours: boolean };
+
+// Group flat slots by day for display. Engine label = "EEE MMM d, h:mm a"
+// e.g. "Wed Jun 3, 8:00 AM" -> day "Wed Jun 3", time "8:00 AM".
+function groupSchedSlots(slots: SchedSlot[]) {
+  const groups: Record<string, (SchedSlot & { time: string })[]> = {};
+  for (const s of slots) {
+    const parts = String(s.label || "").split(", ");
+    const day = parts.length > 1 ? parts.slice(0, -1).join(", ") : s.label;
+    const time = parts.length > 1 ? parts[parts.length - 1] : s.label;
+    if (!groups[day]) groups[day] = [];
+    groups[day].push({ ...s, time });
+  }
+  return groups;
 }
 
 export default function PreppyLuxuryWidget() {
@@ -461,6 +574,22 @@ export default function PreppyLuxuryWidget() {
   const leadId = initialParams.lead;
   const customerName = initialParams.name;
 
+  // ── Inline residential scheduler — books against the shared /exec engine ──
+  // Same calendar (info@preprock.com) and same contract as the commercial page.
+  const SCHEDULER_EXEC_URL =
+    "https://script.google.com/macros/s/AKfycbzD4dusH3GuPPMbDkCAysmUGNszMaDPRTZpyhOYror3JjSJTbmScRpYpnFED0nPJ-UQ3w/exec";
+  const [schedOpen, setSchedOpen] = React.useState(false);
+  const [slotState, setSlotState] = React.useState<"idle" | "loading" | "loaded" | "error">("idle");
+  const [slots, setSlots] = React.useState<SchedSlot[]>([]);
+  const [chosenSlot, setChosenSlot] = React.useState<{ start: string; label: string } | null>(null);
+  const [signer, setSigner] = React.useState<string>("");
+  const [contactEmail, setContactEmail] = React.useState<string>("");
+  const [contactPhone, setContactPhone] = React.useState<string>("");
+  const [bookState, setBookState] = React.useState<"idle" | "booking" | "done" | "taken" | "error">(
+    "idle"
+  );
+  const [confirmedLabel, setConfirmedLabel] = React.useState<string>("");
+
   const currentBuilding = pricing[building];
   const hasLines = currentBuilding ? Object.keys(currentBuilding.lines).length > 0 : false;
   const lineOptions = hasLines ? sortLineLabels(Object.keys(currentBuilding.lines)) : [];
@@ -578,6 +707,88 @@ export default function PreppyLuxuryWidget() {
       // safe to ignore
     }
   }, [leadId, customerName, building, unitLine, unitNumber, serviceType, total, includeInterior, lang]);
+
+  const loadSlots = React.useCallback(async () => {
+    setSlotState("loading");
+    setSlots([]);
+    setChosenSlot(null);
+    setBookState("idle");
+    try {
+      const data = await preppyJsonp(SCHEDULER_EXEC_URL + "?mode=availability");
+      if (data && data.ok && Array.isArray(data.slots)) {
+        setSlots(data.slots as SchedSlot[]);
+        setSlotState("loaded");
+      } else {
+        setSlotState("error");
+      }
+    } catch {
+      setSlotState("error");
+    }
+  }, [SCHEDULER_EXEC_URL]);
+
+  const openScheduler = React.useCallback(() => {
+    setSchedOpen(true);
+    setBookState("idle");
+    setChosenSlot(null);
+    setSigner((prev) => prev || customerName || "");
+    handleBookingClick();
+    loadSlots();
+  }, [customerName, handleBookingClick, loadSlots]);
+
+  const reserveSlot = React.useCallback(async () => {
+    if (!chosenSlot || signer.trim().length < 2) return;
+    setBookState("booking");
+    const svc =
+      serviceType === "glass"
+        ? "Balcony glass cleaning" +
+          (unitLine ? " · line " + unitLine : "") +
+          (total ? " · $" + total : "")
+        : "Residential service";
+    const p = new URLSearchParams();
+    p.set("mode", "book");
+    p.set("type", "residential");
+    p.set("start", chosenSlot.start);
+    const who = customerName || building || "";
+    if (who) p.set("name", who);
+    p.set("plan", svc);
+    p.set("service", svc);
+    const addr = [building, unitNumber ? "Unit " + unitNumber : ""].filter(Boolean).join(", ");
+    if (addr) p.set("address", addr);
+    if (contactEmail.trim()) p.set("email", contactEmail.trim());
+    if (contactPhone.trim()) p.set("phone", contactPhone.trim());
+    p.set("signer", signer.trim());
+    p.set("signedType", "typed");
+    if (leadId) p.set("lead", leadId);
+    try {
+      const res = await preppyJsonp(SCHEDULER_EXEC_URL + "?" + p.toString());
+      if (res && res.ok) {
+        setConfirmedLabel(res.label || chosenSlot.label);
+        setBookState("done");
+      } else if (res && res.reason === "slot_taken") {
+        setBookState("taken");
+        setChosenSlot(null);
+        loadSlots();
+      } else {
+        setBookState("error");
+      }
+    } catch {
+      setBookState("error");
+    }
+  }, [
+    chosenSlot,
+    signer,
+    serviceType,
+    unitLine,
+    total,
+    customerName,
+    building,
+    unitNumber,
+    contactEmail,
+    contactPhone,
+    leadId,
+    loadSlots,
+    SCHEDULER_EXEC_URL,
+  ]);
 
   const hasPersonalization = !!(customerName || unitNumber);
   const personalizationLabel = [customerName, unitNumber ? `Unit ${unitNumber}` : null]
@@ -1012,7 +1223,7 @@ export default function PreppyLuxuryWidget() {
                 />
                 {t("cta.sendImessage")}
               </a>
-            ) : (
+            ) : serviceType === "painting" ? (
               <a
                 href={scheduleUrl}
                 target="_blank"
@@ -1025,8 +1236,21 @@ export default function PreppyLuxuryWidget() {
                   className="pointer-events-none absolute inset-x-3 top-0 h-px opacity-70"
                   style={{ background: "linear-gradient(90deg, transparent, #C5A572, transparent)" }}
                 />
-                {serviceType === "painting" ? t("cta.reserveConsultation") : t("cta.checkAvailability")}
+                {t("cta.reserveConsultation")}
               </a>
+            ) : (
+              <button
+                type="button"
+                onClick={openScheduler}
+                className="group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D]"
+              >
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-3 top-0 h-px opacity-70"
+                  style={{ background: "linear-gradient(90deg, transparent, #C5A572, transparent)" }}
+                />
+                {t("cta.checkAvailability")}
+              </button>
             )}
 
             {isMobile ? (
@@ -1109,6 +1333,181 @@ export default function PreppyLuxuryWidget() {
                 {t("support.close")}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {schedOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-[24px] bg-white p-6 shadow-2xl max-h-[88vh] overflow-y-auto">
+            {bookState === "done" ? (
+              <div className="text-center">
+                <div className="text-[34px] text-[#C5A572]">✓</div>
+                <div
+                  className="mt-1 text-3xl tracking-tight text-[#0D1B24]"
+                  style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 400 }}
+                >
+                  {t("sched.successTitle")}
+                </div>
+                <div className="mt-2 text-[15px] font-medium text-[#0D1B24]">{confirmedLabel}</div>
+                <div className="mt-2 text-[13px] leading-relaxed text-[#5E6C75]">
+                  {t("sched.successBody")}
+                </div>
+                <button
+                  type="button"
+                  className="mt-5 w-full rounded-2xl bg-[#103845] px-4 py-3 font-medium text-white"
+                  onClick={() => setSchedOpen(false)}
+                >
+                  {t("sched.close")}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between gap-3">
+                  <div
+                    className="text-2xl tracking-tight text-[#0D1B24]"
+                    style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 400 }}
+                  >
+                    {t("sched.title")}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={t("sched.close")}
+                    className="-mt-1 text-2xl leading-none text-[#9BA6AF] hover:text-[#5A6972]"
+                    onClick={() => setSchedOpen(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {(building || unitNumber || total) && (
+                  <div className="mt-1 text-[12px] text-[#6B7880]">
+                    {[building, unitNumber ? "Unit " + unitNumber : "", total ? "$" + total : ""]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </div>
+                )}
+
+                {bookState === "taken" && (
+                  <div className="mt-3 rounded-xl bg-[#FBF1E7] px-3 py-2 text-[13px] text-[#9A5B2E]">
+                    {t("sched.takenMsg")}
+                  </div>
+                )}
+                {bookState === "error" && (
+                  <div className="mt-3 rounded-xl bg-[#FBE9E9] px-3 py-2 text-[13px] text-[#9A2E2E]">
+                    {t("sched.errorMsg")}
+                  </div>
+                )}
+
+                {!chosenSlot ? (
+                  <div className="mt-4">
+                    {slotState === "loading" && (
+                      <div className="py-6 text-center text-[14px] text-[#5E6C75]">
+                        {t("sched.loading")}
+                      </div>
+                    )}
+                    {slotState === "error" && (
+                      <div className="py-2">
+                        <div className="text-[14px] text-[#5E6C75]">{t("sched.errorMsg")}</div>
+                        <button
+                          type="button"
+                          className="mt-3 w-full rounded-2xl border border-[#D8CEBF] px-4 py-3 text-[14px] font-medium"
+                          onClick={loadSlots}
+                        >
+                          {t("sched.retry")}
+                        </button>
+                      </div>
+                    )}
+                    {slotState === "loaded" && slots.length === 0 && (
+                      <div className="py-4 text-center text-[14px] leading-relaxed text-[#5E6C75]">
+                        {t("sched.none")}
+                      </div>
+                    )}
+                    {slotState === "loaded" && slots.length > 0 && (
+                      <div className="max-h-[46vh] space-y-4 overflow-y-auto pr-1">
+                        {Object.entries(groupSchedSlots(slots)).map(([day, daySlots]) => (
+                          <div key={day}>
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-[#8B9399]">
+                              {day}
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {daySlots.map((s) => (
+                                <button
+                                  key={s.start}
+                                  type="button"
+                                  onClick={() =>
+                                    setChosenSlot({ start: s.start, label: s.label })
+                                  }
+                                  className={
+                                    "rounded-xl border px-3 py-2 text-[13px] transition " +
+                                    (s.afterHours
+                                      ? "border-dashed border-[#C5A572] text-[#0D1B24] hover:bg-[#FDFCF9]"
+                                      : "border-[#E7DED3] text-[#0D1B24] hover:border-[#C5A572]")
+                                  }
+                                >
+                                  {s.time}
+                                  {s.afterHours ? " ☾" : ""}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                        <div className="text-[12px] italic text-[#9BA6AF]">
+                          {t("sched.afterHoursNote")}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-xl bg-[#FAF8F4] px-3 py-2 text-[14px] font-medium text-[#0D1B24]">
+                      {chosenSlot.label}
+                    </div>
+                    <input
+                      value={signer}
+                      onChange={(e) => setSigner(e.target.value)}
+                      placeholder={t("sched.namePlaceholder")}
+                      className="w-full rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
+                    />
+                    <input
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      type="email"
+                      placeholder={t("sched.emailPlaceholder")}
+                      className="w-full rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
+                    />
+                    <input
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      type="tel"
+                      placeholder={t("sched.phonePlaceholder")}
+                      className="w-full rounded-xl border border-[#E7DED3] px-3 py-2.5 text-[15px] outline-none focus:border-[#C5A572]"
+                    />
+                    <div className="text-[12px] leading-relaxed text-[#8B9399]">
+                      {t("sched.signNote")}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={bookState === "booking" || signer.trim().length < 2}
+                      onClick={reserveSlot}
+                      className="w-full rounded-2xl bg-[#103845] px-5 py-3.5 text-[16px] font-semibold text-white transition hover:bg-[#123F4D] disabled:opacity-50"
+                    >
+                      {bookState === "booking" ? t("sched.reserving") : t("sched.reserve")}
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full rounded-2xl border border-[#D8CEBF] px-5 py-3 text-[14px] font-medium"
+                      onClick={() => {
+                        setChosenSlot(null);
+                        setBookState("idle");
+                      }}
+                    >
+                      {t("sched.back")}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
