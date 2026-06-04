@@ -9653,3 +9653,110 @@ export const QUOTE_WIDGET_RESOLUTION_READINESS_SUMMARY = {
     307,
   checklist: QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget safe-covered registry (Sprint 1364) — read-only safe-covered audit.
+//
+// A clean registry of the 33 already safe-covered buildings, derived from
+// safe-covered buildings list (QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.rows). These
+// are the rows that are an exact match in pricing and verifiedBuildings, so they
+// are safe to use now. The registry makes that set auditable and easy to bridge
+// later into main Preppy OS / Desk confidence surfaces.
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, and promotes NOTHING into verifiedBuildings. Read-only
+// safe-covered audit: it does not change pricing, does not change booking, does
+// not change OG behavior, does not send, and the widget does not render it (no
+// customer-facing import).
+//
+// Safety attestations for this registry:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/** Fixed confidence state for registry rows. */
+export type SafeCoveredConfidenceState = "safe-covered";
+/** Fixed safe-use state for registry rows. */
+export type SafeCoveredUseState = "safe-to-use-now";
+
+/** One already safe-covered building, prepared as a clean registry row. */
+export interface SafeCoveredRegistryRow {
+  /** 1-based batch number (matches widget-deploy/widget-batch-NN.md). */
+  batch: number;
+  /** Building name (unchanged; not renamed, not aliased). */
+  building: string;
+  status: string;
+  /** Note/reason carried verbatim from the coverage gate. */
+  note: string;
+  /** Action bucket this row came from. */
+  actionBucket: string;
+  /** Always "safe-covered". */
+  confidenceState: SafeCoveredConfidenceState;
+  /** Always "safe-to-use-now". */
+  safeUseState: SafeCoveredUseState;
+  /** Why it is safe: exact match in pricing and verifiedBuildings. */
+  sourceBasis: string;
+}
+
+/**
+ * Safe-covered registry — derived from safe-covered buildings list. Each row is
+ * stamped safe-covered + safe-to-use-now with the source basis "exact match in
+ * pricing and verifiedBuildings". No pricing/verifiedBuildings change.
+ */
+export const QUOTE_WIDGET_SAFE_COVERED_REGISTRY: readonly SafeCoveredRegistryRow[] =
+  QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.rows.map((r) => ({
+    batch: r.batch,
+    building: r.building,
+    status: r.status,
+    note: r.note,
+    actionBucket: QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.actionBucket,
+    confidenceState: "safe-covered",
+    safeUseState: "safe-to-use-now",
+    sourceBasis: "exact match in pricing and verifiedBuildings"
+  }));
+
+/**
+ * Safe-covered registry summary — derived totals. Confirms safe-covered plus
+ * blocked resolution rows equals staged rows (33 + 274 = 307 staged building
+ * rows). Read-only safe-covered audit: does not change pricing, does not change
+ * booking, does not change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_SAFE_COVERED_REGISTRY_SUMMARY = {
+  /** safe-covered rows (derived). */
+  safeCoveredRows: QUOTE_WIDGET_SAFE_COVERED_REGISTRY.length,
+  /** 33 safe-covered rows — assertion anchor. */
+  expectedSafeCoveredRows: 33,
+  /** blocked resolution rows across the three queues (derived). */
+  blockedResolutionRows:
+    QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length +
+    QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length +
+    QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+  /** 274 blocked resolution rows — assertion anchor. */
+  expectedBlockedResolutionRows: 274,
+  /** total staged rows = safe-covered rows + blocked resolution rows (derived). */
+  totalStagedRows:
+    QUOTE_WIDGET_SAFE_COVERED_REGISTRY.length +
+    QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length +
+    QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length +
+    QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+  /** 307 staged building rows — assertion anchor. */
+  expectedTotalStagedRows: 307,
+  /** safe-covered plus blocked resolution rows equals staged rows (derived check). */
+  safeCoveredPlusBlockedEqualsStaged:
+    QUOTE_WIDGET_SAFE_COVERED_REGISTRY.length +
+      QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length +
+      QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length +
+      QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length ===
+    307,
+  registry: QUOTE_WIDGET_SAFE_COVERED_REGISTRY
+} as const;
