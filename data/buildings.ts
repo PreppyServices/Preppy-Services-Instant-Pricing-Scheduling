@@ -10385,3 +10385,109 @@ export const QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT_SUMMARY = {
     QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT.integrityChecks
   ).every((v) => v === true)
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget intelligence layer handoff (Sprint 1370) — read-only handoff note.
+// This is the quote widget intelligence layer handoff.
+//
+// Concise in-repo note so FUTURE quote-widget and Desk-bridge sprints know what
+// the coverage intelligence layer is, what may be consumed, and what must remain
+// blocked. The layer is complete and safe for future Desk / Preppy OS bridge work
+// as read-only confidence data only. It is derived from the final audit
+// (QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT) and the Desk bridge export
+// index (QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX).
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only handoff: it does not change pricing, does
+// not change booking, does not change OG behavior, does not send, and the widget
+// does not render it (no customer-facing import).
+//
+// Safety attestations for this handoff:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/**
+ * Quote widget intelligence layer handoff — the layer status, approved entry
+ * point, and the explicit allowed/blocked work for future sprints. Derived from
+ * the final audit and the Desk bridge export index.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-intelligence-layer-handoff",
+  /** handoff version. */
+  handoffVersion: "v1",
+  /** current layer status. */
+  currentLayerStatus: "complete-read-only-confidence-layer",
+  /** baseline final audit reference (allChecksPass certificate). */
+  baselineFinalAudit: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT,
+  /** approved future consumer. */
+  approvedFutureConsumer: "Preppy OS Desk / Gaby confidence surfaces",
+  /** approved entry point — name of the single import-from object. */
+  approvedEntryPoint: "QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX",
+  /** Live reference to the approved entry point. */
+  approvedEntryPointRef: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX,
+  /** final audit reference — name. */
+  finalAuditReference: "QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT",
+  /** Derived totals. */
+  safeCoveredCount: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows,
+  blockedResolutionCount: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows,
+  stagedRowCount: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+  mappingApprovalCount: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows,
+  perLineSourceCount: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows,
+  verifiedPromotionCount: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows,
+  /** explicit next allowed work. */
+  nextAllowedWork: [
+    "consume the export index read-only",
+    "display safe-covered as safe-to-use-now",
+    "show blocked rows as blocked with reason",
+    "build Desk confidence surfaces later from the approved contract/index"
+  ],
+  /** explicit blocked work. */
+  blockedWork: [
+    "no auto-map",
+    "no auto-price",
+    "no auto-promote",
+    "no auto-send",
+    "no final quote confidence for blocked rows",
+    "no tier-to-line conversion",
+    "no invented building or price data"
+  ]
+} as const;
+
+/**
+ * Intelligence layer handoff summary — compact derived totals plus a consistency
+ * check that safe-covered + blocked resolution equals staged rows
+ * (33 + 274 = 307 staged building rows). Read-only handoff: does not change
+ * pricing, does not change booking, does not change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.sourceLabel,
+  handoffVersion: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.handoffVersion,
+  currentLayerStatus: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.currentLayerStatus,
+  approvedEntryPoint: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.approvedEntryPoint,
+  finalAuditReference: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.finalAuditReference,
+  finalAuditAllChecksPass: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT_SUMMARY.allChecksPass,
+  stagedRowCount: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.stagedRowCount,
+  safeCoveredCount: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.safeCoveredCount,
+  blockedResolutionCount: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.blockedResolutionCount,
+  mappingApprovalCount: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.mappingApprovalCount,
+  perLineSourceCount: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.perLineSourceCount,
+  verifiedPromotionCount: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.verifiedPromotionCount,
+  /** safe-covered plus blocked resolution equals staged rows (derived check). */
+  safeCoveredPlusBlockedEqualsStaged:
+    QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.safeCoveredCount +
+      QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.blockedResolutionCount ===
+    QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.stagedRowCount
+} as const;
