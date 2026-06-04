@@ -41,7 +41,15 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   const name = clean(searchParams.get("name"), "Prepared Client");
-  const rawBuilding = clean(searchParams.get("building"), "One Paraiso");
+  // Sprint 1321 — building param compatibility/unblock. Read `building` first;
+  // fall back to the `b` alias (the share page forwards the building as `b`),
+  // then to the existing default only when neither is present. `building` wins
+  // over `b` when both are supplied. This makes the OG card render the real
+  // building instead of always defaulting to "One Paraiso".
+  const rawBuilding = clean(
+    searchParams.get("building") ?? searchParams.get("b"),
+    "One Paraiso"
+  );
   const building = humanizeBuilding(rawBuilding);
   const unit = normalizeUnit(clean(searchParams.get("unit"), ""));
   const lang = clean(searchParams.get("lang"), "EN").toUpperCase();
