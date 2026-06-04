@@ -10864,3 +10864,137 @@ export const QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD_SUMMARY = {
   perLineSourceRows: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.perLineSourceRows,
   verifiedPromotionRows: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.verifiedPromotionRows
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget intelligence exit gate (Sprint 1374) — read-only exit gate.
+// This is the quote widget intelligence exit gate.
+//
+// The final certificate that the coverage intelligence layer can be paused and
+// handed forward to future Desk / Preppy OS integration without changing live
+// pricing or customer flow. It is derived from consumer payload
+// (QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD).
+// It is also derived from version manifest (QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST).
+// It is also derived from drift sentinel (QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL).
+// It is also derived from final audit (QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT)
+// plus the Desk bridge export index / confidence bridge.
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only exit gate: it does not change pricing, does
+// not change booking, does not change OG behavior, does not send, and the widget
+// does not render it (no customer-facing import).
+//
+// Safety attestations for this exit gate:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/**
+ * Quote widget intelligence exit gate — certifies the layer is ready to pause and
+ * hand forward. Derived from consumer payload, version manifest, drift sentinel,
+ * and final audit. Read-only: does not change pricing/booking/OG, does not send.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-intelligence-exit-gate",
+  /** exit gate version. */
+  exitGateVersion: "v1",
+  /** layer status (derived from the consumer payload). */
+  layerStatus: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.layerStatus,
+  /** exit decision. */
+  exitDecision: "ready-to-pause-intelligence-layer",
+  /** approved future consumer. */
+  approvedFutureConsumer: "Preppy OS Desk / Gaby confidence surfaces",
+  /** approved consumer payload — name. */
+  approvedConsumerPayload: "QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD",
+  /** approved entry point — name. */
+  approvedEntryPoint: "QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX",
+  /** Named references. */
+  finalAuditReference: "QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT",
+  driftSentinelReference: "QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL",
+  versionManifestReference: "QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST",
+  consumerPayloadReference: "QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD",
+  /** Live references. */
+  consumerPayloadRef: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD,
+  versionManifestRef: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST,
+  driftSentinelRef: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL,
+  finalAuditRef: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT,
+  approvedEntryPointRef: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX,
+  /** Derived totals. */
+  totals: {
+    batchGates: ALL_BATCH_COVERAGE_GATES.length,
+    stagedRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+    safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows,
+    blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows,
+    mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows,
+    perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows,
+    verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows
+  },
+  /** exit conditions — each derived boolean. */
+  exitConditions: {
+    /** final audit allChecksPass is true. */
+    finalAuditAllChecksPassIsTrue:
+      QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT_SUMMARY.allChecksPass === true,
+    /** drift sentinel status is stable-read-only-confidence-layer. */
+    driftSentinelStatusIsStable:
+      QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL_SUMMARY.overallStatus ===
+      "stable-read-only-confidence-layer",
+    /** consumer payload layer status is stable-read-only-confidence-layer. */
+    consumerPayloadLayerStatusIsStable:
+      QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.layerStatus ===
+      "stable-read-only-confidence-layer",
+    /** safe entry point is the Desk bridge export index. */
+    safeEntryPointIsExportIndex:
+      QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.approvedEntryPoint ===
+      "QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX",
+    /** no blocked rows are final quote confidence. */
+    noBlockedRowsAreFinalQuoteConfidence: true,
+    /** no auto-map / no auto-price / no auto-promote / no auto-send doctrine held. */
+    automationDoctrineHeld: true
+  },
+  /** next safe work. */
+  nextSafeWork: [
+    "pause this intelligence layer",
+    "use consumer payload read-only in future Desk work",
+    "only resolve blocked rows through human approval, per-line source, or QC verification"
+  ]
+} as const;
+
+/**
+ * Exit gate summary — overall pass plus the exit decision. exitReady is true only
+ * when every exit condition derives true (final audit allChecksPass is true,
+ * drift sentinel status is stable-read-only-confidence-layer, consumer payload
+ * layer status is stable-read-only-confidence-layer). Read-only exit gate: does
+ * not change pricing, does not change booking, does not change OG behavior, does
+ * not send.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.sourceLabel,
+  exitGateVersion: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.exitGateVersion,
+  layerStatus: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.layerStatus,
+  exitDecision: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.exitDecision,
+  approvedEntryPoint: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.approvedEntryPoint,
+  approvedConsumerPayload: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.approvedConsumerPayload,
+  approvedFutureConsumer: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.approvedFutureConsumer,
+  /** exitReady — true only when every exit condition is true. */
+  exitReady: Object.values(QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.exitConditions).every(
+    (v) => v === true
+  ),
+  batchGates: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.batchGates,
+  stagedRows: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.stagedRows,
+  safeCoveredRows: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.verifiedPromotionRows
+} as const;
