@@ -34,7 +34,7 @@ function extractOgParams(sp: SearchParams) {
 function buildOgImageUrl(p: ReturnType<typeof extractOgParams>): string {
   const qs = new URLSearchParams();
   if (p.name) qs.set("name", p.name);
-  if (p.building) qs.set("b", p.building);
+  if (p.building) qs.set("building", p.building);
   if (p.unit) qs.set("unit", p.unit);
   if (p.lang !== "en") qs.set("lang", p.lang);
   const q = qs.toString();
