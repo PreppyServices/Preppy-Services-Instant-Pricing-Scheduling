@@ -8753,3 +8753,93 @@ export const BATCH_30_SAFE_COVERAGE: readonly Batch30CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 31 safe coverage gate (Sprint 1355) — read-only reconciliation status.
+// FINAL batch — completes the 31-batch safe coverage gate pass.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_30_SAFE_COVERAGE. Records
+// the widget-deploy Batch 31 roster (widget-deploy/widget-batch-31.md, 7
+// buildings) against this LIVE per-line `pricing` model. Data-layer audit
+// structure only: it does NOT change pricing, booking flow, OG route behavior,
+// calendar, or any service logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 30):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch31CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch31CoverageEntry {
+  /** Staged Batch 31 roster display name (from widget-deploy/widget-batch-31.md). */
+  building: string;
+  status: Batch31CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 31 safe coverage (7 buildings — final batch). No exact safe matches and
+ * no similar live keys this batch (Palm Beach / Jupiter / Hutchinson Island
+ * roster, entirely absent from the Miami-Dade-weighted live pricing map). All
+ * seven are missing a safe per-line source.
+ */
+export const BATCH_31_SAFE_COVERAGE: readonly Batch31CoverageEntry[] = [
+  {
+    building: "Azure",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Frenchman's Harbor",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Old Port Cove",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Jupiter Yacht Club",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "SeaGlass Jupiter Island",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Cristelle Cay",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Jupiter by the Sea",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  }
+];
