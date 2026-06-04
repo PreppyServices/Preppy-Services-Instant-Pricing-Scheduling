@@ -1,3 +1,29 @@
+// -----------------------------------------------------------------------------
+// Sprint 1324A — Quote Widget Batch 1 per-line reconciliation (read-only note).
+//
+// The live widget prices PER LINE from `pricing[building].lines` (+ the
+// `verifiedBuildings` list below). The staged `widget-deploy/widget-batch-01.md`
+// roster is a COARSER tier model (S/M/L/XL single + cadence prices). DO NOT
+// convert those tier prices into per-line `lines` here — that would fabricate
+// line prices the source does not contain.
+//
+// Batch 1 (10 Edgewater buildings) live coverage as of this note:
+//   ALREADY PRESENT + VERIFIED per-line (do not overwrite): Aria on the Bay,
+//   Biscayne Beach, Paraiso Bay, Paraiso Bayviews, One Paraiso, Gran Paraiso,
+//   Elysee Miami, Missoni Baia.
+//   AMBIGUOUS — needs mapping approval before insertion: "Aria Reserve". The
+//   batch row has no exact key here; the live keys are "Aria Reserve North",
+//   "Aria Reserve South", and "Aria Reserve South Tower" (only "South Tower" is
+//   in verifiedBuildings). Do not blind-map the single batch row to any of them.
+//   MISSING — needs a per-line source before insertion: "EDITION Residences
+//   Edgewater". It is NOT the same building as "Edition Miami Beach Residences"
+//   (a different tower/neighborhood) — do not map to it. Do not add it from the
+//   batch tier price alone.
+//
+// No verified per-line prices were changed in this reconciliation; no
+// tier-to-line conversion was performed; no building, mapping, or price data was
+// invented. This is a documentation-only comment (no data change).
+// -----------------------------------------------------------------------------
 export type BuildingStatus = "raw" | "researched" | "mapped" | "priced" | "verified";
 
 export type BuildingPricing = {
