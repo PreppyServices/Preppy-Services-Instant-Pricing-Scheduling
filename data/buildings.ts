@@ -7526,3 +7526,106 @@ export const BATCH_18_SAFE_COVERAGE: readonly Batch18CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 19 safe coverage gate (Sprint 1343) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_18_SAFE_COVERAGE. Records
+// the widget-deploy Batch 19 roster (widget-deploy/widget-batch-19.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 18):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch19CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch19CoverageEntry {
+  /** Staged Batch 19 roster display name (from widget-deploy/widget-batch-19.md). */
+  building: string;
+  status: Batch19CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 19 safe coverage. No exact safe matches this batch. Nine are
+ * name/variant mismatches against an existing live key needing mapping approval.
+ * One is missing a safe per-line source.
+ */
+export const BATCH_19_SAFE_COVERAGE: readonly Batch19CoverageEntry[] = [
+  {
+    building: "Ocean Club Key Biscayne (Tower One)",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — multiple live Ocean Club variants exist ('Ocean Club Ocean Tower 1/2', 'Ocean Club Lake Tower', Lake/Resort Villas); staged differs; &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Ocean Club Key Biscayne (Tower Two)",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — multiple live Ocean Club variants exist ('Ocean Club Ocean Tower 1/2', 'Ocean Club Lake Tower', Lake/Resort Villas); staged differs; &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Grand Bay Residences Key Biscayne",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Grand Bay Residences' (staged adds 'Key Biscayne'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Grand Bay Tower Key Biscayne",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Grand Bay Tower' (staged adds 'Key Biscayne'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "The Ocean Tower Key Biscayne (Ocean Club)",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — closest live keys are 'Ocean Club Ocean Tower 1' and 'Ocean Club Ocean Tower 2' (staged differs substantially); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Key Colony Botanica",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Key Colony IV Botanica' (staged drops 'IV'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Key Colony Emerald Bay",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Key Colony III Emerald Bay' (staged drops 'III'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Towers of Key Biscayne",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live keys are 'Towers of Key Biscayne Tower 1' and 'Towers of Key Biscayne Tower 2' (staged has no tower split); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Casa del Mar Key Biscayne",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Casa del Mar' (staged adds 'Key Biscayne'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "ONE Park Tower by Turnberry",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  }
+];
