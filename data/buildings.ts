@@ -9529,3 +9529,127 @@ export const QUOTE_WIDGET_RESOLUTION_QUEUE_SUMMARY = {
     307,
   queues: QUOTE_WIDGET_RESOLUTION_QUEUE_ROLLUP
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget resolution readiness checklist (Sprint 1363) — read-only readiness audit.
+//
+// This checklist is derived from resolution queue rollup
+// (QUOTE_WIDGET_RESOLUTION_QUEUE_ROLLUP) and the three resolution queues.
+// One checklist item per queue type spells out the exact evidence/action a
+// future sprint needs before any row can move from blocked/pending to
+// safe-covered, plus the safe default and the forbidden actions for each lane.
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, and promotes NOTHING into verifiedBuildings. Read-only
+// readiness audit: it does not change pricing, does not change booking, does not
+// change OG behavior, does not send, and the widget does not render it (no
+// customer-facing import).
+//
+// Safety attestations for this checklist:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export interface ResolutionReadinessItem {
+  /** Queue name. */
+  queue: string;
+  /** Action bucket the queue resolves. */
+  actionBucket: string;
+  /** Derived row count for the queue. */
+  count: number;
+  /** Hardcoded expected count (assertion anchor). */
+  expectedCount: number;
+  /** Readiness state — the gate that keeps these rows blocked. */
+  readinessState: string;
+  /** The exact evidence/action required before a row can advance. */
+  requiredEvidenceAction: string;
+  /** Safe default decision until the required evidence/action lands. */
+  safeDefaultDecision: string;
+  /** Actions explicitly forbidden for this lane this sprint. */
+  forbiddenActions: string;
+}
+
+/**
+ * Resolution readiness checklist — one item per resolution queue, derived from
+ * the queues and the resolution rollup. Spells out blocked-until states and the
+ * required evidence/action for each lane.
+ */
+export const QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST: readonly ResolutionReadinessItem[] = [
+  {
+    queue: "mapping approval queue",
+    actionBucket: "needs mapping approval",
+    count: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length,
+    expectedCount: 92,
+    readinessState: "blocked-until-human-mapping-approval",
+    requiredEvidenceAction: "human approves exact staged building to live key mapping",
+    safeDefaultDecision: "do-not-map-yet",
+    forbiddenActions: "no alias, no key rename, no pricing change, no verifiedBuildings change"
+  },
+  {
+    queue: "per-line source queue",
+    actionBucket: "needs per-line source",
+    count: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length,
+    expectedCount: 138,
+    readinessState: "blocked-until-per-line-source",
+    requiredEvidenceAction: "per-line source data provided and reviewed",
+    safeDefaultDecision: "do-not-price-yet",
+    forbiddenActions: "no tier-to-line conversion, no invented price, no pricing entry"
+  },
+  {
+    queue: "verified promotion queue",
+    actionBucket: "needs verification before promoting",
+    count: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+    expectedCount: 44,
+    readinessState: "blocked-until-qc-verification",
+    requiredEvidenceAction: "existing pricing key QC verified before promotion",
+    safeDefaultDecision: "do-not-promote-yet",
+    forbiddenActions: "no verifiedBuildings promotion without QC approval"
+  }
+];
+
+/**
+ * Resolution readiness summary — derived totals over the checklist. Confirms
+ * resolution rows plus safe-covered rows equals staged rows
+ * (274 blocked resolution rows + 33 safe-covered rows = 307 staged building
+ * rows). Read-only readiness audit: does not change pricing, does not change
+ * booking, does not change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_RESOLUTION_READINESS_SUMMARY = {
+  /** total checklist queues (derived). */
+  totalChecklistQueues: QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST.length,
+  /** 3 checklist queues — assertion anchor. */
+  expectedTotalChecklistQueues: 3,
+  /** total blocked resolution rows across the three queues (derived). */
+  totalBlockedResolutionRows: QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST.reduce(
+    (n, item) => n + item.count,
+    0
+  ),
+  /** 274 blocked resolution rows — assertion anchor. */
+  expectedTotalBlockedResolutionRows: 274,
+  /** safe-covered rows (derived). */
+  safeCoveredRows: QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.count,
+  /** 33 safe-covered rows — assertion anchor. */
+  expectedSafeCoveredRows: 33,
+  /** total staged rows = blocked resolution rows + safe-covered rows (derived). */
+  totalStagedRows:
+    QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST.reduce((n, item) => n + item.count, 0) +
+    QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.count,
+  /** 307 staged building rows — assertion anchor. */
+  expectedTotalStagedRows: 307,
+  /** resolution rows plus safe-covered rows equals staged rows (derived check). */
+  resolutionPlusSafeEqualsStaged:
+    QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST.reduce((n, item) => n + item.count, 0) +
+      QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.count ===
+    307,
+  checklist: QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST
+} as const;
