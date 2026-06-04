@@ -7818,3 +7818,106 @@ export const BATCH_21_SAFE_COVERAGE: readonly Batch21CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 22 safe coverage gate (Sprint 1346) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_21_SAFE_COVERAGE. Records
+// the widget-deploy Batch 22 roster (widget-deploy/widget-batch-22.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 21):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch22CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch22CoverageEntry {
+  /** Staged Batch 22 roster display name (from widget-deploy/widget-batch-22.md). */
+  building: string;
+  status: Batch22CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 22 safe coverage. No exact safe matches this batch. Two have per-line
+ * pricing but are not verified. Eight are name/variant mismatches against an
+ * existing live key needing mapping approval.
+ */
+export const BATCH_22_SAFE_COVERAGE: readonly Batch22CoverageEntry[] = [
+  {
+    building: "Akoya",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Mondrian South Beach",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "South Pointe Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'South Pointe Towers' (singular vs plural); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Cosmopolitan South Beach",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live keys are 'Cosmopolitan Courts' and 'Cosmopolitan Towers' (staged differs); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "The Caribbean",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Caribbean' (staged adds 'The'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "The Bentley Bay North Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Bentley Bay North' (staged adds 'The'/'Tower'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "The Bentley Bay South Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Bentley Bay South' (staged adds 'The'/'Tower'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Bentley Beach (Roney Palace)",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — possible live keys are 'Hilton Bentley Beach' and 'Roney Palace' (two candidates); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Capri South Beach",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live keys are 'Capri South Beach - Ana Capri', '- Marina Grande', '- Marina Piccola' (staged is the umbrella name with no sub-building); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Aqua at Allison Island",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live keys are 'Aqua Allison Island - Chatham Building', '- Gorlin Building', '- Spear Building' (staged is the umbrella name with 'at' and no sub-building); &b= must match exactly; do not blind-map; no invented mapping"
+  }
+];
