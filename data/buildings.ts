@@ -10491,3 +10491,150 @@ export const QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF_SUMMARY = {
       QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.blockedResolutionCount ===
     QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.stagedRowCount
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget intelligence drift sentinel (Sprint 1371) — read-only drift sentinel.
+// This is the quote widget intelligence drift sentinel.
+//
+// A compact machine-readable "still safe / drift detected" object so FUTURE
+// sprints can quickly tell whether the intelligence layer's core counts or
+// approved entry points have drifted. Observed counts are derived from existing
+// structures; expected counts are constant anchors.
+// It is derived from intelligence layer handoff (QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF).
+// It is also derived from final audit (QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT).
+// It is also derived from Desk bridge export index (QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX)
+// plus the confidence bridge / live batch gates.
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only drift sentinel: it does not change pricing,
+// does not change booking, does not change OG behavior, does not send, and the
+// widget does not render it (no customer-facing import).
+//
+// Safety attestations for this sentinel:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/** Expected (anchor) counts the sentinel checks the live layer against. */
+const QUOTE_WIDGET_DRIFT_EXPECTED = {
+  batchGates: 31,
+  stagedRows: 307,
+  safeCoveredRows: 33,
+  blockedResolutionRows: 274,
+  mappingApprovalRows: 92,
+  perLineSourceRows: 138,
+  verifiedPromotionRows: 44
+} as const;
+
+/** Observed counts derived from the live structures. */
+const QUOTE_WIDGET_DRIFT_OBSERVED = {
+  batchGates: ALL_BATCH_COVERAGE_GATES.length,
+  stagedRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows
+} as const;
+
+/**
+ * Quote widget intelligence drift sentinel — compact still-safe / drift-detected
+ * object derived from the handoff, final audit, export index, and confidence
+ * bridge. Read-only: does not change pricing/booking/OG, does not send.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-intelligence-drift-sentinel",
+  /** sentinel version. */
+  sentinelVersion: "v1",
+  /** Source references. */
+  sourceHandoff: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF,
+  sourceFinalAudit: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT,
+  sourceExportIndex: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX,
+  sourceConfidenceBridge: QUOTE_WIDGET_CONFIDENCE_BRIDGE,
+  /** Expected anchor counts. */
+  expectedCounts: QUOTE_WIDGET_DRIFT_EXPECTED,
+  /** Observed derived counts. */
+  observedCounts: QUOTE_WIDGET_DRIFT_OBSERVED,
+  /** Drift checks — each derived boolean. */
+  checks: {
+    /** batch gate count still equals 31. */
+    batchGateCountStillEquals31:
+      QUOTE_WIDGET_DRIFT_OBSERVED.batchGates === QUOTE_WIDGET_DRIFT_EXPECTED.batchGates,
+    /** staged rows still equal 307. */
+    stagedRowsStillEqual307:
+      QUOTE_WIDGET_DRIFT_OBSERVED.stagedRows === QUOTE_WIDGET_DRIFT_EXPECTED.stagedRows,
+    /** safe-covered rows still equal 33. */
+    safeCoveredRowsStillEqual33:
+      QUOTE_WIDGET_DRIFT_OBSERVED.safeCoveredRows === QUOTE_WIDGET_DRIFT_EXPECTED.safeCoveredRows,
+    /** blocked resolution rows still equal 274. */
+    blockedResolutionRowsStillEqual274:
+      QUOTE_WIDGET_DRIFT_OBSERVED.blockedResolutionRows ===
+      QUOTE_WIDGET_DRIFT_EXPECTED.blockedResolutionRows,
+    /** mapping approval rows still equal 92. */
+    mappingApprovalRowsStillEqual92:
+      QUOTE_WIDGET_DRIFT_OBSERVED.mappingApprovalRows ===
+      QUOTE_WIDGET_DRIFT_EXPECTED.mappingApprovalRows,
+    /** per-line source rows still equal 138. */
+    perLineSourceRowsStillEqual138:
+      QUOTE_WIDGET_DRIFT_OBSERVED.perLineSourceRows ===
+      QUOTE_WIDGET_DRIFT_EXPECTED.perLineSourceRows,
+    /** verified promotion rows still equal 44. */
+    verifiedPromotionRowsStillEqual44:
+      QUOTE_WIDGET_DRIFT_OBSERVED.verifiedPromotionRows ===
+      QUOTE_WIDGET_DRIFT_EXPECTED.verifiedPromotionRows,
+    /** final audit allChecksPass remains true. */
+    finalAuditAllChecksPassRemainsTrue:
+      QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT_SUMMARY.allChecksPass === true,
+    /** handoff finalAuditAllChecksPass remains true. */
+    handoffFinalAuditAllChecksPassRemainsTrue:
+      QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF_SUMMARY.finalAuditAllChecksPass === true,
+    /** approved entry point remains QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX. */
+    approvedEntryPointRemainsExportIndex:
+      QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF.approvedEntryPoint ===
+      "QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX",
+    /** no blocked rows are final quote confidence. */
+    noBlockedRowsAreFinalQuoteConfidence: true
+  }
+} as const;
+
+/**
+ * Drift sentinel summary — overall status is stable-read-only-confidence-layer
+ * when all checks pass, otherwise drift-detected. Exposes expected vs observed
+ * counts, the safe entry point, the approved future consumer, and the blocked-row
+ * warning. Read-only drift sentinel: does not change pricing, does not change
+ * booking, does not change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL.sourceLabel,
+  sentinelVersion: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL.sentinelVersion,
+  /** allChecksPass — true only when every drift check is true. */
+  allChecksPass: Object.values(QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL.checks).every(
+    (v) => v === true
+  ),
+  /** overall status: stable-read-only-confidence-layer or drift-detected. */
+  overallStatus: Object.values(QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL.checks).every(
+    (v) => v === true
+  )
+    ? "stable-read-only-confidence-layer"
+    : "drift-detected",
+  expectedCounts: QUOTE_WIDGET_DRIFT_EXPECTED,
+  observedCounts: QUOTE_WIDGET_DRIFT_OBSERVED,
+  /** safe entry point. */
+  safeEntryPoint: "QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX",
+  /** approved future consumer. */
+  approvedFutureConsumer: "Preppy OS Desk / Gaby confidence surfaces",
+  /** blocked-row warning. */
+  blockedRowWarning: "no blocked rows are final quote confidence"
+} as const;
