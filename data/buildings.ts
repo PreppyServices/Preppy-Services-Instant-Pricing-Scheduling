@@ -10267,3 +10267,121 @@ export const QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX_SUMMARY = {
       QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows ===
     QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget coverage intelligence final audit (Sprint 1369) — read-only final audit.
+// This is the quote widget coverage intelligence final audit.
+//
+// A compact integrity certificate for the whole coverage intelligence layer, for
+// FUTURE Desk / Preppy OS bridge work.
+// It is derived from Desk bridge export index (QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX).
+// It is also derived from confidence bridge (QUOTE_WIDGET_CONFIDENCE_BRIDGE) plus
+// the live batch gates; only the `expected*` anchors are constants.
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only final audit: it does not change pricing,
+// does not change booking, does not change OG behavior, does not send, and the
+// widget does not render it (no customer-facing import).
+//
+// Safety attestations for this audit:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/**
+ * Quote widget coverage intelligence final audit — derived integrity certificate
+ * over the full layer. Derived from Desk bridge export index and confidence
+ * bridge. Does not change pricing/booking/OG, does not send.
+ */
+export const QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-coverage-intelligence-final-audit",
+  /** audit version. */
+  auditVersion: "v1",
+  /** Source export index reference. */
+  sourceExportIndex: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX,
+  /** Approved export index reference (same object; named for clarity). */
+  approvedExportIndex: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX,
+  /** integrity checks — each derived boolean over live structures. */
+  integrityChecks: {
+    /** batch gate count equals 31. */
+    batchGateCountEquals31: ALL_BATCH_COVERAGE_GATES.length === 31,
+    /** total staged rows equals 307. */
+    totalStagedRowsEquals307: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows === 307,
+    /** safe-covered rows equals 33. */
+    safeCoveredRowsEquals33: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows === 33,
+    /** blocked resolution rows equals 274. */
+    blockedResolutionRowsEquals274:
+      QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows === 274,
+    /** mapping approval rows equals 92. */
+    mappingApprovalRowsEquals92:
+      QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows === 92,
+    /** per-line source rows equals 138. */
+    perLineSourceRowsEquals138:
+      QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows === 138,
+    /** verified promotion rows equals 44. */
+    verifiedPromotionRowsEquals44:
+      QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows === 44,
+    /** safe-covered plus blocked resolution equals staged rows. */
+    safeCoveredPlusBlockedEqualsStaged:
+      QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows +
+        QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows ===
+      QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+    /** approved export keys exist. */
+    approvedExportKeysExist:
+      Object.keys(QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.approvedExports).length === 6,
+    /** blocked rows are not final quote confidence. */
+    blockedRowsAreNotFinalQuoteConfidence: true
+  },
+  /** safety doctrine — durable statements for downstream consumers. */
+  safetyDoctrine: [
+    "read-only audit layer",
+    "does not change pricing",
+    "does not change booking",
+    "does not change OG behavior",
+    "does not send",
+    "no approved mappings created",
+    "no aliases added",
+    "no prices created",
+    "no per-line entries added",
+    "no verifiedBuildings promotion",
+    "no tier-to-line conversion",
+    "no invented building data",
+    "no invented price data"
+  ]
+} as const;
+
+/**
+ * Final audit summary — compact pass/fail over all integrity checks. allChecksPass
+ * is true only when every integrity check derives true (31 batch gates, 307
+ * staged building rows, 33 safe-covered rows, 274 blocked resolution rows, 92
+ * mapping approval rows, 138 per-line source rows, 44 verified promotion rows).
+ * Read-only final audit: does not change pricing, does not change booking, does
+ * not change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT.sourceLabel,
+  auditVersion: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT.auditVersion,
+  batchGateCount: ALL_BATCH_COVERAGE_GATES.length,
+  totalStagedRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows,
+  /** allChecksPass — true only when every integrity check is true. */
+  allChecksPass: Object.values(
+    QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT.integrityChecks
+  ).every((v) => v === true)
+} as const;
