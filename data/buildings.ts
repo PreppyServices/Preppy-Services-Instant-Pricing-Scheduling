@@ -9412,3 +9412,120 @@ export const QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE_SUMMARY = {
   sourceStatus: "blocked-present-not-verified",
   sourceBucket: "needs verification before promoting"
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget resolution queue rollup (Sprint 1362) — read-only resolution audit.
+//
+// Ties together the three working resolution queues:
+//   1. Mapping approval queue   (QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE)   — 92 rows
+//   2. Per-line source queue    (QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE)    — 138 rows
+//   3. Verified promotion queue (QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE) — 44 rows
+//
+// Every value is derived from resolution queues plus the safe-covered list; only
+// the `expected*` fields are hardcoded as assertion anchors. Key relationship:
+//   274 resolution rows + 33 safe-covered rows = 307 staged building rows.
+//
+// This sprint applies NO mappings, creates NO prices, and promotes NOTHING into
+// verifiedBuildings. Read-only resolution audit: it does not change pricing,
+// does not change booking, does not change OG behavior, does not send, and the
+// widget does not render it (no customer-facing import).
+//
+// Safety attestations for this rollup:
+//   - no approved mappings created
+//   - no prices created
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export interface ResolutionQueueRollupEntry {
+  /** Queue name. */
+  queue: string;
+  /** Action bucket the queue resolves. */
+  actionBucket: string;
+  /** Derived row count for the queue. */
+  count: number;
+  /** Hardcoded expected count (assertion anchor). */
+  expectedCount: number;
+  /** Fixed safe default decision for the queue. */
+  safeDefaultDecision: string;
+  /** The queue rows (read-only; carried through, nothing applied). */
+  rows: readonly { readonly batch: number; readonly building: string; readonly status: string; readonly note: string }[];
+}
+
+/** The three resolution queues, summarized in a single derived rollup. */
+export const QUOTE_WIDGET_RESOLUTION_QUEUE_ROLLUP: readonly ResolutionQueueRollupEntry[] = [
+  {
+    queue: "mapping approval queue rows",
+    actionBucket: "needs mapping approval",
+    count: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length,
+    expectedCount: 92,
+    safeDefaultDecision: "do-not-map-yet",
+    rows: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE
+  },
+  {
+    queue: "per-line source queue rows",
+    actionBucket: "needs per-line source",
+    count: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length,
+    expectedCount: 138,
+    safeDefaultDecision: "do-not-price-yet",
+    rows: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE
+  },
+  {
+    queue: "verified promotion queue rows",
+    actionBucket: "needs verification before promoting",
+    count: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+    expectedCount: 44,
+    safeDefaultDecision: "do-not-promote-yet",
+    rows: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE
+  }
+];
+
+/**
+ * Resolution queue rollup summary — derived totals across the three resolution
+ * queues plus the remaining safe-covered rows. Confirms the relationship
+ * resolution rows plus safe-covered rows equals staged rows
+ * (274 + 33 = 307 staged building rows). Read-only resolution audit: does not
+ * change pricing, does not change booking, does not change OG behavior, does not
+ * send.
+ */
+export const QUOTE_WIDGET_RESOLUTION_QUEUE_SUMMARY = {
+  /** mapping approval queue count (derived). */
+  mappingApprovalCount: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length,
+  /** per-line source queue count (derived). */
+  perLineSourceCount: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length,
+  /** verified promotion queue count (derived). */
+  verifiedPromotionCount: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+  /** total resolution rows across the three queues (derived). */
+  totalResolutionRows:
+    QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length +
+    QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length +
+    QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+  /** 274 resolution rows — assertion anchor. */
+  expectedTotalResolutionRows: 274,
+  /** remaining safe-covered rows (derived). */
+  remainingSafeCoveredRows: QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.count,
+  /** 33 safe-covered rows — assertion anchor. */
+  expectedSafeCoveredRows: 33,
+  /** total staged rows = resolution rows + safe-covered rows (derived). */
+  totalStagedRows:
+    QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length +
+    QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length +
+    QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length +
+    QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.count,
+  /** 307 staged building rows — assertion anchor. */
+  expectedTotalStagedRows: 307,
+  /** resolution rows plus safe-covered rows equals staged rows (derived check). */
+  resolutionPlusSafeEqualsStaged:
+    QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length +
+      QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length +
+      QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length +
+      QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.count ===
+    307,
+  queues: QUOTE_WIDGET_RESOLUTION_QUEUE_ROLLUP
+} as const;
