@@ -10169,3 +10169,101 @@ export const QUOTE_WIDGET_DESK_BRIDGE_CONTRACT_SUMMARY = {
       QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.blockedResolutionRows ===
     QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.totalStagedRows
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget Desk bridge export index (Sprint 1368) — read-only Desk bridge export index.
+// This is the quote widget Desk bridge export index.
+//
+// One small reference object so FUTURE Desk / Preppy OS integration can find the
+// approved confidence exports without digging through the full building data
+// file, plus an explicit warning that raw blocked queues are not final quote
+// confidence. It is derived from Desk bridge contract
+// (QUOTE_WIDGET_DESK_BRIDGE_CONTRACT) and derived from confidence bridge
+// (QUOTE_WIDGET_CONFIDENCE_BRIDGE).
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only Desk bridge export index: it does not
+// change pricing, does not change booking, does not change OG behavior, does not
+// send, and the widget does not render it (no customer-facing import).
+//
+// Safety attestations for this index:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/**
+ * Quote widget Desk bridge export index — the approved confidence exports plus an
+ * integration warning, for future Preppy OS Desk / Gaby confidence surfaces.
+ * Derived from Desk bridge contract and confidence bridge.
+ */
+export const QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-desk-bridge-export-index",
+  /** index version. */
+  indexVersion: "v1",
+  /** approved future consumer. */
+  approvedFutureConsumer: "Preppy OS Desk / Gaby confidence surfaces",
+  /** approved exports — references to the safe confidence objects. */
+  approvedExports: {
+    confidenceBridge: QUOTE_WIDGET_CONFIDENCE_BRIDGE,
+    consumerGuard: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD,
+    deskBridgeContract: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT,
+    safeCoveredRegistry: QUOTE_WIDGET_SAFE_COVERED_REGISTRY,
+    resolutionReadinessChecklist: QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST,
+    resolutionQueueRollup: QUOTE_WIDGET_RESOLUTION_QUEUE_ROLLUP
+  },
+  /** integration warning — what a consumer must respect. */
+  integrationWarning: [
+    "read-only confidence data",
+    "safe-covered rows may display safe-to-use-now",
+    "blocked rows must remain blocked until required approval source or QC evidence exists",
+    "no final quote confidence for blocked rows",
+    "no auto-map",
+    "no auto-price",
+    "no auto-promote",
+    "no auto-send"
+  ],
+  /** Derived totals (from the Desk bridge contract). */
+  totalStagedRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.verifiedPromotionRows
+} as const;
+
+/**
+ * Desk bridge export index summary — compact derived totals plus a consistency
+ * check that safe-covered + blocked resolution rows equals staged rows
+ * (33 + 274 = 307 staged building rows). Read-only Desk bridge export index:
+ * does not change pricing, does not change booking, does not change OG behavior,
+ * does not send.
+ */
+export const QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.sourceLabel,
+  indexVersion: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.indexVersion,
+  approvedFutureConsumer: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.approvedFutureConsumer,
+  approvedExportKeys: Object.keys(QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.approvedExports),
+  totalStagedRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows,
+  /** safe-covered plus blocked resolution rows equals staged rows (derived check). */
+  safeCoveredPlusBlockedEqualsStaged:
+    QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows +
+      QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows ===
+    QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows
+} as const;
