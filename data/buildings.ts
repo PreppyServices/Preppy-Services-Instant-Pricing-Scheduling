@@ -9226,3 +9226,95 @@ export const QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE_SUMMARY = {
   sourceStatus: "blocked-ambiguous-mapping",
   sourceBucket: "needs mapping approval"
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget per-line source queue (Sprint 1360) — read-only source audit.
+//
+// Derived from QUOTE_WIDGET_NEEDS_PER_LINE_SOURCE_BUCKET (the "needs per-line
+// source" action bucket, itself derived from the missing-per-line-source status
+// list and ultimately the 31 batch gates). It turns the missing-source rows into
+// an auditable queue ready for FUTURE sourcing/loading sprints.
+//
+// This sprint creates NO prices, adds NO per-line entries, adds NO aliases,
+// changes NO building keys, and modifies NO verifiedBuildings. Every row is
+// stamped with a fixed source requirement ("requires-per-line-source") and a
+// fixed safe default decision ("do-not-price-yet"). Nothing here prices a
+// building.
+//
+// Read-only source audit. It does not change pricing, does not change booking,
+// does not change OG behavior, does not send, and the widget does not render it
+// (no customer-facing import).
+//
+// Safety attestations for this queue:
+//   - no prices created
+//   - no per-line entries added
+//   - no aliases added
+//   - no building keys changed
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/** Fixed source requirement — every queue row needs a per-line source before pricing. */
+export type PerLineSourceRequirement = "requires-per-line-source";
+/** Fixed safe default — no pricing is applied until a per-line source is loaded. */
+export type PerLineSafeDefaultDecision = "do-not-price-yet";
+
+/** One missing-source row prepared for future sourcing (no price applied). */
+export interface PerLineSourceQueueRow {
+  /** 1-based batch number (matches widget-deploy/widget-batch-NN.md). */
+  batch: number;
+  /** Staged building name from the gate (unchanged; not renamed, not aliased). */
+  building: string;
+  status: string;
+  /** Note/reason carried verbatim from the coverage gate. */
+  note: string;
+  /** Action bucket this row came from. */
+  actionBucket: string;
+  /** Always "requires-per-line-source" — gate before any pricing. */
+  sourceRequirement: PerLineSourceRequirement;
+  /** Always "do-not-price-yet" — safe default until a per-line source is loaded. */
+  safeDefaultDecision: PerLineSafeDefaultDecision;
+}
+
+/**
+ * Per-line source queue — derived from needs per-line source bucket. Each row is
+ * stamped requires-per-line-source + do-not-price-yet. No price is applied.
+ */
+export const QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE: readonly PerLineSourceQueueRow[] =
+  QUOTE_WIDGET_NEEDS_PER_LINE_SOURCE_BUCKET.rows.map((r) => ({
+    batch: r.batch,
+    building: r.building,
+    status: r.status,
+    note: r.note,
+    actionBucket: QUOTE_WIDGET_NEEDS_PER_LINE_SOURCE_BUCKET.actionBucket,
+    sourceRequirement: "requires-per-line-source",
+    safeDefaultDecision: "do-not-price-yet"
+  }));
+
+/**
+ * Per-line source queue summary — derived counts over the 138 per-line source
+ * rows. Read-only source audit: no prices created, no per-line entries added,
+ * no aliases added, no building keys changed, does not change pricing/booking/OG,
+ * does not send.
+ */
+export const QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE_SUMMARY = {
+  /** total queue rows (derived). */
+  totalQueueRows: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length,
+  /** rows requiring per-line source (derived; should equal totalQueueRows). */
+  rowsRequiringPerLineSource: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.filter(
+    (r) => r.sourceRequirement === "requires-per-line-source"
+  ).length,
+  /** rows with safe default do-not-price-yet (derived; should equal totalQueueRows). */
+  rowsSafeDefaultDoNotPriceYet: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.filter(
+    (r) => r.safeDefaultDecision === "do-not-price-yet"
+  ).length,
+  /** 138 per-line source rows — assertion anchor; totalQueueRows should equal this. */
+  expectedTotalQueueRows: 138,
+  sourceStatus: "blocked-missing-per-line-source",
+  sourceBucket: "needs per-line source"
+} as const;
