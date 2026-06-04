@@ -7629,3 +7629,103 @@ export const BATCH_19_SAFE_COVERAGE: readonly Batch19CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 20 safe coverage gate (Sprint 1344) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_19_SAFE_COVERAGE. Records
+// the widget-deploy Batch 20 roster (widget-deploy/widget-batch-20.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 19):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch20CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch20CoverageEntry {
+  /** Staged Batch 20 roster display name (from widget-deploy/widget-batch-20.md). */
+  building: string;
+  status: Batch20CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 20 safe coverage. One building is an exact safe match already present in
+ * `pricing` and `verifiedBuildings` (left untouched). Four have per-line pricing
+ * but are not verified. Four are name/variant mismatches against an existing
+ * live key needing mapping approval. One is missing a safe per-line source.
+ */
+export const BATCH_20_SAFE_COVERAGE: readonly Batch20CoverageEntry[] = [
+  { building: "Faena House", status: "safe-covered", note: "verified per-line pricing" },
+  {
+    building: "Eighty Seven Park",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "57 Ocean",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Monad Terrace",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Glass Miami Beach",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "The Bath Club",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Bath Club' (staged adds 'The'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "L'Atelier Residences",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — only similar live key is 'Atelier' (differs by \"L'\" prefix and 'Residences', possibly a different building); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "The Continuum North Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Continuum North Tower' (staged adds 'The'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "The Continuum South Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Continuum South Tower' (staged adds 'The'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "The Ritz-Carlton Residences Miami Beach",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key (do not conflate with 'Ritz-Carlton Coconut Grove' or 'Grand Bay Ritz Carlton', different buildings); no tier-to-line conversion; no invented price data"
+  }
+];
