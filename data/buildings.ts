@@ -10638,3 +10638,120 @@ export const QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL_SUMMARY = {
   /** blocked-row warning. */
   blockedRowWarning: "no blocked rows are final quote confidence"
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget intelligence version manifest (Sprint 1372) — read-only version manifest.
+// This is the quote widget intelligence version manifest.
+//
+// A small manifest identifying the approved v1 coverage intelligence layer, its
+// entry points, and its safety status, so future quote-widget and Desk bridge
+// work can identify the layer without rereading the whole file.
+// It is derived from drift sentinel (QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL).
+// It is also derived from final audit (QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT).
+// It is also derived from handoff (QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF).
+// It is also derived from Desk bridge export index (QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX)
+// plus the confidence bridge.
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only version manifest: it does not change
+// pricing, does not change booking, does not change OG behavior, does not send,
+// and the widget does not render it (no customer-facing import).
+//
+// Safety attestations for this manifest:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/**
+ * Quote widget intelligence version manifest — identifies the approved v1 layer,
+ * its entry points, and its safety status. Derived from drift sentinel, final
+ * audit, handoff, and Desk bridge export index.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-intelligence-version-manifest",
+  /** manifest version. */
+  manifestVersion: "v1",
+  /** intelligence layer version. */
+  intelligenceLayerVersion: "v1",
+  /** layer status (derived from the drift sentinel). */
+  layerStatus: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL_SUMMARY.overallStatus,
+  /** approved entry point — name. */
+  approvedEntryPoint: "QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX",
+  /** final audit reference — name. */
+  finalAuditReference: "QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT",
+  /** handoff reference — name. */
+  handoffReference: "QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF",
+  /** drift sentinel reference — name. */
+  driftSentinelReference: "QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL",
+  /** Live references to the approved structures. */
+  approvedEntryPointRef: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX,
+  finalAuditRef: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT,
+  handoffRef: QUOTE_WIDGET_INTELLIGENCE_LAYER_HANDOFF,
+  driftSentinelRef: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL,
+  /** drift sentinel status (derived). */
+  driftSentinelStatus: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL_SUMMARY.overallStatus,
+  /** final audit allChecksPass (derived). */
+  finalAuditAllChecksPass: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT_SUMMARY.allChecksPass,
+  /** approved future consumer. */
+  approvedFutureConsumer: "Preppy OS Desk / Gaby confidence surfaces",
+  /** Derived totals. */
+  totals: {
+    batchGates: ALL_BATCH_COVERAGE_GATES.length,
+    stagedRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+    safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows,
+    blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows,
+    mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows,
+    perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows,
+    verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows
+  },
+  /** safety notes. */
+  safetyNotes: [
+    "read-only confidence data",
+    "safe-covered rows may display safe-to-use-now",
+    "blocked rows remain blocked until approval source or QC evidence",
+    "no final quote confidence for blocked rows",
+    "no auto-map",
+    "no auto-price",
+    "no auto-promote",
+    "no auto-send"
+  ]
+} as const;
+
+/**
+ * Version manifest summary — compact identification of the approved v1 layer plus
+ * derived totals and status. Confirms 31 batch coverage gates over 307 staged
+ * building rows. Read-only version manifest: does not change pricing, does not
+ * change booking, does not change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.sourceLabel,
+  manifestVersion: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.manifestVersion,
+  intelligenceLayerVersion: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.intelligenceLayerVersion,
+  layerStatus: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.layerStatus,
+  approvedEntryPoint: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.approvedEntryPoint,
+  finalAuditReference: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.finalAuditReference,
+  handoffReference: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.handoffReference,
+  driftSentinelReference: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.driftSentinelReference,
+  driftSentinelStatus: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.driftSentinelStatus,
+  finalAuditAllChecksPass: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.finalAuditAllChecksPass,
+  approvedFutureConsumer: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.approvedFutureConsumer,
+  batchGates: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.batchGates,
+  stagedRows: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.stagedRows,
+  safeCoveredRows: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.verifiedPromotionRows
+} as const;
