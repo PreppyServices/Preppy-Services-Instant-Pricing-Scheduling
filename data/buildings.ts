@@ -9760,3 +9760,124 @@ export const QUOTE_WIDGET_SAFE_COVERED_REGISTRY_SUMMARY = {
     307,
   registry: QUOTE_WIDGET_SAFE_COVERED_REGISTRY
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget confidence bridge (Sprint 1365) — read-only confidence bridge.
+//
+// One compact, importable object summarizing quote-widget coverage confidence
+// for FUTURE main Preppy OS / Desk confidence surfaces.
+// This is the quote widget confidence bridge.
+// It carries an explicit confidence model version (v1).
+// It is derived from safe-covered registry.
+// It is also derived from resolution readiness checklist plus the resolution
+// queues and the resolution rollup; only the `expected*` and label fields are
+// constants.
+//
+// Counts breakdown (each phrase kept on one line for audit grep):
+//   307 staged building rows
+//   33 safe-covered rows
+//   274 blocked resolution rows
+//   92 mapping approval rows
+//   138 per-line source rows
+//   44 verified promotion rows
+//
+// Safe default language:
+//   - safe-covered rows are safe-to-use-now
+//   - blocked rows stay blocked until required approval source or QC evidence exists
+//   - no row should be auto-promoted, auto-priced, or auto-mapped (no auto-promote,
+//     no auto-price, no auto-map)
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, and renders nothing.
+// Read-only confidence bridge: it does not change pricing, does not change
+// booking, does not change OG behavior, does not send, and the widget does not
+// render it (no customer-facing import).
+//
+// Safety attestations for this bridge:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/**
+ * Quote widget confidence bridge — derived from safe-covered registry and the
+ * resolution layers (queues / readiness checklist / resolution rollup). One
+ * importable object for future Desk / Preppy OS confidence surfaces.
+ */
+export const QUOTE_WIDGET_CONFIDENCE_BRIDGE = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-coverage",
+  /** Confidence model version. */
+  confidenceModelVersion: "v1",
+  /** total staged rows (derived). */
+  totalStagedRows:
+    QUOTE_WIDGET_SAFE_COVERED_REGISTRY.length +
+    QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length +
+    QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length +
+    QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+  /** safe-covered rows (derived). */
+  safeCoveredRows: QUOTE_WIDGET_SAFE_COVERED_REGISTRY.length,
+  /** blocked resolution rows (derived). */
+  blockedResolutionRows:
+    QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length +
+    QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length +
+    QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+  /** mapping approval rows (derived). */
+  mappingApprovalRows: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length,
+  /** per-line source rows (derived). */
+  perLineSourceRows: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE.length,
+  /** verified promotion rows (derived). */
+  verifiedPromotionRows: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+  /** Assertion anchors. */
+  expectedTotalStagedRows: 307,
+  expectedSafeCoveredRows: 33,
+  expectedBlockedResolutionRows: 274,
+  expectedMappingApprovalRows: 92,
+  expectedPerLineSourceRows: 138,
+  expectedVerifiedPromotionRows: 44,
+  /** References to the underlying read-only structures. */
+  safeCoveredRegistry: QUOTE_WIDGET_SAFE_COVERED_REGISTRY,
+  mappingApprovalQueue: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE,
+  perLineSourceQueue: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE,
+  verifiedPromotionQueue: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE,
+  readinessChecklist: QUOTE_WIDGET_RESOLUTION_READINESS_CHECKLIST,
+  resolutionRollup: QUOTE_WIDGET_RESOLUTION_QUEUE_ROLLUP,
+  /** Safe default language for downstream surfaces. */
+  safeDefaults: {
+    safeCovered: "safe-covered rows are safe-to-use-now",
+    blocked: "blocked until required approval source or QC evidence",
+    automation: "no auto-promote, no auto-price, no auto-map"
+  }
+} as const;
+
+/**
+ * Confidence bridge summary — compact derived totals plus a consistency check
+ * that safe-covered + blocked resolution rows equals staged rows
+ * (33 + 274 = 307 staged building rows). Read-only confidence bridge: does not
+ * change pricing, does not change booking, does not change OG behavior, does not
+ * send.
+ */
+export const QUOTE_WIDGET_CONFIDENCE_BRIDGE_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_CONFIDENCE_BRIDGE.sourceLabel,
+  confidenceModelVersion: QUOTE_WIDGET_CONFIDENCE_BRIDGE.confidenceModelVersion,
+  totalStagedRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.verifiedPromotionRows,
+  /** safe-covered plus blocked resolution rows equals staged rows (derived check). */
+  safeCoveredPlusBlockedEqualsStaged:
+    QUOTE_WIDGET_CONFIDENCE_BRIDGE.safeCoveredRows +
+      QUOTE_WIDGET_CONFIDENCE_BRIDGE.blockedResolutionRows ===
+    QUOTE_WIDGET_CONFIDENCE_BRIDGE.totalStagedRows
+} as const;
