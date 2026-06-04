@@ -10998,3 +10998,125 @@ export const QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE_SUMMARY = {
   perLineSourceRows: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.perLineSourceRows,
   verifiedPromotionRows: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.totals.verifiedPromotionRows
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget intelligence arc closeout marker (Sprint 1375) — read-only closeout marker.
+// This is the quote widget intelligence arc closeout marker.
+//
+// Tiny final record that the quote-widget coverage intelligence arc is complete,
+// paused, and ready for future Desk / Preppy OS use through the approved consumer
+// payload and export index. It is derived from exit gate
+// (QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE).
+// It is also derived from consumer payload (QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD)
+// plus the version manifest / drift sentinel / final audit / export index.
+//
+// Safe next move: future Desk / Preppy OS work may consume the payload read-only,
+// but blocked rows remain blocked until human mapping approval, per-line source,
+// or QC verification.
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only closeout marker: it does not change pricing,
+// does not change booking, does not change OG behavior, does not send, and the
+// widget does not render it (no customer-facing import).
+//
+// Safety attestations for this marker:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/**
+ * Quote widget intelligence arc closeout marker — records the arc as complete and
+ * paused, points to the approved structures, and restates the safe next move.
+ * Derived from exit gate and consumer payload.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-intelligence-arc-closeout-marker",
+  /** closeout version. */
+  closeoutVersion: "v1",
+  /** arc status. */
+  arcStatus: "complete-paused-ready-for-future-desk-consumption",
+  /** exit decision (derived from the exit gate). */
+  exitDecision: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE.exitDecision,
+  /** exitReady (derived from the exit gate summary). */
+  exitReady: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE_SUMMARY.exitReady,
+  /** Named references: approved consumer payload, approved export index, final audit reference, drift sentinel reference, version manifest reference, exit gate reference. */
+  approvedConsumerPayload: "QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD",
+  approvedExportIndex: "QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX",
+  finalAuditReference: "QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT",
+  driftSentinelReference: "QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL",
+  versionManifestReference: "QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST",
+  exitGateReference: "QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE",
+  /** Live references. */
+  exitGateRef: QUOTE_WIDGET_INTELLIGENCE_EXIT_GATE,
+  consumerPayloadRef: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD,
+  exportIndexRef: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX,
+  finalAuditRef: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT,
+  driftSentinelRef: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL,
+  versionManifestRef: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST,
+  /** approved next work. */
+  approvedNextWork: [
+    "consume consumer payload read-only in future Desk work",
+    "display safe-covered rows as safe-to-use-now",
+    "display blocked rows as blocked with reason"
+  ],
+  /** blocked next work. */
+  blockedNextWork: [
+    "no auto-map",
+    "no auto-price",
+    "no auto-promote",
+    "no auto-send",
+    "no final quote confidence for blocked rows",
+    "no tier-to-line conversion",
+    "no invented building data",
+    "no invented price data"
+  ],
+  /** Derived totals. */
+  totals: {
+    batchGates: ALL_BATCH_COVERAGE_GATES.length,
+    stagedRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+    safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows,
+    blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows,
+    mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows,
+    perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows,
+    verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows
+  }
+} as const;
+
+/**
+ * Arc closeout summary — compact final record derived from the exit gate /
+ * consumer payload / version manifest / drift sentinel. Confirms 31 batch
+ * coverage gates over 307 staged building rows. Read-only closeout marker: does
+ * not change pricing, does not change booking, does not change OG behavior, does
+ * not send.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.sourceLabel,
+  closeoutVersion: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.closeoutVersion,
+  arcStatus: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.arcStatus,
+  exitDecision: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.exitDecision,
+  exitReady: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.exitReady,
+  layerStatus: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.layerStatus,
+  driftSentinelStatus: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL_SUMMARY.overallStatus,
+  finalAuditAllChecksPass: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT_SUMMARY.allChecksPass,
+  approvedConsumerPayload: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.approvedConsumerPayload,
+  approvedExportIndex: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.approvedExportIndex,
+  batchGates: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.totals.batchGates,
+  stagedRows: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.totals.stagedRows,
+  safeCoveredRows: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.totals.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.totals.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.totals.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.totals.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_INTELLIGENCE_ARC_CLOSEOUT_MARKER.totals.verifiedPromotionRows
+} as const;
