@@ -5775,3 +5775,64 @@ export const researchStatus: Record<string, BuildingStatus> = {
   ),
   ...Object.fromEntries(activePlaceholderBuildings.map((name) => [name, "raw"]))
 };
+
+// -----------------------------------------------------------------------------
+// Batch 1 safe coverage gate (Sprint 1325) — read-only reconciliation status.
+//
+// Records the widget-deploy Batch 1 roster's coverage against this LIVE per-line
+// `pricing` model (see the Sprint 1324A note at the top of this file). This is a
+// data-layer audit structure only: it does NOT change pricing, booking flow, OG
+// route behavior, calendar, or any service logic, and the widget does not render
+// it. It exists so the reconciliation is operationally greppable.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - "Aria Reserve" requires explicit mapping approval (live variants exist:
+//     "Aria Reserve North" / "Aria Reserve South" / "Aria Reserve South Tower")
+//   - "EDITION Residences Edgewater" requires per-line source data and is NOT
+//     the same building as "Edition Miami Beach Residences"
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch1CoverageStatus =
+  | "safe-covered"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch1CoverageEntry {
+  /** Staged Batch 1 roster display name (from widget-deploy/widget-batch-01.md). */
+  building: string;
+  status: Batch1CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 1 safe coverage. Eight buildings are exact safe matches already present
+ * in `pricing` and `verifiedBuildings` (left untouched). Two are blocked: one by
+ * mapping ambiguity, one by missing per-line source data.
+ */
+export const BATCH_1_SAFE_COVERAGE: readonly Batch1CoverageEntry[] = [
+  { building: "Aria on the Bay", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Biscayne Beach", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Paraiso Bay", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Paraiso Bayviews", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "One Paraiso", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Gran Paraiso", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Elysee Miami", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Missoni Baia", status: "safe-covered", note: "verified per-line pricing" },
+  {
+    building: "Aria Reserve",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live variants: Aria Reserve North / South / South Tower; do not blind-map; no invented mapping"
+  },
+  {
+    building: "EDITION Residences Edgewater",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; not the same as Edition Miami Beach Residences; no tier-to-line conversion; no invented price data"
+  }
+];
