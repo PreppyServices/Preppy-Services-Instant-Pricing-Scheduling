@@ -48,7 +48,7 @@ export async function GET(request: Request) {
   // building instead of always defaulting to "One Paraiso".
   const rawBuilding = clean(
     searchParams.get("building") ?? searchParams.get("b"),
-    "One Paraiso"
+    "Preppy Services"
   );
   const building = humanizeBuilding(rawBuilding);
   const unit = normalizeUnit(clean(searchParams.get("unit"), ""));
