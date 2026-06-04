@@ -9039,3 +9039,101 @@ export const QUOTE_WIDGET_COVERAGE_STATUS_LISTS = {
   ambiguousMapping: QUOTE_WIDGET_AMBIGUOUS_MAPPING_BUILDINGS,
   missingPerLineSource: QUOTE_WIDGET_MISSING_PER_LINE_SOURCE_BUILDINGS
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget coverage action buckets (Sprint 1358) — read-only derived queues.
+//
+// Re-frames the four coverage status lists as action buckets for the next
+// mapping / source-resolution arcs:
+//   safe-covered                    -> safe to use now
+//   blocked-present-not-verified    -> needs verification before promoting
+//   blocked-ambiguous-mapping       -> needs mapping approval
+//   blocked-missing-per-line-source -> needs per-line source
+//
+// Every bucket is derived from the existing status lists (which are themselves
+// derived from the 31 batch gates); nothing is hand-listed. Each row keeps its
+// batch number, building, status, and note.
+//
+// This is read-only coverage audit data. It does not change pricing, does not
+// change booking, does not change OG behavior, does not send, and the widget
+// does not render it (no customer-facing import).
+//
+// Safety attestations for these buckets:
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export interface CoverageActionBucket {
+  /** Human-readable action label for this queue. */
+  actionBucket: string;
+  /** Derived row count for the bucket. */
+  count: number;
+  /** Source coverage status this bucket is derived from. */
+  sourceStatus: string;
+  /** The coverage rows in this bucket (batch + building + status + note). */
+  rows: readonly CoverageStatusListEntry[];
+}
+
+/** safe to use now — derived from coverage status lists (safe-covered). */
+export const QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET: CoverageActionBucket = {
+  actionBucket: "safe to use now",
+  count: QUOTE_WIDGET_SAFE_COVERED_BUILDINGS.length,
+  sourceStatus: "safe-covered",
+  rows: QUOTE_WIDGET_SAFE_COVERED_BUILDINGS
+};
+
+/** needs verification before promoting — derived from coverage status lists (blocked-present-not-verified). */
+export const QUOTE_WIDGET_NEEDS_VERIFICATION_BUCKET: CoverageActionBucket = {
+  actionBucket: "needs verification before promoting",
+  count: QUOTE_WIDGET_PRESENT_NOT_VERIFIED_BUILDINGS.length,
+  sourceStatus: "blocked-present-not-verified",
+  rows: QUOTE_WIDGET_PRESENT_NOT_VERIFIED_BUILDINGS
+};
+
+/** needs mapping approval — derived from coverage status lists (blocked-ambiguous-mapping). */
+export const QUOTE_WIDGET_NEEDS_MAPPING_APPROVAL_BUCKET: CoverageActionBucket = {
+  actionBucket: "needs mapping approval",
+  count: QUOTE_WIDGET_AMBIGUOUS_MAPPING_BUILDINGS.length,
+  sourceStatus: "blocked-ambiguous-mapping",
+  rows: QUOTE_WIDGET_AMBIGUOUS_MAPPING_BUILDINGS
+};
+
+/** needs per-line source — derived from coverage status lists (blocked-missing-per-line-source). */
+export const QUOTE_WIDGET_NEEDS_PER_LINE_SOURCE_BUCKET: CoverageActionBucket = {
+  actionBucket: "needs per-line source",
+  count: QUOTE_WIDGET_MISSING_PER_LINE_SOURCE_BUILDINGS.length,
+  sourceStatus: "blocked-missing-per-line-source",
+  rows: QUOTE_WIDGET_MISSING_PER_LINE_SOURCE_BUILDINGS
+};
+
+/**
+ * Quote widget coverage action buckets — the four derived queues plus their
+ * counts, over the 307 staged building rows. Counts are derived and should match
+ * the Sprint 1357 status-list counts. Read-only coverage audit: does not change
+ * pricing, does not change booking, does not change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_COVERAGE_ACTION_BUCKETS = {
+  /** total staged building rows across all four buckets (derived). */
+  totalStagedRows:
+    QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.count +
+    QUOTE_WIDGET_NEEDS_VERIFICATION_BUCKET.count +
+    QUOTE_WIDGET_NEEDS_MAPPING_APPROVAL_BUCKET.count +
+    QUOTE_WIDGET_NEEDS_PER_LINE_SOURCE_BUCKET.count,
+  /** safe to use now count (derived). */
+  safeToUseNowCount: QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET.count,
+  /** needs verification count (derived). */
+  needsVerificationCount: QUOTE_WIDGET_NEEDS_VERIFICATION_BUCKET.count,
+  /** needs mapping approval count (derived). */
+  needsMappingApprovalCount: QUOTE_WIDGET_NEEDS_MAPPING_APPROVAL_BUCKET.count,
+  /** needs per-line source count (derived). */
+  needsPerLineSourceCount: QUOTE_WIDGET_NEEDS_PER_LINE_SOURCE_BUCKET.count,
+  safeToUseNow: QUOTE_WIDGET_SAFE_TO_USE_NOW_BUCKET,
+  needsVerification: QUOTE_WIDGET_NEEDS_VERIFICATION_BUCKET,
+  needsMappingApproval: QUOTE_WIDGET_NEEDS_MAPPING_APPROVAL_BUCKET,
+  needsPerLineSource: QUOTE_WIDGET_NEEDS_PER_LINE_SOURCE_BUCKET
+} as const;
