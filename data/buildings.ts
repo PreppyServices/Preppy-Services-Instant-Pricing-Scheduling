@@ -8843,3 +8843,119 @@ export const BATCH_31_SAFE_COVERAGE: readonly Batch31CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Quote widget coverage rollup (Sprint 1356) — read-only audit summary.
+//
+// Derives totals from the existing BATCH_1_SAFE_COVERAGE through
+// BATCH_31_SAFE_COVERAGE gates. It DERIVES every count from those arrays at
+// module-eval time; the only hardcoded number is `expectedTotalStagedRows` (307)
+// kept as an assertion/check anchor. This is read-only coverage audit data: it
+// does not change pricing, does not change booking, does not change OG behavior,
+// does not send, and the widget does not render it (no customer-facing import).
+//
+// Spans all 31 batch coverage gates over the full 307 staged building rows.
+//
+// Safety attestations for this rollup:
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/** Common read-only shape across every Batch_N_CoverageEntry (status widened to string). */
+type AnyCoverageEntry = { readonly building: string; readonly status: string; readonly note: string };
+
+/** All 31 batch coverage gates, in roster order (Batch 1 … Batch 31). */
+export const ALL_BATCH_COVERAGE_GATES: readonly (readonly AnyCoverageEntry[])[] = [
+  BATCH_1_SAFE_COVERAGE,
+  BATCH_2_SAFE_COVERAGE,
+  BATCH_3_SAFE_COVERAGE,
+  BATCH_4_SAFE_COVERAGE,
+  BATCH_5_SAFE_COVERAGE,
+  BATCH_6_SAFE_COVERAGE,
+  BATCH_7_SAFE_COVERAGE,
+  BATCH_8_SAFE_COVERAGE,
+  BATCH_9_SAFE_COVERAGE,
+  BATCH_10_SAFE_COVERAGE,
+  BATCH_11_SAFE_COVERAGE,
+  BATCH_12_SAFE_COVERAGE,
+  BATCH_13_SAFE_COVERAGE,
+  BATCH_14_SAFE_COVERAGE,
+  BATCH_15_SAFE_COVERAGE,
+  BATCH_16_SAFE_COVERAGE,
+  BATCH_17_SAFE_COVERAGE,
+  BATCH_18_SAFE_COVERAGE,
+  BATCH_19_SAFE_COVERAGE,
+  BATCH_20_SAFE_COVERAGE,
+  BATCH_21_SAFE_COVERAGE,
+  BATCH_22_SAFE_COVERAGE,
+  BATCH_23_SAFE_COVERAGE,
+  BATCH_24_SAFE_COVERAGE,
+  BATCH_25_SAFE_COVERAGE,
+  BATCH_26_SAFE_COVERAGE,
+  BATCH_27_SAFE_COVERAGE,
+  BATCH_28_SAFE_COVERAGE,
+  BATCH_29_SAFE_COVERAGE,
+  BATCH_30_SAFE_COVERAGE,
+  BATCH_31_SAFE_COVERAGE
+];
+
+export interface BatchCoverageSummary {
+  /** 1-based batch number (matches widget-deploy/widget-batch-NN.md). */
+  batch: number;
+  rows: number;
+  safeCovered: number;
+  blockedPresentNotVerified: number;
+  blockedAmbiguousMapping: number;
+  blockedMissingPerLineSource: number;
+}
+
+const countStatusIn = (gate: readonly AnyCoverageEntry[], status: string): number =>
+  gate.filter((e) => e.status === status).length;
+
+const countStatusAll = (status: string): number =>
+  ALL_BATCH_COVERAGE_GATES.reduce((n, gate) => n + countStatusIn(gate, status), 0);
+
+/** Per-batch coverage summary, derived from each gate array. */
+export const PER_BATCH_COVERAGE_SUMMARY: readonly BatchCoverageSummary[] =
+  ALL_BATCH_COVERAGE_GATES.map((gate, i) => ({
+    batch: i + 1,
+    rows: gate.length,
+    safeCovered: countStatusIn(gate, "safe-covered"),
+    blockedPresentNotVerified: countStatusIn(gate, "blocked-present-not-verified"),
+    blockedAmbiguousMapping: countStatusIn(gate, "blocked-ambiguous-mapping"),
+    blockedMissingPerLineSource: countStatusIn(gate, "blocked-missing-per-line-source")
+  }));
+
+/**
+ * Quote widget coverage rollup — derived, read-only audit totals over all
+ * 31 batch coverage gates (307 staged building rows). Hardcoded value
+ * `expectedTotalStagedRows` (307) is an assertion anchor only; `totalStagedRows`
+ * is derived and should equal it. `allBatchGatesPresent` asserts all 31 gates
+ * are wired into ALL_BATCH_COVERAGE_GATES. Does not change pricing, booking, OG,
+ * or send behavior.
+ */
+export const QUOTE_WIDGET_COVERAGE_ROLLUP = {
+  /** 31 batch coverage gates. */
+  batchGateCount: ALL_BATCH_COVERAGE_GATES.length,
+  /** all batch gates present: true when exactly 31 gates are wired in. */
+  allBatchGatesPresent: ALL_BATCH_COVERAGE_GATES.length === 31,
+  /** Derived total staged coverage rows across all gates. */
+  totalStagedRows: ALL_BATCH_COVERAGE_GATES.reduce((n, gate) => n + gate.length, 0),
+  /** 307 staged building rows — assertion anchor; totalStagedRows should equal this. */
+  expectedTotalStagedRows: 307,
+  /** safe-covered total (verified per-line pricing, exact match in pricing + verifiedBuildings). */
+  safeCoveredTotal: countStatusAll("safe-covered"),
+  /** blocked-present-not-verified total (pricing key present, not in verifiedBuildings). */
+  blockedPresentNotVerifiedTotal: countStatusAll("blocked-present-not-verified"),
+  /** blocked-ambiguous-mapping total (mapping approval required; no exact live key or multiple variants). */
+  blockedAmbiguousMappingTotal: countStatusAll("blocked-ambiguous-mapping"),
+  /** blocked-missing-per-line-source total (per-line source required; no safe live record). */
+  blockedMissingPerLineSourceTotal: countStatusAll("blocked-missing-per-line-source"),
+  /** per-batch coverage summary (row + status counts for each of the 31 batches). */
+  perBatch: PER_BATCH_COVERAGE_SUMMARY
+} as const;
