@@ -6381,3 +6381,106 @@ export const BATCH_7_SAFE_COVERAGE: readonly Batch7CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 8 safe coverage gate (Sprint 1332) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_7_SAFE_COVERAGE. Records
+// the widget-deploy Batch 8 roster (widget-deploy/widget-batch-08.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 7):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch8CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch8CoverageEntry {
+  /** Staged Batch 8 roster display name (from widget-deploy/widget-batch-08.md). */
+  building: string;
+  status: Batch8CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 8 safe coverage. No exact safe matches this batch. Five are name/variant
+ * mismatches against an existing live key needing mapping approval. Five are
+ * missing a safe per-line source.
+ */
+export const BATCH_8_SAFE_COVERAGE: readonly Batch8CoverageEntry[] = [
+  {
+    building: "Centro Lofts",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Centro' (staged adds 'Lofts' suffix); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Natiivo Miami",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — closest live key is 'NATIIVO powered by Airbnb'; substantially different display name; &b= must match exactly, so reconcile before covering; do not blind-map; no invented mapping"
+  },
+  {
+    building: "The Elser Hotel and Residences",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'The Elser Hotel & Residences' ('&' vs 'and'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Hyde Midtown",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Hyde Midtown Miami' (staged drops 'Miami'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Midtown 2 (Midblock)",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — closest live key is 'Midtown Midblock'; multiple Midtown variants exist (Two Midtown, Four Midtown, etc.); &b= must match exactly, so reconcile before covering; do not blind-map; no invented mapping"
+  },
+  {
+    building: "E11even Hotel and Residences",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "The Crosby Miami Worldcenter",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "The Residences at 600 Miami Worldcenter",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key (do not conflate with 'Paramount Miami Worldcenter', a different building); no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "JEM Private Residences",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Casa Bella Residences by B and B Italia",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  }
+];
