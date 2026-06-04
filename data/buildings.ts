@@ -6301,3 +6301,83 @@ export const BATCH_6_SAFE_COVERAGE: readonly Batch6CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 7 safe coverage gate (Sprint 1331) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_6_SAFE_COVERAGE. Records
+// the widget-deploy Batch 7 roster (widget-deploy/widget-batch-07.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2/3/4/5/6):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch7CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch7CoverageEntry {
+  /** Staged Batch 7 roster display name (from widget-deploy/widget-batch-07.md). */
+  building: string;
+  status: Batch7CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 7 safe coverage. Six buildings are exact safe matches already present in
+ * `pricing` and `verifiedBuildings` (left untouched). One has per-line pricing
+ * but is not verified. One is a name/variant mismatch needing mapping approval.
+ * Two are missing a safe per-line source.
+ */
+export const BATCH_7_SAFE_COVERAGE: readonly Batch7CoverageEntry[] = [
+  { building: "Ten Museum Park", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Vizcayne South", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "900 Biscayne Bay", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Marina Blue", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "50 Biscayne", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Vizcayne North", status: "safe-covered", note: "verified per-line pricing" },
+  {
+    building: "Marquis Residences",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "The Loft Downtown",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — no exact live key; live variants 'Loft Downtown I' and 'Loft Downtown II' (plus 'The' prefix difference); &b= must match exactly, so reconcile the canonical display name before covering; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Waldorf Astoria Residences Miami",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Okan Tower",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  }
+];
