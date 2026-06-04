@@ -7111,3 +7111,107 @@ export const BATCH_14_SAFE_COVERAGE: readonly Batch14CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 15 safe coverage gate (Sprint 1339) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_14_SAFE_COVERAGE. Records
+// the widget-deploy Batch 15 roster (widget-deploy/widget-batch-15.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 14):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch15CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch15CoverageEntry {
+  /** Staged Batch 15 roster display name (from widget-deploy/widget-batch-15.md). */
+  building: string;
+  status: Batch15CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 15 safe coverage. No exact safe matches this batch. One has per-line
+ * pricing but is not verified. Seven are name/variant mismatches against an
+ * existing live key needing mapping approval. Two are missing a safe per-line
+ * source.
+ */
+export const BATCH_15_SAFE_COVERAGE: readonly Batch15CoverageEntry[] = [
+  {
+    building: "Grovenor House",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "The Grove at Grand Bay North Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Grove at Grand Bay North' (staged adds 'The' and 'Tower'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "The Grove at Grand Bay South Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Grove at Grand Bay South' (staged adds 'The' and 'Tower'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Club Residences at Park Grove",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Park Grove Club Residences' (word order differs); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Two Park Grove",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Park Grove - Two Park Grove' (staged drops 'Park Grove - ' prefix); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "One Park Grove",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Park Grove - One Park Grove' (staged drops 'Park Grove - ' prefix); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "The Ritz-Carlton Residences Coconut Grove",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live keys are 'Ritz-Carlton Coconut Grove 1' and 'Ritz-Carlton Coconut Grove 2' (staged differs with 'The'/'Residences' and no number); &b= must match exactly, so reconcile before covering; do not blind-map; no invented mapping"
+  },
+  {
+    building: "The Fairchild Coconut Grove",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — only similar live key is 'Fairfield Coconut Grove' ('Fairfield' vs 'Fairchild' spelling differs, likely a different building); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Vita at Grove Isle",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key (do not conflate with 'Grove Isle 1/2/3 - Tower' or 'The Markers Grove Isle', different buildings); no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Mr C Residences Coconut Grove",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  }
+];
