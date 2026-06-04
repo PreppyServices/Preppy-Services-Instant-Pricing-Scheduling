@@ -9137,3 +9137,92 @@ export const QUOTE_WIDGET_COVERAGE_ACTION_BUCKETS = {
   needsMappingApproval: QUOTE_WIDGET_NEEDS_MAPPING_APPROVAL_BUCKET,
   needsPerLineSource: QUOTE_WIDGET_NEEDS_PER_LINE_SOURCE_BUCKET
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget mapping approval queue (Sprint 1359) — read-only mapping audit.
+//
+// Derived from QUOTE_WIDGET_NEEDS_MAPPING_APPROVAL_BUCKET (the "needs mapping
+// approval" action bucket, which is itself derived from the ambiguous-mapping
+// status list and ultimately the 31 batch gates). It turns the ambiguous
+// building-name rows into an auditable queue ready for FUTURE human approval.
+//
+// This sprint creates NO approved mappings, adds NO aliases, changes NO building
+// keys, and modifies NO verifiedBuildings. Every row is stamped with a fixed
+// approval state ("requires-human-approval") and a fixed safe default decision
+// ("do-not-map-yet"). Nothing here applies a mapping.
+//
+// Read-only mapping audit. It does not change pricing, does not change booking,
+// does not change OG behavior, does not send, and the widget does not render it
+// (no customer-facing import).
+//
+// Safety attestations for this queue:
+//   - no approved mappings created
+//   - no aliases added
+//   - no building keys changed
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/** Fixed approval state — every queue row requires a human before any mapping. */
+export type MappingApprovalState = "requires-human-approval";
+/** Fixed safe default — no mapping is applied until a human approves. */
+export type MappingSafeDefaultDecision = "do-not-map-yet";
+
+/** One ambiguous-mapping row prepared for future human approval (no mapping applied). */
+export interface MappingApprovalQueueRow {
+  /** 1-based batch number (matches widget-deploy/widget-batch-NN.md). */
+  batch: number;
+  /** Staged building name from the gate (unchanged; not renamed, not aliased). */
+  building: string;
+  status: string;
+  /** Note/reason carried verbatim from the coverage gate. */
+  note: string;
+  /** Action bucket this row came from. */
+  actionBucket: string;
+  /** Always "requires-human-approval" — gate before any mapping. */
+  approvalState: MappingApprovalState;
+  /** Always "do-not-map-yet" — safe default until a human approves. */
+  safeDefaultDecision: MappingSafeDefaultDecision;
+}
+
+/**
+ * Mapping approval queue — derived from needs mapping approval bucket. Each row
+ * is stamped requires-human-approval + do-not-map-yet. No mapping is applied.
+ */
+export const QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE: readonly MappingApprovalQueueRow[] =
+  QUOTE_WIDGET_NEEDS_MAPPING_APPROVAL_BUCKET.rows.map((r) => ({
+    batch: r.batch,
+    building: r.building,
+    status: r.status,
+    note: r.note,
+    actionBucket: QUOTE_WIDGET_NEEDS_MAPPING_APPROVAL_BUCKET.actionBucket,
+    approvalState: "requires-human-approval",
+    safeDefaultDecision: "do-not-map-yet"
+  }));
+
+/**
+ * Mapping approval queue summary — derived counts over the 92 mapping approval
+ * rows. Read-only mapping audit: no approved mappings created, no aliases added,
+ * no building keys changed, does not change pricing/booking/OG, does not send.
+ */
+export const QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE_SUMMARY = {
+  /** total queue rows (derived). */
+  totalQueueRows: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.length,
+  /** rows requiring human approval (derived; should equal totalQueueRows). */
+  rowsRequiringHumanApproval: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.filter(
+    (r) => r.approvalState === "requires-human-approval"
+  ).length,
+  /** rows with safe default do-not-map-yet (derived; should equal totalQueueRows). */
+  rowsSafeDefaultDoNotMapYet: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE.filter(
+    (r) => r.safeDefaultDecision === "do-not-map-yet"
+  ).length,
+  /** 92 mapping approval rows — assertion anchor; totalQueueRows should equal this. */
+  expectedTotalQueueRows: 92,
+  sourceStatus: "blocked-ambiguous-mapping",
+  sourceBucket: "needs mapping approval"
+} as const;
