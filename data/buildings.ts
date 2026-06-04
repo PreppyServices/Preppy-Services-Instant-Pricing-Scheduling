@@ -8959,3 +8959,83 @@ export const QUOTE_WIDGET_COVERAGE_ROLLUP = {
   /** per-batch coverage summary (row + status counts for each of the 31 batches). */
   perBatch: PER_BATCH_COVERAGE_SUMMARY
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget coverage status lists (Sprint 1357) — read-only derived lists.
+//
+// Groups all 307 staged building rows by coverage status, derived from
+// ALL_BATCH_COVERAGE_GATES (the 31 batch gates). Each row is tagged with its
+// 1-based batch number while preserving the original building / status / note
+// fields. Nothing is hand-listed: every entry is produced by flattening and
+// filtering the existing gates.
+//
+// This is read-only coverage audit data. It does not change pricing, does not
+// change booking, does not change OG behavior, does not send, and the widget
+// does not render it (no customer-facing import).
+//
+// Safety attestations for these lists:
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/** One coverage row tagged with its source batch (derived from the gates). */
+export interface CoverageStatusListEntry {
+  /** 1-based batch number (matches widget-deploy/widget-batch-NN.md). */
+  batch: number;
+  building: string;
+  status: string;
+  note: string;
+}
+
+/** Every staged coverage row, flattened from the 31 gates with batch tags. */
+const ALL_COVERAGE_ROWS: readonly CoverageStatusListEntry[] =
+  ALL_BATCH_COVERAGE_GATES.flatMap((gate, i) =>
+    gate.map((e) => ({ batch: i + 1, building: e.building, status: e.status, note: e.note }))
+  );
+
+const rowsWithStatus = (status: string): readonly CoverageStatusListEntry[] =>
+  ALL_COVERAGE_ROWS.filter((r) => r.status === status);
+
+/** safe-covered buildings list — derived from 31 batch coverage gates. */
+export const QUOTE_WIDGET_SAFE_COVERED_BUILDINGS: readonly CoverageStatusListEntry[] =
+  rowsWithStatus("safe-covered");
+
+/** present-not-verified buildings list — derived from 31 batch coverage gates. */
+export const QUOTE_WIDGET_PRESENT_NOT_VERIFIED_BUILDINGS: readonly CoverageStatusListEntry[] =
+  rowsWithStatus("blocked-present-not-verified");
+
+/** ambiguous mapping buildings list — derived from 31 batch coverage gates. */
+export const QUOTE_WIDGET_AMBIGUOUS_MAPPING_BUILDINGS: readonly CoverageStatusListEntry[] =
+  rowsWithStatus("blocked-ambiguous-mapping");
+
+/** missing per-line source buildings list — derived from 31 batch coverage gates. */
+export const QUOTE_WIDGET_MISSING_PER_LINE_SOURCE_BUILDINGS: readonly CoverageStatusListEntry[] =
+  rowsWithStatus("blocked-missing-per-line-source");
+
+/**
+ * Quote widget coverage status lists — the four derived lists plus their counts,
+ * over the 307 staged building rows. Counts are derived and should match the
+ * Sprint 1356 rollup totals. Read-only coverage audit: does not change pricing,
+ * does not change booking, does not change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_COVERAGE_STATUS_LISTS = {
+  /** total staged building rows across all four lists (derived). */
+  totalStagedRows: ALL_COVERAGE_ROWS.length,
+  /** safe-covered count (derived). */
+  safeCoveredCount: QUOTE_WIDGET_SAFE_COVERED_BUILDINGS.length,
+  /** blocked-present-not-verified count (derived). */
+  blockedPresentNotVerifiedCount: QUOTE_WIDGET_PRESENT_NOT_VERIFIED_BUILDINGS.length,
+  /** blocked-ambiguous-mapping count (derived). */
+  blockedAmbiguousMappingCount: QUOTE_WIDGET_AMBIGUOUS_MAPPING_BUILDINGS.length,
+  /** blocked-missing-per-line-source count (derived). */
+  blockedMissingPerLineSourceCount: QUOTE_WIDGET_MISSING_PER_LINE_SOURCE_BUILDINGS.length,
+  safeCovered: QUOTE_WIDGET_SAFE_COVERED_BUILDINGS,
+  presentNotVerified: QUOTE_WIDGET_PRESENT_NOT_VERIFIED_BUILDINGS,
+  ambiguousMapping: QUOTE_WIDGET_AMBIGUOUS_MAPPING_BUILDINGS,
+  missingPerLineSource: QUOTE_WIDGET_MISSING_PER_LINE_SOURCE_BUILDINGS
+} as const;
