@@ -10755,3 +10755,112 @@ export const QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST_SUMMARY = {
   perLineSourceRows: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.perLineSourceRows,
   verifiedPromotionRows: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.totals.verifiedPromotionRows
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget intelligence consumer payload (Sprint 1373) — read-only consumer payload.
+// This is the quote widget intelligence consumer payload.
+//
+// One compact approved object for FUTURE Desk / Gaby confidence surfaces, so a
+// consumer never has to choose among the full internal intelligence objects.
+// It is derived from version manifest (QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST).
+// It is also derived from drift sentinel (QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL).
+// It is also derived from Desk bridge export index (QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX)
+// plus the confidence bridge.
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only consumer payload: it does not change
+// pricing, does not change booking, does not change OG behavior, does not send,
+// and the widget does not render it (no customer-facing import).
+//
+// Safety attestations for this payload:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/**
+ * Quote widget intelligence consumer payload — one compact approved object with
+ * metadata, counts, approved entry point, references, warnings, and status.
+ * Derived from version manifest, drift sentinel, and Desk bridge export index.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-intelligence-consumer-payload",
+  /** payload version. */
+  payloadVersion: "v1",
+  /** layer status (derived from the version manifest). */
+  layerStatus: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST.layerStatus,
+  /** approved future consumer. */
+  approvedFutureConsumer: "Preppy OS Desk / Gaby confidence surfaces",
+  /** approved entry point — name. */
+  approvedEntryPoint: "QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX",
+  /** Named references to the approved structures. */
+  versionManifestReference: "QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST",
+  driftSentinelReference: "QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL",
+  finalAuditReference: "QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT",
+  /** Live references. */
+  approvedEntryPointRef: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX,
+  versionManifestRef: QUOTE_WIDGET_INTELLIGENCE_VERSION_MANIFEST,
+  driftSentinelRef: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL,
+  finalAuditRef: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT,
+  /** safe-covered registry reference (live). */
+  safeCoveredRegistry: QUOTE_WIDGET_SAFE_COVERED_REGISTRY,
+  /** blocked queue references (live): mapping approval queue reference, per-line source queue reference, verified promotion queue reference. */
+  mappingApprovalQueue: QUOTE_WIDGET_MAPPING_APPROVAL_QUEUE,
+  perLineSourceQueue: QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE,
+  verifiedPromotionQueue: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE,
+  /** Derived totals. */
+  totals: {
+    batchGates: ALL_BATCH_COVERAGE_GATES.length,
+    stagedRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.totalStagedRows,
+    safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.safeCoveredRows,
+    blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.blockedResolutionRows,
+    mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.mappingApprovalRows,
+    perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.perLineSourceRows,
+    verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_EXPORT_INDEX.verifiedPromotionRows
+  },
+  /** consumer warnings. */
+  consumerWarnings: [
+    "read-only confidence data",
+    "safe-covered rows may display safe-to-use-now",
+    "blocked rows remain blocked until approval source or QC evidence",
+    "no final quote confidence for blocked rows",
+    "no auto-map",
+    "no auto-price",
+    "no auto-promote",
+    "no auto-send"
+  ]
+} as const;
+
+/**
+ * Consumer payload summary — compact identification + derived totals + status.
+ * Confirms 31 batch coverage gates over 307 staged building rows. Read-only
+ * consumer payload: does not change pricing, does not change booking, does not
+ * change OG behavior, does not send.
+ */
+export const QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.sourceLabel,
+  payloadVersion: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.payloadVersion,
+  layerStatus: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.layerStatus,
+  approvedEntryPoint: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.approvedEntryPoint,
+  approvedFutureConsumer: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.approvedFutureConsumer,
+  driftSentinelStatus: QUOTE_WIDGET_INTELLIGENCE_DRIFT_SENTINEL_SUMMARY.overallStatus,
+  finalAuditAllChecksPass: QUOTE_WIDGET_COVERAGE_INTELLIGENCE_FINAL_AUDIT_SUMMARY.allChecksPass,
+  batchGates: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.batchGates,
+  stagedRows: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.stagedRows,
+  safeCoveredRows: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_INTELLIGENCE_CONSUMER_PAYLOAD.totals.verifiedPromotionRows
+} as const;
