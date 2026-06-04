@@ -10026,3 +10026,146 @@ export const QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD_SUMMARY = {
       QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.blockedResolutionRows ===
     QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.totalStagedRows
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget Desk bridge contract (Sprint 1367) — read-only Desk bridge contract.
+// This is the quote widget Desk bridge contract.
+//
+// Defines the safe payload shape FUTURE Preppy OS Desk / Gaby confidence surfaces
+// may consume later, so cross-repo Desk work never imports raw internal queues
+// blindly. It is derived from confidence bridge (QUOTE_WIDGET_CONFIDENCE_BRIDGE)
+// and derived from consumer guard (QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD).
+//
+// Contract intent:
+//   - safe-covered buildings are safe-to-use-now
+//   - blocked buildings remain blocked until human approval, per-line source, or
+//     QC verification
+//   - confidence data is informational/read-only
+//   - no blocked row may be treated as final quote confidence
+//   - no auto-map, no auto-price, no auto-promote, no auto-send
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, renders nothing, and
+// adds NO cross-repo import. Read-only Desk bridge contract: it does not change
+// pricing, does not change booking, does not change OG behavior, does not send,
+// and the widget does not render it (no customer-facing import).
+//
+// Safety attestations for this contract:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export interface DeskBridgePayloadCategory {
+  /** Allowed payload category key. */
+  category: string;
+  /** Source coverage status for the category. */
+  sourceStatus: string;
+  /** Derived row count for the category. */
+  count: number;
+  /** Safe display label a Desk surface may show. */
+  safeDisplayLabel: string;
+}
+
+/** Allowed payload categories with their safe display labels (derived counts). */
+export const QUOTE_WIDGET_DESK_BRIDGE_PAYLOAD_CATEGORIES: readonly DeskBridgePayloadCategory[] = [
+  {
+    category: "safe-covered",
+    sourceStatus: "safe-covered",
+    count: QUOTE_WIDGET_CONFIDENCE_BRIDGE.safeCoveredRows,
+    safeDisplayLabel: "safe-to-use-now"
+  },
+  {
+    category: "mapping-approval-required",
+    sourceStatus: "blocked-ambiguous-mapping",
+    count: QUOTE_WIDGET_CONFIDENCE_BRIDGE.mappingApprovalRows,
+    safeDisplayLabel: "needs mapping approval"
+  },
+  {
+    category: "per-line-source-required",
+    sourceStatus: "blocked-missing-per-line-source",
+    count: QUOTE_WIDGET_CONFIDENCE_BRIDGE.perLineSourceRows,
+    safeDisplayLabel: "needs per-line source"
+  },
+  {
+    category: "qc-verification-required",
+    sourceStatus: "blocked-present-not-verified",
+    count: QUOTE_WIDGET_CONFIDENCE_BRIDGE.verifiedPromotionRows,
+    safeDisplayLabel: "needs QC verification"
+  }
+];
+
+/**
+ * Quote widget Desk bridge contract — read-only safe payload shape for future
+ * Preppy OS Desk / Gaby confidence surfaces. Derived from confidence bridge and
+ * consumer guard. Does not change pricing/booking/OG, does not send.
+ */
+export const QUOTE_WIDGET_DESK_BRIDGE_CONTRACT = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-desk-bridge-contract",
+  /** contract version. */
+  contractVersion: "v1",
+  /** Source confidence bridge reference. */
+  sourceConfidenceBridge: QUOTE_WIDGET_CONFIDENCE_BRIDGE,
+  /** Source consumer guard reference. */
+  sourceConsumerGuard: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD,
+  /** Intended future consumer. */
+  intendedFutureConsumer: "Preppy OS Desk / Gaby confidence surfaces",
+  /** Allowed payload categories (with safe display labels). */
+  allowedPayloadCategories: QUOTE_WIDGET_DESK_BRIDGE_PAYLOAD_CATEGORIES,
+  /** Safe display labels per category. */
+  safeDisplayLabels: {
+    safeCovered: "safe-to-use-now",
+    mappingApprovalRequired: "needs mapping approval",
+    perLineSourceRequired: "needs per-line source",
+    qcVerificationRequired: "needs QC verification"
+  },
+  /** forbidden consumer actions. */
+  forbiddenConsumerActions: [
+    "no auto-map",
+    "no auto-price",
+    "no auto-promote",
+    "no auto-send",
+    "no final quote confidence for blocked rows"
+  ],
+  /** Derived totals. */
+  totalStagedRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.verifiedPromotionRows
+} as const;
+
+/**
+ * Desk bridge contract summary — compact derived totals plus a consistency check
+ * that safe-covered + blocked resolution rows equals staged rows
+ * (33 + 274 = 307 staged building rows). Read-only Desk bridge contract: does not
+ * change pricing, does not change booking, does not change OG behavior, does not
+ * send.
+ */
+export const QUOTE_WIDGET_DESK_BRIDGE_CONTRACT_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.sourceLabel,
+  contractVersion: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.contractVersion,
+  intendedFutureConsumer: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.intendedFutureConsumer,
+  totalStagedRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.verifiedPromotionRows,
+  /** safe-covered plus blocked resolution rows equals staged rows (derived check). */
+  safeCoveredPlusBlockedEqualsStaged:
+    QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.safeCoveredRows +
+      QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.blockedResolutionRows ===
+    QUOTE_WIDGET_DESK_BRIDGE_CONTRACT.totalStagedRows
+} as const;
