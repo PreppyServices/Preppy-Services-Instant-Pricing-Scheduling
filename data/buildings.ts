@@ -9318,3 +9318,97 @@ export const QUOTE_WIDGET_PER_LINE_SOURCE_QUEUE_SUMMARY = {
   sourceStatus: "blocked-missing-per-line-source",
   sourceBucket: "needs per-line source"
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget verified promotion queue (Sprint 1361) — read-only verification audit.
+//
+// Derived from QUOTE_WIDGET_NEEDS_VERIFICATION_BUCKET (the "needs verification
+// before promoting" action bucket, itself derived from the present-not-verified
+// status list and ultimately the 31 batch gates). These are buildings that have
+// a live per-line `pricing` key but are NOT in `verifiedBuildings`. The queue
+// makes them auditable and ready for FUTURE human/QC verification.
+//
+// This sprint promotes NOTHING into verifiedBuildings, creates NO prices, adds
+// NO per-line entries, adds NO aliases, and changes NO building keys. Every row
+// is stamped with a fixed verification requirement ("requires-qc-verification")
+// and a fixed safe default decision ("do-not-promote-yet"). Nothing here
+// promotes a building.
+//
+// Read-only verification audit. It does not change pricing, does not change
+// booking, does not change OG behavior, does not send, and the widget does not
+// render it (no customer-facing import).
+//
+// Safety attestations for this queue:
+//   - no verifiedBuildings promotion
+//   - no prices created
+//   - no per-line entries added
+//   - no aliases added
+//   - no building keys changed
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+/** Fixed verification requirement — every queue row needs QC before promotion. */
+export type VerificationRequirement = "requires-qc-verification";
+/** Fixed safe default — no promotion into verifiedBuildings until QC passes. */
+export type PromotionSafeDefaultDecision = "do-not-promote-yet";
+
+/** One present-not-verified row prepared for future QC verification (no promotion applied). */
+export interface VerifiedPromotionQueueRow {
+  /** 1-based batch number (matches widget-deploy/widget-batch-NN.md). */
+  batch: number;
+  /** Staged building name from the gate (unchanged; not renamed, not aliased). */
+  building: string;
+  status: string;
+  /** Note/reason carried verbatim from the coverage gate. */
+  note: string;
+  /** Action bucket this row came from. */
+  actionBucket: string;
+  /** Always "requires-qc-verification" — gate before any promotion. */
+  verificationRequirement: VerificationRequirement;
+  /** Always "do-not-promote-yet" — safe default until QC verification passes. */
+  safeDefaultDecision: PromotionSafeDefaultDecision;
+}
+
+/**
+ * Verified promotion queue — derived from needs verification bucket. Each row is
+ * stamped requires-qc-verification + do-not-promote-yet. No promotion is applied.
+ */
+export const QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE: readonly VerifiedPromotionQueueRow[] =
+  QUOTE_WIDGET_NEEDS_VERIFICATION_BUCKET.rows.map((r) => ({
+    batch: r.batch,
+    building: r.building,
+    status: r.status,
+    note: r.note,
+    actionBucket: QUOTE_WIDGET_NEEDS_VERIFICATION_BUCKET.actionBucket,
+    verificationRequirement: "requires-qc-verification",
+    safeDefaultDecision: "do-not-promote-yet"
+  }));
+
+/**
+ * Verified promotion queue summary — derived counts over the 44 verification
+ * rows. Read-only verification audit: no verifiedBuildings promotion, no prices
+ * created, no per-line entries added, no aliases added, no building keys changed,
+ * does not change pricing/booking/OG, does not send.
+ */
+export const QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE_SUMMARY = {
+  /** total queue rows (derived). */
+  totalQueueRows: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.length,
+  /** rows requiring QC verification (derived; should equal totalQueueRows). */
+  rowsRequiringQcVerification: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.filter(
+    (r) => r.verificationRequirement === "requires-qc-verification"
+  ).length,
+  /** rows with safe default do-not-promote-yet (derived; should equal totalQueueRows). */
+  rowsSafeDefaultDoNotPromoteYet: QUOTE_WIDGET_VERIFIED_PROMOTION_QUEUE.filter(
+    (r) => r.safeDefaultDecision === "do-not-promote-yet"
+  ).length,
+  /** 44 verification rows — assertion anchor; totalQueueRows should equal this. */
+  expectedTotalQueueRows: 44,
+  sourceStatus: "blocked-present-not-verified",
+  sourceBucket: "needs verification before promoting"
+} as const;
