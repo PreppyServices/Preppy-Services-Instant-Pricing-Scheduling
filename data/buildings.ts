@@ -7215,3 +7215,107 @@ export const BATCH_15_SAFE_COVERAGE: readonly Batch15CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 16 safe coverage gate (Sprint 1340) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_15_SAFE_COVERAGE. Records
+// the widget-deploy Batch 16 roster (widget-deploy/widget-batch-16.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 15):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch16CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch16CoverageEntry {
+  /** Staged Batch 16 roster display name (from widget-deploy/widget-batch-16.md). */
+  building: string;
+  status: Batch16CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 16 safe coverage. No exact safe matches this batch. One has per-line
+ * pricing but is not verified. Eight are name/variant mismatches against an
+ * existing live key needing mapping approval. One is missing a safe per-line
+ * source.
+ */
+export const BATCH_16_SAFE_COVERAGE: readonly Batch16CoverageEntry[] = [
+  {
+    building: "Bellini Williams Island",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Prive at Island Estates East",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live keys are 'Prive North Tower' and 'Prive South Tower' (staged uses East/West + 'at Island Estates'; directional naming does not safely map); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Prive at Island Estates West",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live keys are 'Prive North Tower' and 'Prive South Tower' (staged uses East/West + 'at Island Estates'; directional naming does not safely map); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Porto Vita North Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Porto Vita North' (staged adds 'Tower'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Porto Vita South Tower",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Porto Vita South' (staged adds 'Tower'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Williams Island 7000 (Villa Marina)",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Williams Island 7000' (staged adds '(Villa Marina)'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Williams Island 2600 (Residence du Cap)",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Williams Island 2600' (staged adds '(Residence du Cap)'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Hamptons West Aventura",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Hamptons West' (staged adds 'Aventura'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Turnberry Isle North",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Turnberry Isle North Tower' (staged drops 'Tower'); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Arbor Residences Coconut Grove",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key (do not conflate with 'Brickell Harbor', a different building); no tier-to-line conversion; no invented price data"
+  }
+];
