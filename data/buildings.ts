@@ -6484,3 +6484,107 @@ export const BATCH_8_SAFE_COVERAGE: readonly Batch8CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 9 safe coverage gate (Sprint 1333) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_8_SAFE_COVERAGE. Records
+// the widget-deploy Batch 9 roster (widget-deploy/widget-batch-09.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 8):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch9CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch9CoverageEntry {
+  /** Staged Batch 9 roster display name (from widget-deploy/widget-batch-09.md). */
+  building: string;
+  status: Batch9CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 9 safe coverage. No exact safe matches this batch. One has per-line
+ * pricing but is not verified. Four are name/variant mismatches against an
+ * existing live key needing mapping approval. Five are missing a safe per-line
+ * source.
+ */
+export const BATCH_9_SAFE_COVERAGE: readonly Batch9CoverageEntry[] = [
+  {
+    building: "Porsche Design Tower",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Midtown 4",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Four Midtown' (numeric vs spelled, word order); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "2 Midtown",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Two Midtown' (numeric vs spelled); variants 'Two Midtown Mews' and 'Two Midtown Midrise' also exist; &b= must match exactly, so reconcile before covering; do not blind-map; no invented mapping"
+  },
+  {
+    building: "4 Midtown",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Four Midtown' (numeric vs spelled); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Residences by Armani/Casa",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live key is 'Residences by Armani Casa' ('/' vs space); &b= must match exactly, so reconcile the canonical display name before covering; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "The Standard Residences Midtown",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Diesel Wynwood",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "NoMad Residences Wynwood",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Society Wynwood",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Ritz-Carlton Residences Sunny Isles Beach",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  }
+];
