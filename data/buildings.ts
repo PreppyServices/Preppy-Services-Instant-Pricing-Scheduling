@@ -5836,3 +5836,83 @@ export const BATCH_1_SAFE_COVERAGE: readonly Batch1CoverageEntry[] = [
     note: "per-line source required; not the same as Edition Miami Beach Residences; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 2 safe coverage gate (Sprint 1326) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE. Records the widget-deploy Batch 2
+// roster (widget-deploy/widget-batch-02.md) against this LIVE per-line `pricing`
+// model. Data-layer audit structure only: it does NOT change pricing, booking
+// flow, OG route behavior, calendar, or any service logic, and the widget does
+// not render it.
+//
+// Status taxonomy:
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-ambiguous-mapping: staged name maps to multiple live variants —
+//     mapping approval required; no invented mapping. (None in Batch 2.)
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//   - blocked-present-not-verified: an exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification is
+//     required before it can be marked safe-covered. No `verifiedBuildings`
+//     change is made here (the staged Batch 2 source is tier-only, which does
+//     not justify flipping verification).
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch2CoverageStatus =
+  | "safe-covered"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source"
+  | "blocked-present-not-verified";
+
+export interface Batch2CoverageEntry {
+  /** Staged Batch 2 roster display name (from widget-deploy/widget-batch-02.md). */
+  building: string;
+  status: Batch2CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 2 safe coverage. Six buildings are exact safe matches already present in
+ * `pricing` and `verifiedBuildings` (left untouched). One has per-line pricing
+ * but is not yet verified. Three are missing a safe per-line source.
+ */
+export const BATCH_2_SAFE_COVERAGE: readonly Batch2CoverageEntry[] = [
+  { building: "The Crimson", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Bay House", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Icon Bay", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Quantum on the Bay", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "1010 Brickell", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Echo Brickell", status: "safe-covered", note: "verified per-line pricing" },
+  {
+    building: "Onyx on the Bay",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Cove at 1740",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Biscayne 21",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key (23 Biscayne / 50 Biscayne / 900 Biscayne Bay are different buildings); no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Villa Miami",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; do not map to Villa Regina / Villa Di Mare / Villa Alhambra / Villa del Mare (different buildings); mapping approval required for any future match; no invented mapping"
+  }
+];
