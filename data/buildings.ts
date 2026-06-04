@@ -7423,3 +7423,106 @@ export const BATCH_17_SAFE_COVERAGE: readonly Batch17CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 18 safe coverage gate (Sprint 1342) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_17_SAFE_COVERAGE. Records
+// the widget-deploy Batch 18 roster (widget-deploy/widget-batch-18.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 17):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch18CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch18CoverageEntry {
+  /** Staged Batch 18 roster display name (from widget-deploy/widget-batch-18.md). */
+  building: string;
+  status: Batch18CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 18 safe coverage. No exact safe matches this batch. Two are
+ * name/variant mismatches against an existing live key needing mapping approval.
+ * Eight are missing a safe per-line source.
+ */
+export const BATCH_18_SAFE_COVERAGE: readonly Batch18CoverageEntry[] = [
+  {
+    building: "The Point Aventura",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — live keys are 'The Point North Tower' and 'The Point South Tower' (also 'Atlantic One at The Point'); staged differs with 'Aventura' and no tower split; &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "Uptown Marina Lofts",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — only similar live key is 'Uptown Lofts' (missing 'Marina', possibly a different building); &b= must match exactly; do not blind-map; no invented mapping"
+  },
+  {
+    building: "2000 Island Boulevard (Williams Island)",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Merrick Manor",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "The Plaza Coral Gables Residences",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Biltmore Parc",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Gables Marquis",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Ponce Tower",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Villa Valencia Coral Gables",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Segovia Tower",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  }
+];
