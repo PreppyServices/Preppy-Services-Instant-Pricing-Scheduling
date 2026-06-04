@@ -6105,3 +6105,99 @@ export const BATCH_4_SAFE_COVERAGE: readonly Batch4CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 5 safe coverage gate (Sprint 1329) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE / BATCH_2_SAFE_COVERAGE /
+// BATCH_3_SAFE_COVERAGE / BATCH_4_SAFE_COVERAGE. Records the widget-deploy
+// Batch 5 roster (widget-deploy/widget-batch-05.md) against this LIVE per-line
+// `pricing` model. Data-layer audit structure only: it does NOT change pricing,
+// booking flow, OG route behavior, calendar, or any service logic, and the
+// widget does not render it.
+//
+// Status taxonomy (same four as Batch 2/3/4):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch5CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch5CoverageEntry {
+  /** Staged Batch 5 roster display name (from widget-deploy/widget-batch-05.md). */
+  building: string;
+  status: Batch5CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 5 safe coverage. Two buildings are exact safe matches already present in
+ * `pricing` and `verifiedBuildings` (left untouched). Five have per-line pricing
+ * but are not verified. Three are missing a safe per-line source.
+ */
+export const BATCH_5_SAFE_COVERAGE: readonly Batch5CoverageEntry[] = [
+  { building: "Brickell Heights East", status: "safe-covered", note: "verified per-line pricing" },
+  { building: "Brickell Heights West", status: "safe-covered", note: "verified per-line pricing" },
+  {
+    building: "MyBrickell",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "The Mark on Brickell",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Infinity at Brickell",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "The Club at Brickell Bay",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Vue at Brickell",
+    status: "blocked-present-not-verified",
+    note: "exact pricing key has per-line data but is not in verifiedBuildings; QC verification required before safe-covered; no verifiedBuildings change made; no invented data"
+  },
+  {
+    building: "Cipriani Residences Miami",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "The Residences at 1428 Brickell",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "The St Regis Residences Brickell",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live Brickell key; do not conflate with 'St Regis Residences Sunny Isles Beach' or 'St. Regis Bal Harbour' towers (different buildings); mapping approval required for any future match; no tier-to-line conversion; no invented mapping"
+  }
+];
