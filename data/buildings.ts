@@ -8649,3 +8649,107 @@ export const BATCH_29_SAFE_COVERAGE: readonly Batch29CoverageEntry[] = [
     note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
   }
 ];
+
+// -----------------------------------------------------------------------------
+// Batch 30 safe coverage gate (Sprint 1354) — read-only reconciliation status.
+//
+// Same pattern as BATCH_1_SAFE_COVERAGE through BATCH_29_SAFE_COVERAGE. Records
+// the widget-deploy Batch 30 roster (widget-deploy/widget-batch-30.md) against
+// this LIVE per-line `pricing` model. Data-layer audit structure only: it does
+// NOT change pricing, booking flow, OG route behavior, calendar, or any service
+// logic, and the widget does not render it.
+//
+// Status taxonomy (same four as Batch 2 through 29):
+//   - safe-covered: exact match in BOTH `pricing` and `verifiedBuildings`
+//     (verified per-line pricing; left untouched).
+//   - blocked-present-not-verified: exact `pricing` key exists with per-line
+//     data, but the name is NOT in `verifiedBuildings`; QC verification required
+//     before safe-covered. No `verifiedBuildings` change made.
+//   - blocked-ambiguous-mapping: staged name has no exact live key, or multiple
+//     possible live variants exist — mapping approval required; no invented
+//     mapping, no rename of the existing key.
+//   - blocked-missing-per-line-source: no safe live per-line record — per-line
+//     source required; no tier-to-line conversion.
+//
+// Safety attestations for this gate:
+//   - no verified prices overwritten
+//   - no tier-to-line conversion
+//   - no invented building data
+//   - no invented price data
+//   - no verifiedBuildings entries changed
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export type Batch30CoverageStatus =
+  | "safe-covered"
+  | "blocked-present-not-verified"
+  | "blocked-ambiguous-mapping"
+  | "blocked-missing-per-line-source";
+
+export interface Batch30CoverageEntry {
+  /** Staged Batch 30 roster display name (from widget-deploy/widget-batch-30.md). */
+  building: string;
+  status: Batch30CoverageStatus;
+  /** Plain-language reason; never a tier-to-line conversion or invented value. */
+  note: string;
+}
+
+/**
+ * Batch 30 safe coverage. No exact safe matches this batch (Palm Beach / Singer
+ * Island roster, absent from the Miami-Dade-weighted live pricing map). One is a
+ * generic live key needing mapping approval. Nine are missing a safe per-line
+ * source.
+ */
+export const BATCH_30_SAFE_COVERAGE: readonly Batch30CoverageEntry[] = [
+  {
+    building: "Ritz-Carlton Residences Singer Island",
+    status: "blocked-ambiguous-mapping",
+    note: "mapping approval required — only similar live key is the generic 'Ritz-Carlton Residences' (staged adds 'Singer Island'); confirm which Ritz-Carlton Residences before covering; &b= must match exactly; do not rename the existing key; no invented mapping"
+  },
+  {
+    building: "Esperante",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "The Plaza of the Palm Beaches",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "3550 South Ocean",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "2700 North Ocean",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "VistaBlue Singer Island",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Amrit Ocean Residences",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "The Resort at Singer Island",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Martinique",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  },
+  {
+    building: "Water Club North Palm Beach",
+    status: "blocked-missing-per-line-source",
+    note: "per-line source required; no exact live key; no tier-to-line conversion; no invented price data"
+  }
+];
