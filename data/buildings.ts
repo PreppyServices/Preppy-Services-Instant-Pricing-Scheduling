@@ -9881,3 +9881,148 @@ export const QUOTE_WIDGET_CONFIDENCE_BRIDGE_SUMMARY = {
       QUOTE_WIDGET_CONFIDENCE_BRIDGE.blockedResolutionRows ===
     QUOTE_WIDGET_CONFIDENCE_BRIDGE.totalStagedRows
 } as const;
+
+// -----------------------------------------------------------------------------
+// Quote widget confidence consumer guard (Sprint 1366) — read-only consumer guard.
+// This is the quote widget confidence consumer guard.
+//
+// Defines what FUTURE Desk / Preppy OS consumers may and may not do with each
+// confidence category from the confidence bridge, so blocked rows are never
+// accidentally treated as quotable. It is derived from confidence bridge
+// (QUOTE_WIDGET_CONFIDENCE_BRIDGE) and the underlying queues / registry.
+//
+// Category intent:
+//   - safe-covered rows can be displayed as safe-to-use-now
+//   - mapping rows require human mapping approval before use
+//   - per-line source rows require per-line source data before pricing
+//   - verified promotion rows require QC verification before verified promotion
+//   - no blocked row may auto-price, auto-map, auto-promote, or be treated as
+//     final quote confidence (no auto-map, no auto-price, no auto-promote,
+//     no auto-send, no final quote confidence for blocked rows)
+//
+// This sprint applies NO mappings, adds NO aliases, creates NO prices, adds NO
+// per-line entries, promotes NOTHING into verifiedBuildings, and renders nothing.
+// Read-only consumer guard: it does not change pricing, does not change booking,
+// does not change OG behavior, does not send, and the widget does not render it
+// (no customer-facing import).
+//
+// Safety attestations for this guard:
+//   - no approved mappings created
+//   - no aliases added
+//   - no prices created
+//   - no per-line entries added
+//   - no verifiedBuildings promotion
+//   - no tier-to-line conversion
+//   - no verified prices overwritten
+//   - no verifiedBuildings entries changed
+//   - no invented building data
+//   - no invented price data
+//   - Sprint 1321 OG behavior preserved (building first, then b alias, then the
+//     existing default only when neither is present)
+// -----------------------------------------------------------------------------
+
+export interface ConfidenceCategoryRule {
+  /** Confidence category. */
+  category: string;
+  /** Source coverage status for the category. */
+  sourceStatus: string;
+  /** Derived row count for the category. */
+  count: number;
+  /** What a consumer is allowed to do with these rows. */
+  allowed: string;
+  /** What a consumer must never do with these rows. */
+  forbidden: string;
+}
+
+/** Row category rules — one per confidence category, derived from the bridge. */
+export const QUOTE_WIDGET_CONFIDENCE_CATEGORY_RULES: readonly ConfidenceCategoryRule[] = [
+  {
+    category: "safe-covered",
+    sourceStatus: "safe-covered",
+    count: QUOTE_WIDGET_CONFIDENCE_BRIDGE.safeCoveredRows,
+    allowed: "display as safe-to-use-now / exact verified per-line match",
+    forbidden: "changing pricing, changing verifiedBuildings, auto-sending"
+  },
+  {
+    category: "mapping approval",
+    sourceStatus: "blocked-ambiguous-mapping",
+    count: QUOTE_WIDGET_CONFIDENCE_BRIDGE.mappingApprovalRows,
+    allowed: "display as needs mapping approval",
+    forbidden: "auto-map, alias, key rename, pricing change"
+  },
+  {
+    category: "per-line source",
+    sourceStatus: "blocked-missing-per-line-source",
+    count: QUOTE_WIDGET_CONFIDENCE_BRIDGE.perLineSourceRows,
+    allowed: "display as needs per-line source",
+    forbidden: "tier-to-line conversion, invented price, pricing entry"
+  },
+  {
+    category: "verified promotion",
+    sourceStatus: "blocked-present-not-verified",
+    count: QUOTE_WIDGET_CONFIDENCE_BRIDGE.verifiedPromotionRows,
+    allowed: "display as needs QC verification",
+    forbidden: "verifiedBuildings promotion without QC approval"
+  }
+];
+
+/**
+ * Quote widget confidence consumer guard — read-only rules for future Desk /
+ * Preppy OS surfaces consuming the confidence bridge. Derived from confidence
+ * bridge. Does not change pricing/booking/OG, does not send.
+ */
+export const QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD = {
+  /** Source label for downstream consumers. */
+  sourceLabel: "quote-widget-confidence-consumer-guard",
+  /** consumer guard version. */
+  guardVersion: "v1",
+  /** Source confidence bridge reference. */
+  sourceConfidenceBridge: QUOTE_WIDGET_CONFIDENCE_BRIDGE,
+  /** allowed consumer uses. */
+  allowedConsumerUses: [
+    "display as safe-to-use-now",
+    "display as needs mapping approval",
+    "display as needs per-line source",
+    "display as needs QC verification"
+  ],
+  /** forbidden consumer uses. */
+  forbiddenConsumerUses: [
+    "no auto-map",
+    "no auto-price",
+    "no auto-promote",
+    "no auto-send",
+    "no final quote confidence for blocked rows"
+  ],
+  /** row category rules. */
+  rowCategoryRules: QUOTE_WIDGET_CONFIDENCE_CATEGORY_RULES,
+  /** Derived totals. */
+  totalStagedRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_CONFIDENCE_BRIDGE.verifiedPromotionRows
+} as const;
+
+/**
+ * Consumer guard summary — compact derived totals plus a consistency check that
+ * safe-covered + blocked resolution rows equals staged rows
+ * (33 + 274 = 307 staged building rows). Read-only consumer guard: does not
+ * change pricing, does not change booking, does not change OG behavior, does not
+ * send.
+ */
+export const QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD_SUMMARY = {
+  sourceLabel: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.sourceLabel,
+  guardVersion: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.guardVersion,
+  totalStagedRows: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.totalStagedRows,
+  safeCoveredRows: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.safeCoveredRows,
+  blockedResolutionRows: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.blockedResolutionRows,
+  mappingApprovalRows: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.mappingApprovalRows,
+  perLineSourceRows: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.perLineSourceRows,
+  verifiedPromotionRows: QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.verifiedPromotionRows,
+  /** safe-covered plus blocked resolution rows equals staged rows (derived check). */
+  safeCoveredPlusBlockedEqualsStaged:
+    QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.safeCoveredRows +
+      QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.blockedResolutionRows ===
+    QUOTE_WIDGET_CONFIDENCE_CONSUMER_GUARD.totalStagedRows
+} as const;
