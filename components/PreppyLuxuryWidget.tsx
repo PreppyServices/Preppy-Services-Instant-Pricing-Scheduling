@@ -9,7 +9,6 @@ import {
   verifiedBuildingSet,
   safeMappedPricing,
   provisionalBuildings,
-  researchStatus,
 } from "../data/buildings";
 /**
  * Preppy Services — Luxury Quote Widget
@@ -80,13 +79,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "selectResidence": "Select Residence",
     "search.placeholder": "Search by building name…",
     "search.footer": "{count} residences · Type to filter",
-    "status.verified": "Verified · Pricing confirmed",
-    "status.priced": "Pricing available",
-    "status.raw": "Floor plan research in progress",
     "unit.labelWithUnit": "Unit {unit} — Line",
     "unit.label": "Select Unit / Line",
     "unit.chooseLine": "Choose line",
-    "unit.pending": "Research in progress",
+    "unit.pending": "Share your unit for a quote",
     "unit.autoDetectedLast2": "Line {line} detected from unit {unit} — tap to change",
     "unit.autoDetectedExact": "Matched unit {unit} · Line {line}",
     "services.header": "Services",
@@ -110,7 +106,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.private": "Private consultation",
     "price.reserveHeadline": "Discuss your project on-site.",
     "price.reserveSub": "Finalize details, get quote and coordinate scheduling.",
-    "price.residenceFinalizing": "This residence is being finalized for line-specific pricing.",
+    "price.residenceFinalizing": "We'll confirm line-specific pricing before you book.",
     "price.textPrivate": "Text us for a private quote.",
     "price.selectResidenceFirst": "Select your residence and unit line to view pricing",
     "price.exterior": "Exterior detailing",
@@ -128,7 +124,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "trust.sameWeek.sub": "Booking",
     "footer.region": "Miami · Miami Beach",
     "support.title": "Text us a photo",
-    "support.sub": "For penthouses, custom layouts, or buildings still being mapped. Send photos for a faster quote.",
+    "support.sub": "For penthouses, custom layouts, or buildings that need a quick quote review. Send photos for a faster quote.",
     "support.copy": "Copy Number",
     "support.close": "Close",
     "sched.title": "Choose your appointment",
@@ -171,13 +167,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "selectResidence": "Seleccione Residencia",
     "search.placeholder": "Buscar por nombre del edificio…",
     "search.footer": "{count} residencias · Escriba para filtrar",
-    "status.verified": "Verificado · Precios confirmados",
-    "status.priced": "Precios disponibles",
-    "status.raw": "Investigación de planos en curso",
     "unit.labelWithUnit": "Unidad {unit} — Línea",
     "unit.label": "Seleccionar Unidad / Línea",
     "unit.chooseLine": "Elegir línea",
-    "unit.pending": "Investigación en curso",
+    "unit.pending": "Comparte tu unidad para una cotización",
     "unit.autoDetectedLast2": "Línea {line} detectada de la unidad {unit} — toque para cambiar",
     "unit.autoDetectedExact": "Unidad {unit} coincidente · Línea {line}",
     "services.header": "Servicios",
@@ -200,7 +193,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.private": "Consulta privada",
     "price.reserveHeadline": "Converse sobre su proyecto en sitio.",
     "price.reserveSub": "Finalize detalles, reciba una cotización y coordine la programación.",
-    "price.residenceFinalizing": "Esta residencia está siendo finalizada para precios por línea.",
+    "price.residenceFinalizing": "Confirmamos el precio por línea antes de reservar.",
     "price.textPrivate": "Escríbanos para una cotización privada.",
     "price.selectResidenceFirst": "Seleccione residencia y línea de unidad para ver precios",
     "price.exterior": "Detallado exterior",
@@ -218,7 +211,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "trust.sameWeek.sub": "Reserva",
     "footer.region": "Miami · Miami Beach",
     "support.title": "Envíenos una foto",
-    "support.sub": "Para penthouses, diseños a medida o edificios en mapeo. Envíe fotos para una cotización más rápida.",
+    "support.sub": "Para penthouses, diseños a medida o edificios que necesitan una revisión rápida de cotización. Envíe fotos para una cotización más rápida.",
     "support.copy": "Copiar Número",
     "support.close": "Cerrar",
     "sched.title": "Elija su cita",
@@ -261,13 +254,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "selectResidence": "Sélectionner la Résidence",
     "search.placeholder": "Rechercher par nom de bâtiment…",
     "search.footer": "{count} résidences · Tapez pour filtrer",
-    "status.verified": "Vérifié · Tarifs confirmés",
-    "status.priced": "Tarifs disponibles",
-    "status.raw": "Recherche de plan en cours",
     "unit.labelWithUnit": "Unité {unit} — Ligne",
     "unit.label": "Sélectionner Unité / Ligne",
     "unit.chooseLine": "Choisir la ligne",
-    "unit.pending": "Recherche en cours",
+    "unit.pending": "Indiquez votre unité pour un devis",
     "unit.autoDetectedLast2": "Ligne {line} détectée de l'unité {unit} — touchez pour changer",
     "unit.autoDetectedExact": "Unité {unit} correspondante · Ligne {line}",
     "services.header": "Services",
@@ -290,7 +280,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.private": "Consultation privée",
     "price.reserveHeadline": "Discutez de votre projet sur place.",
     "price.reserveSub": "Finalisez les détails, obtenez un devis et coordonnez la planification.",
-    "price.residenceFinalizing": "Cette résidence est en cours de finalisation pour les tarifs par ligne.",
+    "price.residenceFinalizing": "Nous confirmons le tarif par ligne avant votre réservation.",
     "price.textPrivate": "Écrivez-nous pour un devis privé.",
     "price.selectResidenceFirst": "Sélectionnez votre résidence et ligne d'unité pour voir les tarifs",
     "price.exterior": "Détaillage extérieur",
@@ -308,7 +298,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "trust.sameWeek.sub": "Réservation",
     "footer.region": "Miami · Miami Beach",
     "support.title": "Envoyez-nous une photo",
-    "support.sub": "Pour les penthouses, agencements sur mesure ou bâtiments en cours de cartographie. Envoyez des photos pour un devis plus rapide.",
+    "support.sub": "Pour les penthouses, agencements sur mesure ou bâtiments nécessitant une révision rapide de devis. Envoyez des photos pour un devis plus rapide.",
     "support.copy": "Copier le Numéro",
     "support.close": "Fermer",
     "sched.title": "Choisissez votre rendez-vous",
@@ -829,12 +819,6 @@ export default function PreppyLuxuryWidget() {
   const personalizationLabel = [customerName, unitNumber ? `Unit ${unitNumber}` : null]
     .filter(Boolean)
     .join(" · ");
-  const statusKey =
-    researchStatus[building] === "verified"
-      ? "status.verified"
-      : researchStatus[building] === "priced"
-        ? "status.priced"
-        : "status.raw";
 
   const showAutoDetectedHint = unitLine && (lineSource === "exact" || lineSource === "last2");
 
@@ -1036,17 +1020,6 @@ export default function PreppyLuxuryWidget() {
                             className="flex w-full items-center justify-between px-4 py-2.5 text-left transition hover:bg-[#F7F3EE]"
                           >
                             <span className="text-[15px] font-medium text-[#0D1B24]">{name}</span>
-                            <span
-                              className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-[9px] uppercase tracking-[0.15em] font-semibold ${
-                                researchStatus[name] === "verified"
-                                  ? "bg-[#E6F5F5] text-[#0F7C82]"
-                                  : researchStatus[name] === "priced"
-                                    ? "bg-[#EEF3F5] text-[#4A7080]"
-                                    : "bg-[#F3EFE9] text-[#8B7355]"
-                              }`}
-                            >
-                              {researchStatus[name]}
-                            </span>
                           </button>
                         ))}
                       </div>
@@ -1058,12 +1031,6 @@ export default function PreppyLuxuryWidget() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-                <div className="mt-2 flex items-center justify-between text-[12px] text-[#66747C]">
-                  <span>{t(statusKey)}</span>
-                  <span className="rounded-full border border-[#E4DACE] bg-white px-2.5 py-1 uppercase tracking-[0.14em] text-[10px] font-semibold text-[#0F7C82]">
-                    {researchStatus[building]}
-                  </span>
-                </div>
               </div>
 
               <div>
