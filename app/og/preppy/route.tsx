@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { resolveVerifiedBuilding } from "../../../lib/ogBuilding";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -40,19 +41,49 @@ function normalizeUnit(value: string) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  const name = clean(searchParams.get("name"), "Prepared Client");
-  // Sprint 1321 — building param compatibility/unblock. Read `building` first;
-  // fall back to the `b` alias (the share page forwards the building as `b`),
-  // then to the existing default only when neither is present. `building` wins
-  // over `b` when both are supplied. This makes the OG card render the real
-  // building instead of always defaulting to "One Paraiso".
+  // No fabricated personalization: an absent name stays empty rather than
+  // defaulting to a generic "Prepared Client".
+  const name = clean(searchParams.get("name"), "");
+
+  // Building param compatibility: accept both `building` and the `b` alias the
+  // share page forwards (`building` wins when both are present). The raw value
+  // is then resolved against the verified building list. An unknown / unverified
+  // building resolves to null, which renders the neutral Preppy Services card —
+  // it never echoes arbitrary input and never falls back to a wrong named
+  // building such as "One Paraiso" or "1 Hotel & Homes".
   const rawBuilding = clean(
     searchParams.get("building") ?? searchParams.get("b"),
-    "Preppy Services"
+    ""
   );
-  const building = humanizeBuilding(rawBuilding);
-  const unit = normalizeUnit(clean(searchParams.get("unit"), ""));
+  const building = resolveVerifiedBuilding(rawBuilding) ?? "";
+
+  // A unit is only shown when its building actually matched.
+  const unit = building ? normalizeUnit(clean(searchParams.get("unit"), "")) : "";
   const lang = clean(searchParams.get("lang"), "EN").toUpperCase();
+
+  // Decide the card's text lines from what we actually have. Only a matched
+  // building (or an explicitly supplied name) personalizes the card; otherwise
+  // it stays neutral Preppy Services branding.
+  let kicker: string;
+  let heroLine: string;
+  let goldLine: string; // secondary line under the hero, in gold
+  if (name && building) {
+    kicker = "Prepared For";
+    heroLine = name;
+    goldLine = building;
+  } else if (name) {
+    kicker = "Prepared For";
+    heroLine = name;
+    goldLine = "";
+  } else if (building) {
+    kicker = "Resident Preview";
+    heroLine = building;
+    goldLine = "";
+  } else {
+    kicker = "Luxury Home Services";
+    heroLine = "Preppy Services";
+    goldLine = "";
+  }
 
   // Self-hosted serif — same origin, no external dep
   const playfairRegular = await fetch(
@@ -268,7 +299,7 @@ export async function GET(request: Request) {
               fontWeight: 500,
             }}
           >
-            Prepared For
+            {kicker}
           </div>
 
           <div
@@ -284,23 +315,25 @@ export async function GET(request: Request) {
               fontFamily: SERIF,
             }}
           >
-            {name}
+            {heroLine}
           </div>
 
-          <div
-            style={{
-              marginTop: 24,
-              fontSize: 50,
-              lineHeight: 1.02,
-              color: GOLD_HERO,
-              fontWeight: 500,
-              letterSpacing: "-0.025em",
-              maxWidth: 720,
-              fontFamily: SERIF,
-            }}
-          >
-            {building}
-          </div>
+          {goldLine ? (
+            <div
+              style={{
+                marginTop: 24,
+                fontSize: 50,
+                lineHeight: 1.02,
+                color: GOLD_HERO,
+                fontWeight: 500,
+                letterSpacing: "-0.025em",
+                maxWidth: 720,
+                fontFamily: SERIF,
+              }}
+            >
+              {goldLine}
+            </div>
+          ) : null}
 
           {unit ? (
             <div

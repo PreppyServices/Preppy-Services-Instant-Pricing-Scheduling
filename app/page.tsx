@@ -6,6 +6,7 @@
 
 import type { Metadata } from "next";
 import WidgetShell from "./WidgetShell";
+import { resolveVerifiedBuilding } from "../lib/ogBuilding";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -25,8 +26,13 @@ function normLang(raw: string): Lang {
 
 function extractOgParams(sp: SearchParams) {
   const name = asString(sp.name).trim().slice(0, 36);
-  const building = asString(sp.b || sp.building).trim().slice(0, 48);
-  const unit = asString(sp.unit).trim().slice(0, 8);
+  // Resolve the inbound building (?b= or ?building=) against the verified
+  // building list. Unknown / unverified buildings resolve to "" so the card
+  // falls back to neutral Preppy Services branding instead of echoing arbitrary
+  // input. A unit is only carried through when its building actually matched.
+  const rawBuilding = asString(sp.b || sp.building).trim().slice(0, 48);
+  const building = resolveVerifiedBuilding(rawBuilding) ?? "";
+  const unit = building ? asString(sp.unit).trim().slice(0, 8) : "";
   const lang = normLang(asString(sp.lang));
   return { name, building, unit, lang };
 }
