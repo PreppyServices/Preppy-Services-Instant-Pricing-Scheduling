@@ -109,6 +109,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.residenceFinalizing": "We'll confirm line-specific pricing before you book.",
     "price.textPrivate": "Text us for a private quote.",
     "price.selectResidenceFirst": "Select your residence and unit line to view pricing",
+    "unmatched.kicker": "Building not verified yet",
+    "unmatched.body": "We don't have {building} verified yet. Preppy can still review your unit manually.",
+    "unmatched.search": "Search above to find your building, or text us for a manual review.",
+    "unmatched.cta": "Text us for a manual review",
     "price.exterior": "Exterior detailing",
     "price.interiorAddon": "Interior add-on",
     "price.estimated": "Estimated total",
@@ -196,6 +200,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.residenceFinalizing": "Confirmamos el precio por línea antes de reservar.",
     "price.textPrivate": "Escríbanos para una cotización privada.",
     "price.selectResidenceFirst": "Seleccione residencia y línea de unidad para ver precios",
+    "unmatched.kicker": "Edificio aún no verificado",
+    "unmatched.body": "Todavía no tenemos {building} verificado. Preppy puede revisar su unidad manualmente.",
+    "unmatched.search": "Busque arriba para encontrar su edificio, o escríbanos para una revisión manual.",
+    "unmatched.cta": "Escríbanos para una revisión manual",
     "price.exterior": "Detallado exterior",
     "price.interiorAddon": "Complemento interior",
     "price.estimated": "Total estimado",
@@ -283,6 +291,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.residenceFinalizing": "Nous confirmons le tarif par ligne avant votre réservation.",
     "price.textPrivate": "Écrivez-nous pour un devis privé.",
     "price.selectResidenceFirst": "Sélectionnez votre résidence et ligne d'unité pour voir les tarifs",
+    "unmatched.kicker": "Bâtiment pas encore vérifié",
+    "unmatched.body": "Nous n'avons pas encore vérifié {building}. Preppy peut tout de même évaluer votre logement manuellement.",
+    "unmatched.search": "Recherchez ci-dessus pour trouver votre bâtiment, ou écrivez-nous pour une évaluation manuelle.",
+    "unmatched.cta": "Écrivez-nous pour une évaluation manuelle",
     "price.exterior": "Détaillage extérieur",
     "price.interiorAddon": "Option intérieure",
     "price.estimated": "Total estimé",
@@ -489,6 +501,8 @@ export default function PreppyLuxuryWidget() {
     if (typeof window === "undefined") {
       return {
         building: null as string | null,
+        buildingParamRaw: "",
+        buildingUnmatched: false,
         line: "",
         lineSource: "none" as "none" | "url" | "exact" | "last2",
         unit: null as string | null,
@@ -502,12 +516,19 @@ export default function PreppyLuxuryWidget() {
 
     const p = new URLSearchParams(window.location.search);
     const rawB = p.get("b") || p.get("building");
+    const buildingParamRaw = (rawB || "").trim();
     let matchedB: string | null = null;
 
-    if (rawB) {
-      const norm = rawB.trim().toLowerCase();
+    if (buildingParamRaw) {
+      const norm = buildingParamRaw.toLowerCase();
       matchedB = buildings.find((n) => n.toLowerCase() === norm) || null;
     }
+
+    // A building param was supplied but matched no priced building. Flag it so
+    // the widget shows a neutral unmatched state instead of silently falling
+    // back to buildings[0] (which would render the first building, "1 Hotel &
+    // Homes", with verified pricing).
+    const buildingUnmatched = buildingParamRaw.length > 0 && !matchedB;
 
     const rawLine = p.get("line") || p.get("l") || "";
     let resolvedLine =
@@ -538,6 +559,8 @@ export default function PreppyLuxuryWidget() {
 
     return {
       building: matchedB,
+      buildingParamRaw,
+      buildingUnmatched,
       line: resolvedLine,
       lineSource,
       unit: rawUnit,
@@ -557,7 +580,15 @@ export default function PreppyLuxuryWidget() {
         : "glass";
 
   const [serviceType, setServiceType] = React.useState<ServiceType>(resolvedService);
-  const [building, setBuilding] = React.useState<string>(initialParams.building || buildings[0] || "");
+  // Core fix: only fall back to buildings[0] for an organic visit with no
+  // building param. When a building param was supplied but did not match, keep
+  // the selection empty and surface a neutral unmatched state — never default
+  // to "1 Hotel & Homes" verified pricing.
+  const [building, setBuilding] = React.useState<string>(
+    initialParams.building || (initialParams.buildingUnmatched ? "" : buildings[0] || "")
+  );
+  const [unmatched, setUnmatched] = React.useState<boolean>(initialParams.buildingUnmatched);
+  const unmatchedName = initialParams.buildingParamRaw.slice(0, 48);
   const [unitLine, setUnitLine] = React.useState<string>(initialParams.line);
   const [lineSource, setLineSource] = React.useState<"none" | "url" | "exact" | "last2">(
     initialParams.lineSource
@@ -925,6 +956,26 @@ export default function PreppyLuxuryWidget() {
 
           <div className="p-5 md:p-6">
             <div className="space-y-5">
+              {unmatched && (
+                <div className="rounded-2xl border border-[#E7D2A8] bg-[#FBF6EC] px-4 py-4 text-center">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#9A7B3C]">
+                    {t("unmatched.kicker")}
+                  </div>
+                  <div className="mt-2 text-[15px] leading-relaxed text-[#0D1B24]">
+                    {unmatchedName
+                      ? t("unmatched.body", { building: unmatchedName })
+                      : t("unmatched.search")}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSupport(true)}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[#D8CEBF] bg-white px-5 py-3 text-[15px] font-medium tracking-tight text-[#0D1B24] transition hover:border-[#C5A572] hover:bg-[#FDFCF9]"
+                  >
+                    <span className="text-[#0F7C82]">✉</span>
+                    {t("unmatched.cta")}
+                  </button>
+                </div>
+              )}
               <div className="rounded-2xl border border-[#EAE1D7] bg-[#FCFAF7] px-4 py-3 text-center">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-[#5A6972]">
                   {serviceType === "painting"
@@ -1014,6 +1065,7 @@ export default function PreppyLuxuryWidget() {
                             onMouseDown={(e) => {
                               e.preventDefault();
                               setBuilding(name);
+                              setUnmatched(false);
                               setBuildingQuery("");
                               setShowBuildingDropdown(false);
                             }}
