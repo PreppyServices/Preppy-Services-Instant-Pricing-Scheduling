@@ -2507,21 +2507,13 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
-    "1 Hotel & Homes": {
-      lines: {
-        "01": 320,
-        "02": 260,
-        "03": 260,
-        "04": 320,
-        "05": 220,
-        "06": 220,
-        "07": 300,
-        "08": 300,
-        "PH01": 450,
-        "PH02": 450
-      },
-      penthouse: false,
-    },
+    // LB5 (2026-06-10): "1 Hotel & Homes" removed from customer-facing verified
+    // pricing per Joe — not needed in the widget right now. Removing it from
+    // `pricing` drops it from the widget's selectable inventory (Object.keys),
+    // so ?b=1 Hotel & Homes (and variants) now fall to the neutral
+    // unmatched / manual-review state. Original price data is preserved in git
+    // history and backup tag backup/widget-main-lb2-076d209; re-add this block
+    // plus the verifiedBuildings entry to restore. No aliases added.
     "200 Ocean Drive": {
       lines: {
         "01": 220,
@@ -5370,7 +5362,6 @@ export const verifiedBuildings: string[] = [
     "Apogee South Beach",
     "Faena House",
     "Aston Martin Residences",
-    "1 Hotel & Homes",
     "Portofino Tower",
     "Aria on the Bay",
     "Bay House",
@@ -5526,7 +5517,6 @@ export const placeholderBuildings: string[] = [
     "South Bay Club",
     "Waverly",
     "1500 Ocean Drive",
-    "1 Hotel & Homes",
     "ArteCity",
     "Boulan South Beach",
     "Casa Grande",
