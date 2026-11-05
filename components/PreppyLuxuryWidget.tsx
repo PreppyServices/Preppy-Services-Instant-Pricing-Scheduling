@@ -11,11 +11,15 @@ import {
   provisionalBuildings,
 } from "../data/buildings";
 import {
+  FLYER_ASSETS,
   firstServicePrice,
   interiorGlassAddOn,
   isIntroRequest,
+  readFlyerLanding,
   setIntroSearch,
+  type HolidayFlyerId,
 } from "../lib/introPricing";
+import HolidayFlyer from "./HolidayFlyer";
 /**
  * Preppy Services — Luxury Quote Widget
  * =====================================
@@ -35,6 +39,12 @@ import {
  *                          glass add-on. Also accepts ?first=1 or ?promo=intro.
  *                          The resident can toggle it off. Regular interior
  *                          prices stay on addOnPricing.
+ *   /november              Holiday flyer above the calculator, with the 20%
+ *                          November newsletter discount already applied.
+ *                          ?flyer=1, ?flyer=november, ?promo=november, and
+ *                          ?promo=holiday do the same on any path.
+ *                          ?flyer=building with ?b=Gran Paraiso uses that
+ *                          building's rate card. Otherwise the sunset flyer.
  *   ?service=painting      Land on painting consultation mode instead of glass
  *   ?service=custom        Land on custom job mode
  *   ?lang=en|es|fr         Override display language. Falls back to navigator.language.
@@ -135,6 +145,20 @@ const I18N: Record<Lang, Record<string, string>> = {
     "intro.toggle.sub": "20% off balcony glass",
     "intro.on": "On",
     "intro.off": "Off",
+    "discount.newsletter": "20% November Newsletter Discount Applied",
+    "discount.november": "20% November Discount Applied",
+    "discount.instruction":
+      "Select your building and unit/floor line below to see your instant 20%-off price. Book online in seconds — pay only after service is complete.",
+    "discount.viewFlyer": "View Holiday Flyer",
+    "discount.hideFlyer": "Hide Holiday Flyer",
+    "flyer.seePrice": "See Your Unit's Price Below ↓",
+    "flyer.open": "Open the holiday flyer full screen",
+    "flyer.tap": "Tap to enlarge",
+    "flyer.close": "Close",
+    "flyer.zoomIn": "Zoom in",
+    "flyer.zoomOut": "Zoom out",
+    "flyer.reset": "Fit",
+    "flyer.hint": "Pinch or double-tap to zoom",
     "cta.sendImessage": "Send via iMessage",
     "cta.checkAvailability": "Check Availability",
     "cta.reserveConsultation": "Reserve On-Site Walkthrough",
@@ -233,6 +257,20 @@ const I18N: Record<Lang, Record<string, string>> = {
     "intro.toggle.sub": "20% de descuento en cristal de balcón",
     "intro.on": "Sí",
     "intro.off": "No",
+    "discount.newsletter": "20% de descuento del boletín de noviembre aplicado",
+    "discount.november": "20% de descuento de noviembre aplicado",
+    "discount.instruction":
+      "Seleccione su edificio y la línea de su unidad abajo para ver su precio instantáneo con 20% de descuento. Reserve en línea en segundos — pague solo cuando el servicio esté completo.",
+    "discount.viewFlyer": "Ver el folleto de temporada",
+    "discount.hideFlyer": "Ocultar el folleto",
+    "flyer.seePrice": "Vea el precio de su unidad abajo ↓",
+    "flyer.open": "Abrir el folleto a pantalla completa",
+    "flyer.tap": "Toque para ampliar",
+    "flyer.close": "Cerrar",
+    "flyer.zoomIn": "Acercar",
+    "flyer.zoomOut": "Alejar",
+    "flyer.reset": "Ajustar",
+    "flyer.hint": "Pellizque o toque dos veces para ampliar",
     "cta.sendImessage": "Enviar por iMessage",
     "cta.checkAvailability": "Ver Disponibilidad",
     "cta.reserveConsultation": "Reservar Visita en Sitio",
@@ -331,6 +369,20 @@ const I18N: Record<Lang, Record<string, string>> = {
     "intro.toggle.sub": "20 % de réduction sur le verre de balcon",
     "intro.on": "Oui",
     "intro.off": "Non",
+    "discount.newsletter": "Réduction de 20 % — newsletter de novembre appliquée",
+    "discount.november": "Réduction de 20 % de novembre appliquée",
+    "discount.instruction":
+      "Sélectionnez votre immeuble et votre ligne d'unité ci-dessous pour voir votre prix instantané à −20 %. Réservez en ligne en quelques secondes — payez uniquement une fois le service terminé.",
+    "discount.viewFlyer": "Voir le flyer des fêtes",
+    "discount.hideFlyer": "Masquer le flyer",
+    "flyer.seePrice": "Voir le prix de votre unité ci-dessous ↓",
+    "flyer.open": "Ouvrir le flyer en plein écran",
+    "flyer.tap": "Touchez pour agrandir",
+    "flyer.close": "Fermer",
+    "flyer.zoomIn": "Zoom avant",
+    "flyer.zoomOut": "Zoom arrière",
+    "flyer.reset": "Ajuster",
+    "flyer.hint": "Pincez ou touchez deux fois pour zoomer",
     "cta.sendImessage": "Envoyer via iMessage",
     "cta.checkAvailability": "Vérifier la Disponibilité",
     "cta.reserveConsultation": "Réserver la Visite sur Place",
@@ -545,6 +597,10 @@ export default function PreppyLuxuryWidget() {
         intro: false,
         service: null as string | null,
         lang: "en" as Lang,
+        flyerShow: false,
+        flyerNewsletter: false,
+        flyerImpliesIntro: false,
+        flyerId: "sunset" as HolidayFlyerId,
       };
     }
 
@@ -578,6 +634,7 @@ export default function PreppyLuxuryWidget() {
       }
     }
 
+    const landing = readFlyerLanding(window.location.pathname, p);
     const intP = p.get("interior");
     const rawLang = (p.get("lang") || "").toLowerCase().slice(0, 2);
     const navLang =
@@ -601,9 +658,13 @@ export default function PreppyLuxuryWidget() {
       lead: p.get("lead"),
       name: p.get("name"),
       interior: (intP === "1" || intP === "true") && !!resolvedLine,
-      intro: isIntroRequest(p),
+      intro: isIntroRequest(p, window.location.pathname),
       service: p.get("service"),
       lang: pickedLang,
+      flyerShow: landing.showFlyer,
+      flyerNewsletter: landing.newsletter,
+      flyerImpliesIntro: landing.impliesIntro,
+      flyerId: landing.flyerId,
     };
   }, [buildings]);
 
@@ -631,6 +692,9 @@ export default function PreppyLuxuryWidget() {
   const [lang, setLang] = React.useState<Lang>(initialParams.lang);
   const [includeInterior, setIncludeInterior] = React.useState<boolean>(initialParams.interior);
   const [introPricing, setIntroPricing] = React.useState<boolean>(initialParams.intro);
+  const [flyerPeek, setFlyerPeek] = React.useState(false);
+  const showFlyer = initialParams.flyerShow || flyerPeek;
+  const flyerAsset = FLYER_ASSETS[initialParams.flyerId];
   const [customDescription, setCustomDescription] = React.useState<string>("");
   const [showSupport, setShowSupport] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
@@ -649,11 +713,15 @@ export default function PreppyLuxuryWidget() {
   const setIntroPricingAndUrl = React.useCallback((on: boolean) => {
     setIntroPricing(on);
     if (typeof window === "undefined") return;
-    const next = setIntroSearch(new URLSearchParams(window.location.search), on);
+    const next = setIntroSearch(
+      new URLSearchParams(window.location.search),
+      on,
+      initialParams.flyerImpliesIntro
+    );
     const qs = next.toString();
     const url = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
     window.history.replaceState(window.history.state, "", url);
-  }, []);
+  }, [initialParams.flyerImpliesIntro]);
 
   // ── Inline residential scheduler — books against the shared /exec engine ──
   // Same calendar (info@preprock.com) and same contract as the commercial page.
@@ -687,6 +755,11 @@ export default function PreppyLuxuryWidget() {
       setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
     }
   }, []);
+
+  React.useEffect(() => {
+    if (!flyerPeek) return;
+    document.getElementById("holiday-flyer")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [flyerPeek]);
 
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -923,7 +996,13 @@ export default function PreppyLuxuryWidget() {
   const showAutoDetectedHint = unitLine && (lineSource === "exact" || lineSource === "last2");
 
   return (
-    <div className="relative min-h-screen bg-[#F5F1EA] text-[#0D1B24] px-4 py-7 md:py-9">
+    <div
+      className={`relative min-h-screen bg-[#F5F1EA] text-[#0D1B24] px-4 ${
+        showFlyer ? "py-3.5 md:py-8" : "py-7 md:py-9"
+      }`}
+      data-flyer-landing={showFlyer ? "open" : "closed"}
+      data-intro-pricing={introPricing ? "on" : "off"}
+    >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[360px]"
@@ -934,7 +1013,7 @@ export default function PreppyLuxuryWidget() {
       />
 
       <div className="relative mx-auto max-w-[460px]">
-        <div className="mb-4 flex items-center justify-center gap-1.5">
+        <div className={`${showFlyer ? "mb-2.5" : "mb-4"} flex items-center justify-center gap-1.5`}>
           {(["en", "es", "fr"] as Lang[]).map((l) => {
             const active = lang === l;
             return (
@@ -956,6 +1035,7 @@ export default function PreppyLuxuryWidget() {
           })}
         </div>
 
+        {!showFlyer && (
         <div className="mb-6 text-center">
           <motion.div
             initial="hidden"
@@ -992,6 +1072,7 @@ export default function PreppyLuxuryWidget() {
             {t("brand.insured")}
           </motion.div>
         </div>
+        )}
 
         {hasPersonalization && (
           <motion.div
@@ -999,7 +1080,7 @@ export default function PreppyLuxuryWidget() {
             animate="visible"
             custom={1.6}
             variants={fadeUp}
-            className="mb-5 rounded-2xl border border-[#EAE1D7] bg-white/90 px-4 py-3 text-center shadow-[0_4px_18px_rgba(13,27,36,0.05)]"
+            className={`${showFlyer ? "mb-3" : "mb-5"} rounded-2xl border border-[#EAE1D7] bg-white/90 px-4 py-3 text-center shadow-[0_4px_18px_rgba(13,27,36,0.05)]`}
           >
             <div className="text-[11px] uppercase tracking-[0.22em] text-[#5A6972]">
               {t("preparedFor")}
@@ -1010,7 +1091,27 @@ export default function PreppyLuxuryWidget() {
           </motion.div>
         )}
 
-        <div className="overflow-hidden rounded-[28px] border border-[#E8E0D6] bg-white shadow-[0_12px_40px_rgba(13,27,36,0.08)]">
+        {showFlyer && (
+          <HolidayFlyer
+            src={flyerAsset.src}
+            alt={flyerAsset.alt}
+            width={flyerAsset.width}
+            height={flyerAsset.height}
+            seePriceLabel={t("flyer.seePrice")}
+            openLabel={t("flyer.open")}
+            tapLabel={t("flyer.tap")}
+            closeLabel={t("flyer.close")}
+            zoomInLabel={t("flyer.zoomIn")}
+            zoomOutLabel={t("flyer.zoomOut")}
+            resetLabel={t("flyer.reset")}
+            hintLabel={t("flyer.hint")}
+          />
+        )}
+
+        <div
+          id="unit-price"
+          className="scroll-mt-3 overflow-hidden rounded-[28px] border border-[#E8E0D6] bg-white shadow-[0_12px_40px_rgba(13,27,36,0.08)]"
+        >
           <div className="relative h-2 overflow-hidden">
             <div
               className="absolute inset-0"
@@ -1022,6 +1123,40 @@ export default function PreppyLuxuryWidget() {
             <div className="absolute inset-x-0 bottom-0 h-px bg-white/40" />
           </div>
           <div className="h-px bg-gradient-to-r from-transparent via-[#E7D6AE] to-transparent opacity-90" />
+
+          {introPricing && (
+            <div
+              className="border-b border-[#C5A572]/35 bg-[#0C1E30] px-4 py-3.5 md:px-5"
+              role="status"
+              data-discount-banner={initialParams.flyerNewsletter ? "newsletter" : "november"}
+            >
+              <div className="flex items-start gap-2.5 rounded-2xl border border-[#1F8A62]/60 bg-[#0E3B30] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                <span
+                  aria-hidden="true"
+                  className="mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1F8A62] text-[13px] font-bold leading-none text-white"
+                >
+                  ✓
+                </span>
+                <span className="text-[14.5px] font-semibold leading-snug tracking-tight text-white">
+                  {initialParams.flyerNewsletter
+                    ? t("discount.newsletter")
+                    : t("discount.november")}
+                </span>
+              </div>
+              <p className="mt-2.5 text-[14px] leading-relaxed text-[#F6F1E8]">
+                {t("discount.instruction")}
+              </p>
+              {!initialParams.flyerShow && (
+                <button
+                  type="button"
+                  onClick={() => setFlyerPeek((open) => !open)}
+                  className="mt-2.5 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#E7D6AE] underline decoration-[#C5A572]/70 underline-offset-4"
+                >
+                  {flyerPeek ? t("discount.hideFlyer") : t("discount.viewFlyer")}
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="p-5 md:p-6">
             <div className="space-y-5">
