@@ -10,6 +10,7 @@ import {
   safeMappedPricing,
   provisionalBuildings,
 } from "../data/buildings";
+import { firstServicePrice, isIntroRequest, setIntroSearch } from "../lib/introPricing";
 /**
  * Preppy Services — Luxury Quote Widget
  * =====================================
@@ -24,12 +25,16 @@ import {
  *   ?lead=A1042            Lead ID for conversion tracking (stored locally + forwarded)
  *   ?name=Alex             Customer first name for personalization
  *   ?interior=1            Pre-toggle interior add-on (requires a valid line)
+ *   ?intro=1               First-service / new-customer balcony glass: 20% off
+ *                          the regular line price. Also accepts ?first=1 or
+ *                          ?promo=intro. The resident can toggle it off.
  *   ?service=painting      Land on painting consultation mode instead of glass
  *   ?service=custom        Land on custom job mode
  *   ?lang=en|es|fr         Override display language. Falls back to navigator.language.
  *
  * Example morning-text links:
  *   Glass:   https://preppyservices.com/?b=Paraiso+Bay&line=04&unit=3204&lead=A1042&name=Alex
+ *   Intro:   https://quote.preppyservices.com/?b=Gran%20Paraiso&intro=1&line=01&name=Joe
  *   Paint:   https://preppyservices.com/?service=painting&b=Paraiso+Bay&unit=3204&lead=A1042&name=Alex
  *   Custom:  https://preppyservices.com/?service=custom&b=Paraiso+Bay&unit=3204&lead=A1042&name=Alex
  *
@@ -116,6 +121,13 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.exterior": "Exterior detailing",
     "price.interiorAddon": "Interior add-on",
     "price.estimated": "Estimated total",
+    "price.regular": "Regular",
+    "price.firstService": "First service",
+    "price.firstServiceNote": "New-customer pricing · 20% off",
+    "intro.toggle": "First service / new customer",
+    "intro.toggle.sub": "20% off balcony glass",
+    "intro.on": "On",
+    "intro.off": "Off",
     "cta.sendImessage": "Send via iMessage",
     "cta.checkAvailability": "Check Availability",
     "cta.reserveConsultation": "Reserve On-Site Walkthrough",
@@ -207,6 +219,13 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.exterior": "Detallado exterior",
     "price.interiorAddon": "Complemento interior",
     "price.estimated": "Total estimado",
+    "price.regular": "Regular",
+    "price.firstService": "Primer servicio",
+    "price.firstServiceNote": "Precio para clientes nuevos · 20% de descuento",
+    "intro.toggle": "Primer servicio / cliente nuevo",
+    "intro.toggle.sub": "20% de descuento en cristal de balcón",
+    "intro.on": "Sí",
+    "intro.off": "No",
     "cta.sendImessage": "Enviar por iMessage",
     "cta.checkAvailability": "Ver Disponibilidad",
     "cta.reserveConsultation": "Reservar Visita en Sitio",
@@ -298,6 +317,13 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.exterior": "Détaillage extérieur",
     "price.interiorAddon": "Option intérieure",
     "price.estimated": "Total estimé",
+    "price.regular": "Tarif habituel",
+    "price.firstService": "Premier service",
+    "price.firstServiceNote": "Tarif nouveau client · 20 % de réduction",
+    "intro.toggle": "Premier service / nouveau client",
+    "intro.toggle.sub": "20 % de réduction sur le verre de balcon",
+    "intro.on": "Oui",
+    "intro.off": "Non",
     "cta.sendImessage": "Envoyer via iMessage",
     "cta.checkAvailability": "Vérifier la Disponibilité",
     "cta.reserveConsultation": "Réserver la Visite sur Place",
@@ -509,6 +535,7 @@ export default function PreppyLuxuryWidget() {
         lead: null as string | null,
         name: null as string | null,
         interior: false,
+        intro: false,
         service: null as string | null,
         lang: "en" as Lang,
       };
@@ -567,6 +594,7 @@ export default function PreppyLuxuryWidget() {
       lead: p.get("lead"),
       name: p.get("name"),
       interior: (intP === "1" || intP === "true") && !!resolvedLine,
+      intro: isIntroRequest(p),
       service: p.get("service"),
       lang: pickedLang,
     };
@@ -595,6 +623,7 @@ export default function PreppyLuxuryWidget() {
   );
   const [lang, setLang] = React.useState<Lang>(initialParams.lang);
   const [includeInterior, setIncludeInterior] = React.useState<boolean>(initialParams.interior);
+  const [introPricing, setIntroPricing] = React.useState<boolean>(initialParams.intro);
   const [customDescription, setCustomDescription] = React.useState<string>("");
   const [showSupport, setShowSupport] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
@@ -606,6 +635,18 @@ export default function PreppyLuxuryWidget() {
   const unitNumber = initialParams.unit;
   const leadId = initialParams.lead;
   const customerName = initialParams.name;
+  // Building captured on first paint, including a ?b= / ?building= deep link.
+  // The line-sync effect must not clear that selection on mount.
+  const deepLinkBuildingRef = React.useRef(building);
+
+  const setIntroPricingAndUrl = React.useCallback((on: boolean) => {
+    setIntroPricing(on);
+    if (typeof window === "undefined") return;
+    const next = setIntroSearch(new URLSearchParams(window.location.search), on);
+    const qs = next.toString();
+    const url = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
+    window.history.replaceState(window.history.state, "", url);
+  }, []);
 
   // ── Inline residential scheduler — books against the shared /exec engine ──
   // Same calendar (info@preprock.com) and same contract as the commercial page.
@@ -663,6 +704,11 @@ export default function PreppyLuxuryWidget() {
   }, [buildingQuery, buildings]);
 
   React.useEffect(() => {
+    // ?line= is applied as initial state. Clearing it on mount left
+    // ?b=Gran%20Paraiso&line=01 with an empty quote. Re-sync only after the
+    // resident changes building, or when a unit number can derive a line.
+    if (building === deepLinkBuildingRef.current && !unitNumber) return;
+
     setIncludeInterior(false);
 
     if (unitNumber) {
@@ -682,9 +728,22 @@ export default function PreppyLuxuryWidget() {
     if (serviceType !== "glass") setIncludeInterior(false);
   }, [serviceType]);
 
-  const basePrice = unitLine && currentBuilding ? currentBuilding.lines[unitLine] ?? null : null;
-  const interiorAddOn = basePrice ? addOnPricing[basePrice] ?? 0 : 0;
-  const total = basePrice ? basePrice + (includeInterior ? interiorAddOn : 0) : null;
+  const regularPrice =
+    unitLine && currentBuilding ? currentBuilding.lines[unitLine] ?? null : null;
+  const introPrice = regularPrice != null ? firstServicePrice(regularPrice) : null;
+  // Intro is balcony glass only. Interior add-ons stay keyed off the regular
+  // catalog price so a discounted line cannot invent a different add-on tier.
+  const glassIntro = introPricing && serviceType === "glass";
+  const chargedPrice = glassIntro && introPrice != null ? introPrice : regularPrice;
+  const interiorAddOn = regularPrice != null ? addOnPricing[regularPrice] ?? 0 : 0;
+  const total =
+    chargedPrice != null ? chargedPrice + (includeInterior ? interiorAddOn : 0) : null;
+  const quoteLabel =
+    total != null
+      ? glassIntro
+        ? `$${total} · ${t("price.firstService")}`
+        : `$${total}`
+      : "";
 
   const scheduleUrl = React.useMemo(() => {
     const base = serviceType === "painting" ? PAINTING_URL : BOOKING_URL;
@@ -732,6 +791,7 @@ export default function PreppyLuxuryWidget() {
         unit: unitNumber,
         service: serviceType,
         quote: total,
+        intro: glassIntro,
         interior: includeInterior,
         lang,
       };
@@ -741,7 +801,7 @@ export default function PreppyLuxuryWidget() {
     } catch {
       // safe to ignore
     }
-  }, [leadId, customerName, building, unitLine, unitNumber, serviceType, total, includeInterior, lang]);
+  }, [leadId, customerName, building, unitLine, unitNumber, serviceType, total, glassIntro, includeInterior, lang]);
 
   const loadSlots = React.useCallback(async () => {
     setSlotState("loading");
@@ -796,7 +856,7 @@ export default function PreppyLuxuryWidget() {
       (building ? " · " + building : "") +
       (unitLine ? " · line " + unitLine : "") +
       (unit ? " · Unit " + unit : "") +
-      (total ? " · $" + total : "") +
+      (total ? " · $" + total + (glassIntro ? " first service" : "") : "") +
       (note ? " · Notes: " + note : "");
     const addr = [building, unit ? "Unit " + unit : ""].filter(Boolean).join(" · ");
     const p = new URLSearchParams();
@@ -839,6 +899,7 @@ export default function PreppyLuxuryWidget() {
     building,
     unitLine,
     total,
+    glassIntro,
     contactEmail,
     contactPhone,
     leadId,
@@ -1152,7 +1213,7 @@ export default function PreppyLuxuryWidget() {
                         </div>
                       </div>
                       <div className="pt-1 text-sm font-medium text-[#0F7C82]">
-                        {basePrice ? `+ $${interiorAddOn}` : t("glass.selectUnitFirst")}
+                        {regularPrice != null ? `+ $${interiorAddOn}` : t("glass.selectUnitFirst")}
                       </div>
                     </div>
                   </button>
@@ -1209,6 +1270,34 @@ export default function PreppyLuxuryWidget() {
               </div>
             ) : (
               <div className="rounded-2xl border border-[#ECE3D8] bg-white px-4 py-4 shadow-sm">
+                {serviceType === "glass" && (
+                  <button
+                    type="button"
+                    onClick={() => setIntroPricingAndUrl(!introPricing)}
+                    aria-pressed={introPricing}
+                    className={`mb-4 flex w-full items-start justify-between gap-4 rounded-2xl border px-4 py-3 text-left transition ${
+                      introPricing
+                        ? "border-[#B6D9D8] bg-[#F3FBFB]"
+                        : "border-[#ECE5DB] bg-[#FFFEFC] hover:border-[#D8CEBF]"
+                    }`}
+                  >
+                    <span>
+                      <span className="block text-[15px] font-semibold tracking-tight text-[#0D1B24]">
+                        {t("intro.toggle")}
+                      </span>
+                      <span className="mt-1 block text-[11px] uppercase tracking-[0.16em] text-[#6B7880]">
+                        {t("intro.toggle.sub")}
+                      </span>
+                    </span>
+                    <span
+                      className={`pt-0.5 text-[12px] font-semibold uppercase tracking-[0.18em] ${
+                        introPricing ? "text-[#0F7C82]" : "text-[#8B9399]"
+                      }`}
+                    >
+                      {introPricing ? t("intro.on") : t("intro.off")}
+                    </span>
+                  </button>
+                )}
                 {serviceType === "painting" ? (
                   <div className="text-center">
                     <div className="text-[13px] uppercase tracking-[0.22em] text-[#6B7880]">
@@ -1231,12 +1320,32 @@ export default function PreppyLuxuryWidget() {
                     {t("price.selectResidenceFirst")}
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-baseline gap-2 text-[15px]">
-                      <span className="text-[#5A6972]">{t("price.exterior")}</span>
-                      <span className="flex-1 translate-y-[-3px] border-b border-dotted border-[#D7CEC2]" />
-                      <span className="font-semibold text-[#0D1B24]">${basePrice}</span>
-                    </div>
+                  <div
+                    className="space-y-3"
+                    data-pricing-mode={glassIntro ? "intro" : "regular"}
+                    data-regular-price={regularPrice ?? ""}
+                    data-quote-amount={total ?? ""}
+                  >
+                    {glassIntro ? (
+                      <>
+                        <div className="flex items-baseline gap-2 text-[15px]">
+                          <span className="text-[#5A6972]">{t("price.regular")}</span>
+                          <span className="flex-1 translate-y-[-3px] border-b border-dotted border-[#D7CEC2]" />
+                          <span className="font-medium text-[#8B9399] line-through">${regularPrice}</span>
+                        </div>
+                        <div className="flex items-baseline gap-2 text-[15px]">
+                          <span className="text-[#0F7C82]">{t("price.firstService")}</span>
+                          <span className="flex-1 translate-y-[-3px] border-b border-dotted border-[#D7CEC2]" />
+                          <span className="font-semibold text-[#0D1B24]">${chargedPrice}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-baseline gap-2 text-[15px]">
+                        <span className="text-[#5A6972]">{t("price.exterior")}</span>
+                        <span className="flex-1 translate-y-[-3px] border-b border-dotted border-[#D7CEC2]" />
+                        <span className="font-semibold text-[#0D1B24]">${chargedPrice}</span>
+                      </div>
+                    )}
                     {includeInterior && (
                       <div className="flex items-baseline gap-2 text-[15px]">
                         <span className="text-[#5A6972]">{t("price.interiorAddon")}</span>
@@ -1259,6 +1368,11 @@ export default function PreppyLuxuryWidget() {
                         ${total}
                       </motion.span>
                     </div>
+                    {glassIntro && (
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-[#0F7C82]">
+                        {t("price.firstServiceNote")}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1436,7 +1550,7 @@ export default function PreppyLuxuryWidget() {
 
                 {(building || unitNumber || total) && (
                   <div className="mt-1 text-[12px] text-[#6B7880]">
-                    {[building, unitNumber ? "Unit " + unitNumber : "", total ? "$" + total : ""]
+                    {[building, unitNumber ? "Unit " + unitNumber : "", quoteLabel]
                       .filter(Boolean)
                       .join(" · ")}
                   </div>
@@ -1522,7 +1636,7 @@ export default function PreppyLuxuryWidget() {
                       {(building || total) && (
                         <span className="font-normal text-[#6B7880]">
                           {"  ·  "}
-                          {[building, total ? "$" + total : ""].filter(Boolean).join(" · ")}
+                          {[building, quoteLabel].filter(Boolean).join(" · ")}
                         </span>
                       )}
                     </div>
