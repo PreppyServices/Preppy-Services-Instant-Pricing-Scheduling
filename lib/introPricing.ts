@@ -78,7 +78,7 @@ function viewValue(params: SearchReader): string {
 
 /**
  * Holiday flyer landing: /november, ?flyer=1, ?flyer=november, ?promo=november,
- * and ?promo=holiday. The hero is the real mirrored Edgewater balcony card.
+ * and ?promo=holiday. The hero is the clean upper Edgewater balcony photo.
  * ?view=daylight or ?view=sunset swaps in the other real Edgewater photo.
  */
 export function readFlyerLanding(pathname: string, params: SearchReader): FlyerLanding {
@@ -105,24 +105,27 @@ export function readFlyerLanding(pathname: string, params: SearchReader): FlyerL
 
 export const FLYER_ASSETS: Record<
   HolidayFlyerId,
-  { src: string; alt: string; width: number; height: number }
+  { src: string; alt: string; width: number; height: number; priceBand: boolean }
 > = {
   mirrored: {
-    src: "/preppy-mirrored-holiday-card.jpg",
+    src: "/preppy-holiday-flyer-v3.jpg",
     width: 1080,
     height: 1350,
-    alt: "Preppy Services holiday balcony cleaning. Spotless balcony glass before guests arrive. Glass, floors, frames, and railing. 20% deal applied. Select your property and line for price at quote.preppyservices.com.",
+    priceBand: false,
+    alt: "Preppy Services holiday balcony cleaning. Glass, floors, frames, and railing. Click here to get your unit pricing.",
   },
   sunset: {
     src: "/flyers/real_edgewater_sunset_holiday_card.jpg",
     width: 1080,
     height: 1350,
+    priceBand: true,
     alt: "Real Edgewater sunset balcony over Biscayne Bay. Preppy Services holiday balcony glass, 20% off the first visit. Instant balcony pricing at quote.preppyservices.com.",
   },
   daylight: {
     src: "/flyers/real_edgewater_daylight_holiday_card.jpg",
     width: 1080,
     height: 1350,
+    priceBand: true,
     alt: "Real Edgewater daylight balcony over Biscayne Bay. Preppy Services November newsletter offer, 20% off the first visit. Instant balcony pricing at quote.preppyservices.com.",
   },
 };
