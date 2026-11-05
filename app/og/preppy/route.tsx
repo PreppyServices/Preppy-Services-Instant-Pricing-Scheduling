@@ -64,7 +64,7 @@ export async function GET(request: Request) {
   );
 
   // Self-hosted serif, same origin. `v` only busts the iMessage image cache.
-  const [playfairRegular, playfairMedium, photoSrc] = await Promise.all([
+  const [playfairRegular, playfairMedium, photoSrc, iconSrc] = await Promise.all([
     fetch(new URL("/fonts/PlayfairDisplay-Regular.ttf", request.url)).then((res) =>
       res.arrayBuffer()
     ),
@@ -73,6 +73,9 @@ export async function GET(request: Request) {
     ),
     november
       ? publicDataUrl(request, "/preppy-holiday-flyer-v3.jpg", "image/jpeg")
+      : Promise.resolve(""),
+    november
+      ? publicDataUrl(request, "/preppy-icon-512.png", "image/png")
       : Promise.resolve(""),
   ]);
 
@@ -99,6 +102,7 @@ export async function GET(request: Request) {
           kicker={novemberKicker(firstName)}
           subline={novemberSubline(building)}
           photoSrc={photoSrc}
+          iconSrc={iconSrc}
         />
       ),
       {

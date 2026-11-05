@@ -59,7 +59,7 @@ export async function generateMetadata({
           url: image,
           width: 1200,
           height: 630,
-          alt: "Click here to get your unit pricing. Preppy Services holiday balcony cleaning.",
+          alt: "Click here to get your unit pricing. Holiday balcony cleaning. Glass, floors, frames, and railing.",
         },
       ],
     },
