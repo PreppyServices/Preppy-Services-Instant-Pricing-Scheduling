@@ -34,13 +34,13 @@ export type BuildingPricing = {
 export const pricing: Record<string, BuildingPricing> = {
     "Gran Paraiso": {
       lines: {
-        "01": 300,
+        "01": 350,
         "02": 180,
         "03": 180,
         "04": 180,
         "05": 180,
         "06": 180,
-        "07": 280,
+        "07": 350,
         "PH01": 420,
         "PH02": 360,
         "PH03": 400,
