@@ -46,7 +46,20 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      {
+        url: "https://quote.preppyservices.com/preppy-icon-512.png",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
+    apple: [
+      {
+        url: "https://quote.preppyservices.com/preppy-icon-512.png",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
   },
 };
 

@@ -25,10 +25,121 @@ function flagOn(params: SearchReader, key: string): boolean {
   return TRUTHY.has(paramValue(params, key).trim().toLowerCase());
 }
 
-/** True for ?intro=1, ?first=1, or ?promo=intro (1/true accepted on the flags). */
-export function isIntroRequest(params: SearchReader): boolean {
+const OFF = new Set(["0", "false", "off", "no"]);
+
+/** Flyer values that open the holiday hero and apply the first-service rate. */
+const FLYER_ON = new Set([
+  "1",
+  "true",
+  "yes",
+  "november",
+  "holiday",
+  "building",
+  "sunset",
+  "daylight",
+  "tower",
+  "square",
+  "gran-paraiso",
+]);
+
+export type HolidayFlyerId = "mirrored" | "sunset" | "daylight";
+
+export type FlyerLanding = {
+  /** Render the holiday flyer above the calculator. */
+  showFlyer: boolean;
+  /** Path or query implies intro even without ?intro=1. Toggle-off persists intro=0. */
+  impliesIntro: boolean;
+  /** Newsletter wording (/november, ?promo=november, ?flyer=november). */
+  newsletter: boolean;
+  flyerId: HolidayFlyerId;
+};
+
+function promoValue(params: SearchReader): string {
+  return paramValue(params, "promo").trim().toLowerCase();
+}
+
+function flyerValue(params: SearchReader): string {
+  return paramValue(params, "flyer").trim().toLowerCase();
+}
+
+/** Explicit opt-out. Checked before campaign paths so a toggle-off survives refresh. */
+export function isExplicitIntroOff(params: SearchReader): boolean {
+  return OFF.has(paramValue(params, "intro").trim().toLowerCase());
+}
+
+export function isNovemberPath(pathname: string): boolean {
+  const path = (pathname || "/").replace(/\/+$/, "") || "/";
+  return path === "/november";
+}
+
+function viewValue(params: SearchReader): string {
+  return paramValue(params, "view").trim().toLowerCase();
+}
+
+/**
+ * Holiday flyer landing: /november, ?flyer=1, ?flyer=november, ?promo=november,
+ * and ?promo=holiday. The hero is the real mirrored Edgewater balcony card.
+ * ?view=daylight or ?view=sunset swaps in the other real Edgewater photo.
+ */
+export function readFlyerLanding(pathname: string, params: SearchReader): FlyerLanding {
+  const pathNovember = isNovemberPath(pathname);
+  const flyer = flyerValue(params);
+  const promo = promoValue(params);
+  const view = viewValue(params);
+  const flyerOn = FLYER_ON.has(flyer);
+  const promoOn = promo === "november" || promo === "holiday";
+  const showFlyer = pathNovember || flyerOn || promoOn;
+  const newsletter = pathNovember || promo === "november" || flyer === "november";
+
+  let flyerId: HolidayFlyerId = "mirrored";
+  if (view === "daylight" || flyer === "daylight") flyerId = "daylight";
+  else if (view === "sunset" || flyer === "sunset") flyerId = "sunset";
+
+  return {
+    showFlyer,
+    impliesIntro: showFlyer,
+    newsletter,
+    flyerId,
+  };
+}
+
+export const FLYER_ASSETS: Record<
+  HolidayFlyerId,
+  { src: string; alt: string; width: number; height: number }
+> = {
+  mirrored: {
+    src: "/preppy-mirrored-holiday-card.jpg",
+    width: 1080,
+    height: 1350,
+    alt: "Preppy Services holiday balcony cleaning. Spotless balcony glass before guests arrive. Glass, floors, frames, and railing. 20% deal applied. Select your property and line for price at quote.preppyservices.com.",
+  },
+  sunset: {
+    src: "/flyers/real_edgewater_sunset_holiday_card.jpg",
+    width: 1080,
+    height: 1350,
+    alt: "Real Edgewater sunset balcony over Biscayne Bay. Preppy Services holiday balcony glass, 20% off the first visit. Instant balcony pricing at quote.preppyservices.com.",
+  },
+  daylight: {
+    src: "/flyers/real_edgewater_daylight_holiday_card.jpg",
+    width: 1080,
+    height: 1350,
+    alt: "Real Edgewater daylight balcony over Biscayne Bay. Preppy Services November newsletter offer, 20% off the first visit. Instant balcony pricing at quote.preppyservices.com.",
+  },
+};
+
+/**
+ * True for ?intro=1, ?first=1, ?promo=intro, the November flyer landing
+ * (/november, ?promo=november, ?promo=holiday, ?flyer=1 / ?flyer=november),
+ * unless intro is explicitly off (intro=0).
+ */
+export function isIntroRequest(params: SearchReader, pathname = ""): boolean {
+  if (isExplicitIntroOff(params)) return false;
   if (flagOn(params, "intro") || flagOn(params, "first")) return true;
-  return paramValue(params, "promo").trim().toLowerCase() === "intro";
+  const promo = promoValue(params);
+  if (promo === "intro" || promo === "november" || promo === "holiday") return true;
+  if (FLYER_ON.has(flyerValue(params))) return true;
+  if (pathname && isNovemberPath(pathname)) return true;
+  return false;
 }
 
 /** Flyer first-service price: 20% off the regular line, rounded to the dollar. */
@@ -65,10 +176,17 @@ export function interiorGlassAddOn(
 /**
  * Reflect the first-service toggle in the query string without touching
  * building, line, unit, or name. Canonical on-state is intro=1.
+ * When the page itself implies intro (for example /november), turning it off
+ * writes intro=0 so a refresh does not snap the discount back on.
  */
-export function setIntroSearch(params: URLSearchParams, on: boolean): URLSearchParams {
+export function setIntroSearch(
+  params: URLSearchParams,
+  on: boolean,
+  implied = false
+): URLSearchParams {
   const next = new URLSearchParams(params.toString());
   if (on) next.set("intro", "1");
+  else if (implied) next.set("intro", "0");
   else next.delete("intro");
   next.delete("first");
   if ((next.get("promo") ?? "").trim().toLowerCase() === "intro") next.delete("promo");
