@@ -23,10 +23,16 @@ function normLang(raw: string): Lang {
   return v === "es" || v === "fr" ? (v as Lang) : "en";
 }
 
+const OG_TITLE = "20% Deal Applied · Select Your Property & Line for Price";
+const OG_DESCRIPTION =
+  "Instant building & unit pricing — 20% November discount applied. Pay after service.";
+const OG_IMAGE = "https://quote.preppyservices.com/preppy-mirrored-holiday-card.jpg";
+const APPLE_ICON = "https://quote.preppyservices.com/preppy-icon-512.png";
+
 const TAGLINE: Record<Lang, string> = {
-  en: "20% off your first balcony cleaning. Instant unit pricing. Pay after service.",
-  es: "20% de descuento en su primera limpieza de balcón. Precio al instante. Pague después del servicio.",
-  fr: "20 % de réduction sur votre premier nettoyage de balcon. Prix instantané. Payez après le service.",
+  en: OG_DESCRIPTION,
+  es: "Precio instantáneo por edificio y unidad — 20% de descuento de noviembre aplicado. Pague después del servicio.",
+  fr: "Prix instantané par immeuble et ligne — réduction de 20 % de novembre appliquée. Payez après le service.",
 };
 
 const PREPARED_FOR: Record<Lang, string> = {
@@ -46,22 +52,12 @@ export async function generateMetadata({
   const building = resolveVerifiedBuilding(rawBuilding) ?? "";
   const lang = normLang(asString(sp.lang));
   const description = TAGLINE[lang];
-
-  let title = "Holiday Balcony Cleaning — 20% Off First Visit · Preppy Services";
-  if (name && building) {
-    title = `${PREPARED_FOR[lang]} ${name} · ${building} · 20% Off · Preppy Services`;
-  } else if (building) {
-    title = `${building} · Holiday Balcony Cleaning · 20% Off · Preppy Services`;
-  } else if (name) {
-    title = `${PREPARED_FOR[lang]} ${name} · Holiday Balcony Cleaning · Preppy Services`;
-  }
-
-  const qs = new URLSearchParams();
-  if (name) qs.set("name", name);
-  if (building) qs.set("building", building);
-  if (lang !== "en") qs.set("lang", lang);
-  const q = qs.toString();
-  const ogImage = q ? `/og/preppy?${q}` : "/og/preppy";
+  // iMessage reads these tags from the raw HTML. Keep the locked title and the
+  // real mirrored Edgewater card even when the link also carries ?b= or ?line=.
+  const title =
+    name && building
+      ? `${PREPARED_FOR[lang]} ${name} · ${building} · ${OG_TITLE}`
+      : OG_TITLE;
 
   return {
     title: { absolute: title },
@@ -69,16 +65,27 @@ export async function generateMetadata({
     openGraph: {
       type: "website",
       siteName: "Preppy Services",
-      title,
-      description,
-      url: "/november",
-      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      title: OG_TITLE,
+      description: OG_DESCRIPTION,
+      url: "https://quote.preppyservices.com/november",
+      images: [
+        {
+          url: OG_IMAGE,
+          width: 1080,
+          height: 1350,
+          alt: "Preppy Services mirrored Edgewater balcony. 20% deal applied. Select your property and line for price.",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
+      title: OG_TITLE,
+      description: OG_DESCRIPTION,
+      images: [OG_IMAGE],
+    },
+    icons: {
+      icon: [{ url: APPLE_ICON, type: "image/png", sizes: "512x512" }],
+      apple: [{ url: APPLE_ICON, type: "image/png", sizes: "512x512" }],
     },
   };
 }

@@ -48,33 +48,39 @@ export default function HolidayFlyer({
   return (
     <>
       <section id="holiday-flyer" className="mb-3 scroll-mt-3" data-holiday-flyer="true">
-        <div className="overflow-hidden rounded-[28px] border border-[#1A3348] bg-[#0B1C2E] shadow-[0_18px_44px_rgba(11,28,46,0.18)]">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="relative block w-full cursor-zoom-in bg-[#0B1C2E]"
-          >
+        <div className="overflow-hidden rounded-[28px] border border-[#1A3348] bg-[#071520] shadow-[0_18px_44px_rgba(11,28,46,0.18)]">
+          <div className="relative mx-auto w-fit max-w-full">
             <img
               src={src}
               alt={alt}
               width={width}
               height={height}
               data-flyer-src={src}
-              className="mx-auto block h-auto max-h-[min(40dvh,440px)] w-full object-contain"
+              className="mx-auto block h-auto max-h-[min(52dvh,560px)] w-auto max-w-full"
             />
-            <span className="sr-only">{openLabel}</span>
-            <span className="pointer-events-none absolute right-3 top-3 rounded-full border border-white/15 bg-[#0B1C2E]/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F2E5BE] shadow-sm backdrop-blur-sm">
-              {tapLabel}
-            </span>
-          </button>
-          <a
-            href="#unit-price"
-            data-see-price="true"
-            onClick={scrollToPrice}
-            className="flex w-full items-center justify-center gap-2 border-t border-white/10 bg-[#0B1C2E] px-4 py-2.5 text-[13px] font-semibold tracking-tight text-[#F2E5BE] transition hover:bg-[#10283A] hover:text-white"
-          >
-            {seePriceLabel}
-          </a>
+            <button
+              type="button"
+              data-flyer-zone="photo"
+              onClick={() => setOpen(true)}
+              aria-label={openLabel}
+              className="absolute inset-x-0 top-0 h-[74%] cursor-zoom-in bg-transparent"
+            >
+              <span className="sr-only">{openLabel}</span>
+              <span className="pointer-events-none absolute right-3 top-3 rounded-full border border-white/15 bg-[#0B1C2E]/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F2E5BE] shadow-sm backdrop-blur-sm">
+                {tapLabel}
+              </span>
+            </button>
+            <a
+              href="#unit-price"
+              data-see-price="true"
+              data-flyer-zone="price"
+              aria-label={seePriceLabel}
+              onClick={scrollToPrice}
+              className="absolute inset-x-0 bottom-0 h-[26%] cursor-pointer"
+            >
+              <span className="sr-only">{seePriceLabel}</span>
+            </a>
+          </div>
         </div>
       </section>
       {open && (

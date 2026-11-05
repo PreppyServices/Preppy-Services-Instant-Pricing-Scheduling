@@ -36,12 +36,13 @@ const FLYER_ON = new Set([
   "holiday",
   "building",
   "sunset",
+  "daylight",
   "tower",
   "square",
   "gran-paraiso",
 ]);
 
-export type HolidayFlyerId = "sunset" | "tower" | "square" | "gran-paraiso";
+export type HolidayFlyerId = "mirrored" | "sunset" | "daylight";
 
 export type FlyerLanding = {
   /** Render the holiday flyer above the calculator. */
@@ -71,35 +72,28 @@ export function isNovemberPath(pathname: string): boolean {
   return path === "/november";
 }
 
-function buildingParam(params: SearchReader): string {
-  return (paramValue(params, "b") || paramValue(params, "building"))
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+function viewValue(params: SearchReader): string {
+  return paramValue(params, "view").trim().toLowerCase();
 }
 
 /**
  * Holiday flyer landing: /november, ?flyer=1, ?flyer=november, ?promo=november,
- * and ?promo=holiday. ?flyer=building with Gran Paraiso swaps in that building's
- * rate card. Every other flyer request uses the universal sunset hero.
+ * and ?promo=holiday. The hero is the real mirrored Edgewater balcony card.
+ * ?view=daylight or ?view=sunset swaps in the other real Edgewater photo.
  */
 export function readFlyerLanding(pathname: string, params: SearchReader): FlyerLanding {
   const pathNovember = isNovemberPath(pathname);
   const flyer = flyerValue(params);
   const promo = promoValue(params);
+  const view = viewValue(params);
   const flyerOn = FLYER_ON.has(flyer);
   const promoOn = promo === "november" || promo === "holiday";
   const showFlyer = pathNovember || flyerOn || promoOn;
   const newsletter = pathNovember || promo === "november" || flyer === "november";
 
-  let flyerId: HolidayFlyerId = "sunset";
-  if (flyer === "tower") flyerId = "tower";
-  else if (flyer === "square") flyerId = "square";
-  else if (flyer === "gran-paraiso") flyerId = "gran-paraiso";
-  else if (flyer === "building" && buildingParam(params) === "gran paraiso") {
-    flyerId = "gran-paraiso";
-  }
+  let flyerId: HolidayFlyerId = "mirrored";
+  if (view === "daylight" || flyer === "daylight") flyerId = "daylight";
+  else if (view === "sunset" || flyer === "sunset") flyerId = "sunset";
 
   return {
     showFlyer,
@@ -113,29 +107,23 @@ export const FLYER_ASSETS: Record<
   HolidayFlyerId,
   { src: string; alt: string; width: number; height: number }
 > = {
-  sunset: {
-    src: "/flyers/miami-holiday-sunset-flyer.jpg",
-    width: 864,
-    height: 1152,
-    alt: "Preppy Services Miami holiday balcony cleaning flyer. 20% off your first visit. Crystal-clear balcony glass, frames, railings, and floors. Instant quote at quote.preppyservices.com. Call 305-414-0305.",
-  },
-  tower: {
-    src: "/flyers/miami-holiday-tower-flyer.jpg",
+  mirrored: {
+    src: "/preppy-mirrored-holiday-card.jpg",
     width: 1080,
     height: 1350,
-    alt: "Preppy Services holiday balcony glass flyer for Miami high-rises. 20% off your first balcony cleaning. Instant online quote. Pay after service.",
+    alt: "Preppy Services holiday balcony cleaning. Spotless balcony glass before guests arrive. Glass, floors, frames, and railing. 20% deal applied. Select your property and line for price at quote.preppyservices.com.",
   },
-  square: {
-    src: "/flyers/miami-holiday-square-flyer.jpg",
-    width: 1024,
-    height: 1024,
-    alt: "Preppy Services holiday ready views flyer. 20% off applied to your first balcony cleaning. Book at quote.preppyservices.com.",
+  sunset: {
+    src: "/flyers/real_edgewater_sunset_holiday_card.jpg",
+    width: 1080,
+    height: 1350,
+    alt: "Real Edgewater sunset balcony over Biscayne Bay. Preppy Services holiday balcony glass, 20% off the first visit. Instant balcony pricing at quote.preppyservices.com.",
   },
-  "gran-paraiso": {
-    src: "/flyers/gran-paraiso-flyer.jpg",
-    width: 1400,
-    height: 1812,
-    alt: "Gran Paraiso balcony glass cleaning flyer. 20% off your first balcony glass cleaning. Line 01 regular $350, first service $280. Interior glass may be added for $100.",
+  daylight: {
+    src: "/flyers/real_edgewater_daylight_holiday_card.jpg",
+    width: 1080,
+    height: 1350,
+    alt: "Real Edgewater daylight balcony over Biscayne Bay. Preppy Services November newsletter offer, 20% off the first visit. Instant balcony pricing at quote.preppyservices.com.",
   },
 };
 

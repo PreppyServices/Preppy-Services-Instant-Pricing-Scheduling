@@ -39,12 +39,11 @@ import HolidayFlyer from "./HolidayFlyer";
  *                          glass add-on. Also accepts ?first=1 or ?promo=intro.
  *                          The resident can toggle it off. Regular interior
  *                          prices stay on addOnPricing.
- *   /november              Holiday flyer above the calculator, with the 20%
- *                          November newsletter discount already applied.
- *                          ?flyer=1, ?flyer=november, ?promo=november, and
- *                          ?promo=holiday do the same on any path.
- *                          ?flyer=building with ?b=Gran Paraiso uses that
- *                          building's rate card. Otherwise the sunset flyer.
+ *   /november              Real Edgewater mirrored balcony card above the
+ *                          calculator, with the 20% first-service rate already
+ *                          applied. ?flyer=1, ?flyer=november, ?promo=november,
+ *                          and ?promo=holiday do the same. ?view=daylight or
+ *                          ?view=sunset swaps in the other real Edgewater photo.
  *   ?service=painting      Land on painting consultation mode instead of glass
  *   ?service=custom        Land on custom job mode
  *   ?lang=en|es|fr         Override display language. Falls back to navigator.language.
@@ -145,10 +144,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "intro.toggle.sub": "20% off balcony glass",
     "intro.on": "On",
     "intro.off": "Off",
-    "discount.newsletter": "20% November Newsletter Discount Applied",
-    "discount.november": "20% November Discount Applied",
-    "discount.instruction":
-      "Select your building and unit/floor line below to see your instant 20%-off price. Book online in seconds — pay only after service is complete.",
+    "discount.deal": "✓ 20% Deal Applied",
+    "discount.offer": "November Newsletter Offer · Glass · Floors · Frames · Railing",
+    "discount.offerShort": "Glass · Floors · Frames · Railing",
+    "discount.heading": "Select Your Property & Line for Price",
     "discount.viewFlyer": "View Holiday Flyer",
     "discount.hideFlyer": "Hide Holiday Flyer",
     "flyer.seePrice": "See Your Unit's Price Below ↓",
@@ -257,10 +256,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "intro.toggle.sub": "20% de descuento en cristal de balcón",
     "intro.on": "Sí",
     "intro.off": "No",
-    "discount.newsletter": "20% de descuento del boletín de noviembre aplicado",
-    "discount.november": "20% de descuento de noviembre aplicado",
-    "discount.instruction":
-      "Seleccione su edificio y la línea de su unidad abajo para ver su precio instantáneo con 20% de descuento. Reserve en línea en segundos — pague solo cuando el servicio esté completo.",
+    "discount.deal": "✓ 20% de oferta aplicada",
+    "discount.offer": "Oferta del boletín de noviembre · Cristal · Pisos · Marcos · Barandal",
+    "discount.offerShort": "Cristal · Pisos · Marcos · Barandal",
+    "discount.heading": "Seleccione su propiedad y línea para ver el precio",
     "discount.viewFlyer": "Ver el folleto de temporada",
     "discount.hideFlyer": "Ocultar el folleto",
     "flyer.seePrice": "Vea el precio de su unidad abajo ↓",
@@ -369,10 +368,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "intro.toggle.sub": "20 % de réduction sur le verre de balcon",
     "intro.on": "Oui",
     "intro.off": "Non",
-    "discount.newsletter": "Réduction de 20 % — newsletter de novembre appliquée",
-    "discount.november": "Réduction de 20 % de novembre appliquée",
-    "discount.instruction":
-      "Sélectionnez votre immeuble et votre ligne d'unité ci-dessous pour voir votre prix instantané à −20 %. Réservez en ligne en quelques secondes — payez uniquement une fois le service terminé.",
+    "discount.deal": "✓ Offre de 20 % appliquée",
+    "discount.offer": "Offre newsletter de novembre · Verre · Sols · Cadres · Garde-corps",
+    "discount.offerShort": "Verre · Sols · Cadres · Garde-corps",
+    "discount.heading": "Sélectionnez votre propriété et votre ligne pour le prix",
     "discount.viewFlyer": "Voir le flyer des fêtes",
     "discount.hideFlyer": "Masquer le flyer",
     "flyer.seePrice": "Voir le prix de votre unité ci-dessous ↓",
@@ -600,7 +599,7 @@ export default function PreppyLuxuryWidget() {
         flyerShow: false,
         flyerNewsletter: false,
         flyerImpliesIntro: false,
-        flyerId: "sunset" as HolidayFlyerId,
+        flyerId: "mirrored" as HolidayFlyerId,
       };
     }
 
@@ -1097,7 +1096,7 @@ export default function PreppyLuxuryWidget() {
             alt={flyerAsset.alt}
             width={flyerAsset.width}
             height={flyerAsset.height}
-            seePriceLabel={t("flyer.seePrice")}
+            seePriceLabel={t("discount.heading")}
             openLabel={t("flyer.open")}
             tapLabel={t("flyer.tap")}
             closeLabel={t("flyer.close")}
@@ -1130,22 +1129,30 @@ export default function PreppyLuxuryWidget() {
               role="status"
               data-discount-banner={initialParams.flyerNewsletter ? "newsletter" : "november"}
             >
-              <div className="flex items-start gap-2.5 rounded-2xl border border-[#1F8A62]/60 bg-[#0E3B30] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                <span
-                  aria-hidden="true"
-                  className="mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1F8A62] text-[13px] font-bold leading-none text-white"
-                >
-                  ✓
-                </span>
-                <span className="text-[14.5px] font-semibold leading-snug tracking-tight text-white">
-                  {initialParams.flyerNewsletter
-                    ? t("discount.newsletter")
-                    : t("discount.november")}
-                </span>
+              <div className="flex items-start gap-3">
+                <img
+                  src="/preppy-icon-512.png"
+                  alt="Preppy"
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 shrink-0 rounded-[14px] shadow-[0_6px_16px_rgba(0,0,0,0.35)]"
+                />
+                <div className="min-w-0">
+                  <div className="inline-flex items-center rounded-full border border-[#C5A572]/80 bg-[#1A1408] px-3 py-1">
+                    <span className="text-[13px] font-semibold tracking-tight text-[#F2E5BE]">
+                      {t("discount.deal")}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-snug tracking-[0.04em] text-[#E7D6AE]">
+                    {initialParams.flyerNewsletter
+                      ? t("discount.offer")
+                      : t("discount.offerShort")}
+                  </p>
+                  <p className="mt-1 text-[17px] font-semibold leading-snug tracking-tight text-white">
+                    {t("discount.heading")}
+                  </p>
+                </div>
               </div>
-              <p className="mt-2.5 text-[14px] leading-relaxed text-[#F6F1E8]">
-                {t("discount.instruction")}
-              </p>
               {!initialParams.flyerShow && (
                 <button
                   type="button"
