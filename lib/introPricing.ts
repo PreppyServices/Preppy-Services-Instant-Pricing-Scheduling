@@ -37,6 +37,32 @@ export function firstServicePrice(regular: number): number {
 }
 
 /**
+ * Flat interior-glass add-on on first-service / new-customer quotes.
+ * Matches the Gran Paraiso balcony-glass flyer ("Add interior glass" $100).
+ * The 20% intro rate applies only to the exterior line, not to this add-on.
+ */
+export const INTRO_INTERIOR_ADDON = 100;
+
+/**
+ * Interior glass dollars once a line is priced (the add-on is offered).
+ *
+ * Regular quotes keep the shared catalog tier (`addOnPricing`, keyed by the
+ * regular exterior price). A missing tier stays $0 — this does not invent a
+ * regular interior price.
+ *
+ * Intro quotes use the flat $100 for every building. The catalog is global,
+ * so a building-specific override would leave the same first-service path
+ * showing $0 or a low tier everywhere else.
+ */
+export function interiorGlassAddOn(
+  catalogAddOn: number | undefined,
+  intro: boolean
+): number {
+  if (intro) return INTRO_INTERIOR_ADDON;
+  return catalogAddOn ?? 0;
+}
+
+/**
  * Reflect the first-service toggle in the query string without touching
  * building, line, unit, or name. Canonical on-state is intro=1.
  */

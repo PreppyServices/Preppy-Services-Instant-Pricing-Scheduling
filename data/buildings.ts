@@ -5710,6 +5710,11 @@ export const placeholderBuildings: string[] = [
     "Fisher Island Bayview X"
   ];
 
+// Regular interior-glass add-on, keyed by the regular exterior line price.
+// One map for every building. A price missing from this map has no regular
+// interior tier (the widget shows $0). First-service / intro quotes do not
+// read this map — they use the flat INTRO_INTERIOR_ADDON in lib/introPricing.ts.
+// Do not backfill tiers here to match the $100 flyer.
 export const addOnPricing: Record<number, number> = {
     120: 30,
     140: 30,

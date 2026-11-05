@@ -10,7 +10,12 @@ import {
   safeMappedPricing,
   provisionalBuildings,
 } from "../data/buildings";
-import { firstServicePrice, isIntroRequest, setIntroSearch } from "../lib/introPricing";
+import {
+  firstServicePrice,
+  interiorGlassAddOn,
+  isIntroRequest,
+  setIntroSearch,
+} from "../lib/introPricing";
 /**
  * Preppy Services — Luxury Quote Widget
  * =====================================
@@ -26,8 +31,10 @@ import { firstServicePrice, isIntroRequest, setIntroSearch } from "../lib/introP
  *   ?name=Alex             Customer first name for personalization
  *   ?interior=1            Pre-toggle interior add-on (requires a valid line)
  *   ?intro=1               First-service / new-customer balcony glass: 20% off
- *                          the regular line price. Also accepts ?first=1 or
- *                          ?promo=intro. The resident can toggle it off.
+ *                          the regular line price, plus a flat $100 interior
+ *                          glass add-on. Also accepts ?first=1 or ?promo=intro.
+ *                          The resident can toggle it off. Regular interior
+ *                          prices stay on addOnPricing.
  *   ?service=painting      Land on painting consultation mode instead of glass
  *   ?service=custom        Land on custom job mode
  *   ?lang=en|es|fr         Override display language. Falls back to navigator.language.
@@ -94,7 +101,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.complete": "Complete Balcony Glass & Frame Detailing",
     "glass.exterior": "Exterior",
     "glass.included": "Included",
-    "glass.interior": "Full Interior Glass Detailing",
+    "glass.interior": "Add interior glass",
     "glass.addon": "Add-on",
     "glass.selectUnitFirst": "Select unit first",
     "paint.header": "Consultation",
@@ -119,7 +126,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "unmatched.search": "Search above to find your building, or text us for a manual review.",
     "unmatched.cta": "Text us for a manual review",
     "price.exterior": "Exterior detailing",
-    "price.interiorAddon": "Interior add-on",
+    "price.interiorAddon": "Interior glass",
     "price.estimated": "Estimated total",
     "price.regular": "Regular",
     "price.firstService": "First service",
@@ -193,7 +200,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.complete": "Detallado Completo de Cristal y Marco del Balcón",
     "glass.exterior": "Exterior",
     "glass.included": "Incluido",
-    "glass.interior": "Detallado Completo de Cristal Interior",
+    "glass.interior": "Agregar cristal interior",
     "glass.addon": "Complemento",
     "glass.selectUnitFirst": "Seleccione unidad primero",
     "paint.header": "Consulta",
@@ -217,7 +224,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "unmatched.search": "Busque arriba para encontrar su edificio, o escríbanos para una revisión manual.",
     "unmatched.cta": "Escríbanos para una revisión manual",
     "price.exterior": "Detallado exterior",
-    "price.interiorAddon": "Complemento interior",
+    "price.interiorAddon": "Cristal interior",
     "price.estimated": "Total estimado",
     "price.regular": "Regular",
     "price.firstService": "Primer servicio",
@@ -291,7 +298,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.complete": "Détaillage Complet du Verre et Cadre de Balcon",
     "glass.exterior": "Extérieur",
     "glass.included": "Inclus",
-    "glass.interior": "Détaillage Complet du Verre Intérieur",
+    "glass.interior": "Ajouter le verre intérieur",
     "glass.addon": "Option",
     "glass.selectUnitFirst": "Sélectionnez l'unité d'abord",
     "paint.header": "Consultation",
@@ -315,7 +322,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "unmatched.search": "Recherchez ci-dessus pour trouver votre bâtiment, ou écrivez-nous pour une évaluation manuelle.",
     "unmatched.cta": "Écrivez-nous pour une évaluation manuelle",
     "price.exterior": "Détaillage extérieur",
-    "price.interiorAddon": "Option intérieure",
+    "price.interiorAddon": "Verre intérieur",
     "price.estimated": "Total estimé",
     "price.regular": "Tarif habituel",
     "price.firstService": "Premier service",
@@ -731,11 +738,12 @@ export default function PreppyLuxuryWidget() {
   const regularPrice =
     unitLine && currentBuilding ? currentBuilding.lines[unitLine] ?? null : null;
   const introPrice = regularPrice != null ? firstServicePrice(regularPrice) : null;
-  // Intro is balcony glass only. Interior add-ons stay keyed off the regular
-  // catalog price so a discounted line cannot invent a different add-on tier.
+  // Intro discounts the exterior line only. Interior glass on that path is a
+  // flat $100. Regular interior dollars stay on the shared addOnPricing catalog.
   const glassIntro = introPricing && serviceType === "glass";
   const chargedPrice = glassIntro && introPrice != null ? introPrice : regularPrice;
-  const interiorAddOn = regularPrice != null ? addOnPricing[regularPrice] ?? 0 : 0;
+  const interiorAddOn =
+    regularPrice != null ? interiorGlassAddOn(addOnPricing[regularPrice], glassIntro) : 0;
   const total =
     chargedPrice != null ? chargedPrice + (includeInterior ? interiorAddOn : 0) : null;
   const quoteLabel =
@@ -1197,6 +1205,9 @@ export default function PreppyLuxuryWidget() {
                   <button
                     type="button"
                     onClick={() => unitLine && setIncludeInterior((v) => !v)}
+                    data-interior-addon={regularPrice != null ? interiorAddOn : ""}
+                    data-interior-mode={glassIntro ? "intro" : "regular"}
+                    aria-pressed={includeInterior}
                     className={`mt-3 w-full rounded-2xl border px-4 py-4 text-left transition ${
                       !unitLine
                         ? "border-[#F0E9E0] bg-[#FBFAF8] opacity-60"
@@ -1324,6 +1335,8 @@ export default function PreppyLuxuryWidget() {
                     className="space-y-3"
                     data-pricing-mode={glassIntro ? "intro" : "regular"}
                     data-regular-price={regularPrice ?? ""}
+                    data-charged-price={chargedPrice ?? ""}
+                    data-interior-addon={interiorAddOn}
                     data-quote-amount={total ?? ""}
                   >
                     {glassIntro ? (
