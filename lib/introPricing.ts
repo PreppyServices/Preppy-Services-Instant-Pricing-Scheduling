@@ -108,11 +108,11 @@ export const FLYER_ASSETS: Record<
   { src: string; alt: string; width: number; height: number; priceBand: boolean }
 > = {
   mirrored: {
-    src: "/preppy-holiday-flyer-v3.jpg",
+    src: "/preppy-holiday-flyer-v4.jpg",
     width: 1080,
     height: 1350,
     priceBand: false,
-    alt: "Preppy Services holiday balcony cleaning. Glass, floors, frames, and railing. Click here to get your unit pricing.",
+    alt: "Preppy Services November newsletter. Holiday balcony cleaning. Glass, floors, frames, and railing.",
   },
   sunset: {
     src: "/flyers/real_edgewater_sunset_holiday_card.jpg",

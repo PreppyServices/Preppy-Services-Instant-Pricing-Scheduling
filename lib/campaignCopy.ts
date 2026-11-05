@@ -41,6 +41,20 @@ export function novemberSubline(building: string): string {
   return `${campaignBuildingLabel(building)} · ${NOVEMBER_SCOPE}`;
 }
 
+const SCOPE_WORDS = ["Glass", "Floors", "Frames", "Railing"] as const;
+
+/**
+ * Scope chips for the right-hand preview panel. A verified building is added
+ * only when the extra name still fits the 23px line in that column.
+ */
+export function novemberScopeParts(building: string): string[] {
+  const scope = [...SCOPE_WORDS];
+  if (!building) return scope;
+  const label = campaignBuildingLabel(building);
+  if (!label || label.length > 8) return scope;
+  return [label, ...scope];
+}
+
 /**
  * Trim a customer name, drop punctuation that is not part of a name, and
  * title-case tokens that arrived in all lowercase or all uppercase.
@@ -91,7 +105,7 @@ export function isNovemberOgRequest(mode: string, campaign: string): boolean {
   return mode.trim().toLowerCase() === "november" || campaign.trim().toLowerCase() === "nov20";
 }
 
-/** Versioned preview image. `v=4` busts aggressive iMessage image caches. */
+/** Versioned preview image. `v=5` busts aggressive iMessage image caches. */
 export function novemberOgImageUrl(opts: {
   name?: string;
   building?: string;
@@ -99,7 +113,7 @@ export function novemberOgImageUrl(opts: {
 }): string {
   const qs = new URLSearchParams();
   qs.set("mode", "november");
-  qs.set("v", "4");
+  qs.set("v", "5");
   if (opts.name) qs.set("name", opts.name);
   if (opts.building) qs.set("b", opts.building);
   if (opts.building && opts.unit) qs.set("unit", opts.unit);

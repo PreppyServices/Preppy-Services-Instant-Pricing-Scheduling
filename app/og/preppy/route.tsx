@@ -2,8 +2,6 @@ import { ImageResponse } from "next/og";
 import {
   campaignFirstName,
   isNovemberOgRequest,
-  novemberKicker,
-  novemberSubline,
 } from "../../../lib/campaignCopy";
 import { resolveVerifiedBuilding } from "../../../lib/ogBuilding";
 import { PreppyOgCard } from "./card";
@@ -72,7 +70,7 @@ export async function GET(request: Request) {
       res.arrayBuffer()
     ),
     november
-      ? publicDataUrl(request, "/preppy-holiday-flyer-v3.jpg", "image/jpeg")
+      ? publicDataUrl(request, "/mirrored_edgewater_daylight_zoomed_back_820.jpg", "image/jpeg")
       : Promise.resolve(""),
     november
       ? publicDataUrl(request, "/preppy-icon-512.png", "image/png")
@@ -99,8 +97,8 @@ export async function GET(request: Request) {
     return new ImageResponse(
       (
         <NovemberCampaignCard
-          kicker={novemberKicker(firstName)}
-          subline={novemberSubline(building)}
+          firstName={firstName}
+          building={building}
           photoSrc={photoSrc}
           iconSrc={iconSrc}
         />
