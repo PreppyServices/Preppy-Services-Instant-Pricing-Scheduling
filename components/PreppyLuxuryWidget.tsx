@@ -5,15 +5,17 @@ import {
   verifiedBuildings,
   placeholderBuildings,
   addOnPricing,
+  preservedRegularInterior,
   activePlaceholderBuildings,
   verifiedBuildingSet,
   safeMappedPricing,
   provisionalBuildings,
 } from "../data/buildings";
+import { matchCatalogBuilding } from "../lib/catalogBuilding";
 import {
   FLYER_ASSETS,
   firstServicePrice,
-  interiorGlassAddOn,
+  quoteInteriorAddOn,
   isIntroRequest,
   readFlyerLanding,
   setIntroSearch,
@@ -606,12 +608,7 @@ export default function PreppyLuxuryWidget() {
     const p = new URLSearchParams(window.location.search);
     const rawB = p.get("b") || p.get("building");
     const buildingParamRaw = (rawB || "").trim();
-    let matchedB: string | null = null;
-
-    if (buildingParamRaw) {
-      const norm = buildingParamRaw.toLowerCase();
-      matchedB = buildings.find((n) => n.toLowerCase() === norm) || null;
-    }
+    const matchedB = matchCatalogBuilding(buildings, buildingParamRaw);
 
     // A building param was supplied but matched no priced building. Flag it so
     // the widget shows a neutral unmatched state instead of silently falling
@@ -811,11 +808,21 @@ export default function PreppyLuxuryWidget() {
     unitLine && currentBuilding ? currentBuilding.lines[unitLine] ?? null : null;
   const introPrice = regularPrice != null ? firstServicePrice(regularPrice) : null;
   // Intro discounts the exterior line only. Interior glass on that path is a
-  // flat $100. Regular interior dollars stay on the shared addOnPricing catalog.
+  // flat $100. Regular interior dollars use the shared catalog unless this
+  // line has a preserved pre-change add-on.
   const glassIntro = introPricing && serviceType === "glass";
   const chargedPrice = glassIntro && introPrice != null ? introPrice : regularPrice;
   const interiorAddOn =
-    regularPrice != null ? interiorGlassAddOn(addOnPricing[regularPrice], glassIntro) : 0;
+    regularPrice != null
+      ? quoteInteriorAddOn(
+          building,
+          unitLine,
+          regularPrice,
+          glassIntro,
+          addOnPricing,
+          preservedRegularInterior
+        )
+      : 0;
   const total =
     chargedPrice != null ? chargedPrice + (includeInterior ? interiorAddOn : 0) : null;
   const quoteLabel =
