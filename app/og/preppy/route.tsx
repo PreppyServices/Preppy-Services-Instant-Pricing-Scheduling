@@ -1,6 +1,11 @@
 import { ImageResponse } from "next/og";
+import {
+  campaignFirstName,
+  isNovemberOgRequest,
+} from "../../../lib/campaignCopy";
 import { resolveVerifiedBuilding } from "../../../lib/ogBuilding";
 import { PreppyOgCard } from "./card";
+import { NovemberCampaignCard } from "./november-card";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -15,6 +20,18 @@ function clean(value: string | null, fallback = "") {
   } catch {
     return value.trim();
   }
+}
+
+async function publicDataUrl(request: Request, path: string, mime: string): Promise<string> {
+  const res = await fetch(new URL(path, request.url));
+  if (!res.ok) throw new Error(`missing ${path}`);
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  let binary = "";
+  const step = 8192;
+  for (let i = 0; i < bytes.length; i += step) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + step));
+  }
+  return `data:${mime};base64,${btoa(binary)}`;
 }
 
 export async function GET(request: Request) {
@@ -39,35 +56,67 @@ export async function GET(request: Request) {
   // A unit is only carried through when its building actually matched.
   const unit = building ? clean(searchParams.get("unit"), "") : "";
   const lang = clean(searchParams.get("lang"), "EN").toUpperCase();
+  const november = isNovemberOgRequest(
+    clean(searchParams.get("mode"), ""),
+    clean(searchParams.get("campaign"), "")
+  );
 
-  // Self-hosted serif — same origin, no external dep
-  const playfairRegular = await fetch(
-    new URL("/fonts/PlayfairDisplay-Regular.ttf", request.url)
-  ).then((res) => res.arrayBuffer());
+  // Self-hosted serif, same origin. `v` only busts the iMessage image cache.
+  const [playfairRegular, playfairMedium, photoSrc, iconSrc] = await Promise.all([
+    fetch(new URL("/fonts/PlayfairDisplay-Regular.ttf", request.url)).then((res) =>
+      res.arrayBuffer()
+    ),
+    fetch(new URL("/fonts/PlayfairDisplay-Medium.ttf", request.url)).then((res) =>
+      res.arrayBuffer()
+    ),
+    november
+      ? publicDataUrl(request, "/mirrored_edgewater_daylight_zoomed_back_820.jpg", "image/jpeg")
+      : Promise.resolve(""),
+    november
+      ? publicDataUrl(request, "/preppy-icon-512.png", "image/png")
+      : Promise.resolve(""),
+  ]);
 
-  const playfairMedium = await fetch(
-    new URL("/fonts/PlayfairDisplay-Medium.ttf", request.url)
-  ).then((res) => res.arrayBuffer());
+  const fonts = [
+    {
+      name: "Playfair",
+      data: playfairRegular,
+      style: "normal" as const,
+      weight: 400 as const,
+    },
+    {
+      name: "Playfair",
+      data: playfairMedium,
+      style: "normal" as const,
+      weight: 500 as const,
+    },
+  ];
+
+  if (november) {
+    const firstName = campaignFirstName(name);
+    return new ImageResponse(
+      (
+        <NovemberCampaignCard
+          firstName={firstName}
+          building={building}
+          photoSrc={photoSrc}
+          iconSrc={iconSrc}
+        />
+      ),
+      {
+        width: WIDTH,
+        height: HEIGHT,
+        fonts,
+      }
+    );
+  }
 
   return new ImageResponse(
     <PreppyOgCard name={name} building={building} unit={unit} lang={lang} />,
     {
       width: WIDTH,
       height: HEIGHT,
-      fonts: [
-        {
-          name: "Playfair",
-          data: playfairRegular,
-          style: "normal",
-          weight: 400,
-        },
-        {
-          name: "Playfair",
-          data: playfairMedium,
-          style: "normal",
-          weight: 500,
-        },
-      ],
+      fonts,
     }
   );
 }
