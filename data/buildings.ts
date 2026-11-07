@@ -988,7 +988,6 @@ export const pricing: Record<string, BuildingPricing> = {
       lines: {
         "01": 280,
         "02": 220,
-        "07": 280,
         "PH01": 430,
         "PH02": 410,
         "PH03": 410,
@@ -1000,7 +999,6 @@ export const pricing: Record<string, BuildingPricing> = {
       lines: {
         "01": 280,
         "02": 220,
-        "07": 280,
         "PH01": 430,
         "PH02": 410,
         "PH03": 410,
@@ -5740,6 +5738,17 @@ export const addOnPricing: Record<number, number> = {
     440: 160,
     450: 170
   };
+
+// Regular interior dollars locked to the quote these lines showed before their
+// exterior price moved. The shared addOnPricing tiers stay the default for
+// every other line. Intro quotes do not read this map.
+export const preservedRegularInterior: Record<string, Record<string, number>> = {
+  "Aria on the Bay": { "01": 70 },
+  "One Paraiso": { "03": 80, "04": 80 },
+  "Paraiso Bay": { "07": 30 },
+  "Aria Reserve North": { "01": 70 },
+  "Aria Reserve South": { "01": 70 },
+};
 
 export const activePlaceholderBuildings = placeholderBuildings.filter(
   (name) => !(name in pricing)

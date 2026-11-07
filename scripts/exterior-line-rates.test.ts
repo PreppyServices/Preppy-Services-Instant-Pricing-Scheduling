@@ -6,10 +6,22 @@
  * when present, otherwise the last two digits. There is no floor-band field.
  *
  * This guard locks the confirmed increases, the higher prices that stay put,
- * and the provisional lines that must not move.
+ * the original regular interior dollar on each moved line, and the provisional
+ * lines that must not move.
  */
-import { addOnPricing, pricing } from "../data/buildings.ts";
-import { INTRO_INTERIOR_ADDON, INTRO_RATE } from "../lib/introPricing.ts";
+import {
+  addOnPricing,
+  preservedRegularInterior,
+  pricing,
+  verifiedBuildings,
+} from "../data/buildings.ts";
+import { matchCatalogBuilding } from "../lib/catalogBuilding.ts";
+import {
+  firstServicePrice,
+  INTRO_INTERIOR_ADDON,
+  INTRO_RATE,
+  quoteInteriorAddOn,
+} from "../lib/introPricing.ts";
 
 type Lines = Record<string, number>;
 
@@ -75,9 +87,7 @@ check("confirmed increases", () => {
   assertPrice("One Paraiso", "04", 280);
   assertPrice("Paraiso Bay", "07", 280);
   assertPrice("Aria Reserve South", "01", 280);
-  assertPrice("Aria Reserve South", "07", 280);
   assertPrice("Aria Reserve North", "01", 280);
-  assertPrice("Aria Reserve North", "07", 280);
 });
 
 check("higher existing prices preserved", () => {
@@ -106,7 +116,14 @@ check("blocked floor band and compass lines", () => {
   assertUnit("Aria Reserve North", "2702", "02", 220);
   assertUnit("Aria Reserve North", "5602", "02", 220);
   assertUnit("Aria Reserve North", "2701", "01", 280);
-  assertUnit("Aria Reserve South", "1207", "07", 280);
+  assertAbsent("Aria Reserve North", "07");
+  assertAbsent("Aria Reserve South", "07");
+  if (lineForUnit("Aria Reserve South", "1207") !== null) {
+    throw new Error("South unit 1207 must not resolve; line 07 was not in the catalog");
+  }
+  if (lineForUnit("Aria Reserve North", "2707") !== null) {
+    throw new Error("North unit 2707 must not resolve; line 07 was not in the catalog");
+  }
 
   for (const building of ["Elysee", "Elysee Miami"]) {
     assertAbsent(building, "01");
@@ -180,6 +197,128 @@ check("interior catalog and other services untouched", () => {
     throw new Error(`intro interior add-on changed to ${INTRO_INTERIOR_ADDON}`);
   }
   if (INTRO_RATE !== 0.8) throw new Error(`intro rate changed to ${INTRO_RATE}`);
+});
+
+type MovedLine = {
+  building: string;
+  line: string;
+  oldExterior: number;
+  newExterior: number;
+  priorInterior: number;
+};
+
+const movedLines: MovedLine[] = [
+  { building: "Aria on the Bay", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
+  { building: "One Paraiso", line: "03", oldExterior: 260, newExterior: 280, priorInterior: 80 },
+  { building: "One Paraiso", line: "04", oldExterior: 260, newExterior: 280, priorInterior: 80 },
+  { building: "Paraiso Bay", line: "07", oldExterior: 140, newExterior: 280, priorInterior: 30 },
+  { building: "Aria Reserve South", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
+  { building: "Aria Reserve North", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
+];
+
+function interiorQuote(building: string, line: string, exterior: number, intro: boolean): number {
+  return quoteInteriorAddOn(building, line, exterior, intro, addOnPricing, preservedRegularInterior);
+}
+
+check("moved lines keep the original regular interior quote", () => {
+  const lockKeys = Object.keys(preservedRegularInterior).sort();
+  const expectedBuildings = [...new Set(movedLines.map((row) => row.building))].sort();
+  if (lockKeys.join("|") !== expectedBuildings.join("|")) {
+    throw new Error(`preserved buildings: ${lockKeys.join(", ")}`);
+  }
+  for (const row of movedLines) {
+    const locked = preservedRegularInterior[row.building]?.[row.line];
+    if (locked !== row.priorInterior) {
+      throw new Error(`${row.building} ${row.line} lock is ${locked}, prior quote was ${row.priorInterior}`);
+    }
+    if (addOnPricing[row.oldExterior] !== row.priorInterior) {
+      throw new Error(`${row.oldExterior} catalog tier is not the prior interior ${row.priorInterior}`);
+    }
+    assertPrice(row.building, row.line, row.newExterior);
+    if (row.newExterior < row.oldExterior) {
+      throw new Error(`${row.building} ${row.line} decreased`);
+    }
+    const regularInterior = interiorQuote(row.building, row.line, row.newExterior, false);
+    const introInterior = interiorQuote(row.building, row.line, row.newExterior, true);
+    const introExterior = firstServicePrice(row.newExterior);
+    if (regularInterior !== row.priorInterior) {
+      throw new Error(
+        `${row.building} ${row.line} regular interior ${regularInterior}, expected ${row.priorInterior}`
+      );
+    }
+    if (regularInterior === addOnPricing[row.newExterior]) {
+      throw new Error(`${row.building} ${row.line} followed the new exterior tier`);
+    }
+    if (introInterior !== 100) {
+      throw new Error(`${row.building} ${row.line} intro interior ${introInterior}`);
+    }
+    const regularTotal = row.newExterior + regularInterior;
+    const introTotal = introExterior + introInterior;
+    const expectedRegular = row.newExterior + row.priorInterior;
+    const expectedIntro = introExterior + 100;
+    if (regularTotal !== expectedRegular || introTotal !== expectedIntro) {
+      throw new Error(`${row.building} ${row.line} totals ${regularTotal} / ${introTotal}`);
+    }
+  }
+  for (const [building, lines] of Object.entries(preservedRegularInterior)) {
+    for (const line of Object.keys(lines)) {
+      const known = movedLines.some((row) => row.building === building && row.line === line);
+      if (!known) throw new Error(`unexpected interior lock ${building} ${line}`);
+    }
+  }
+});
+
+check("every other line keeps its catalog interior and intro stays 100", () => {
+  let scanned = 0;
+  for (const [building, entry] of Object.entries(pricing)) {
+    for (const [line, exterior] of Object.entries(entry.lines)) {
+      scanned += 1;
+      const intro = interiorQuote(building, line, exterior, true);
+      if (intro !== 100) throw new Error(`${building} ${line} intro interior ${intro}`);
+      const moved = movedLines.some((row) => row.building === building && row.line === line);
+      if (moved) continue;
+      const regular = interiorQuote(building, line, exterior, false);
+      const catalog = addOnPricing[exterior] ?? 0;
+      if (regular !== catalog) {
+        throw new Error(`${building} ${line} interior ${regular}, catalog ${catalog}`);
+      }
+    }
+  }
+  if (scanned < 100) throw new Error(`scanned only ${scanned} lines`);
+});
+
+check("canonical Aria Reserve South is not South Tower", () => {
+  const names = Object.keys(pricing);
+  const south = "Aria Reserve South";
+  const tower = "Aria Reserve South Tower";
+  if (south === tower) throw new Error("names collapsed");
+  if (pricing[south] === pricing[tower]) throw new Error("South and South Tower share one entry");
+  if (matchCatalogBuilding(names, south) !== south) throw new Error("South did not match itself");
+  if (matchCatalogBuilding(names, tower) !== tower) throw new Error("South Tower did not match itself");
+  if (matchCatalogBuilding(names, "aria reserve south") !== south) {
+    throw new Error("case-insensitive South match failed");
+  }
+  if (matchCatalogBuilding(names, "  Aria Reserve South Tower  ") !== tower) {
+    throw new Error("trimmed South Tower match failed");
+  }
+  if (matchCatalogBuilding(names, "Aria Reserve") !== null) {
+    throw new Error("prefix Aria Reserve must not select a tower");
+  }
+  if (matchCatalogBuilding(names, "Aria Reserve South T") !== null) {
+    throw new Error("partial South Tower name must not match");
+  }
+  assertPrice(south, "01", 280);
+  assertPrice(tower, "01", 220);
+  assertPrice(tower, "02", 220);
+  assertAbsent(south, "07");
+  assertAbsent(tower, "07");
+  if (preservedRegularInterior[tower]) throw new Error("South Tower must not have an interior lock");
+  if (interiorQuote(tower, "01", 220, false) !== 70) {
+    throw new Error("South Tower line 01 interior moved");
+  }
+  if (verifiedBuildings.includes(south) || verifiedBuildings.includes(tower)) {
+    throw new Error("OG verified list must not include Aria Reserve South or South Tower");
+  }
 });
 
 if (failures.length) {

@@ -157,20 +157,34 @@ export const INTRO_INTERIOR_ADDON = 100;
 /**
  * Interior glass dollars once a line is priced (the add-on is offered).
  *
- * Regular quotes keep the shared catalog tier (`addOnPricing`, keyed by the
- * regular exterior price). A missing tier stays $0 — this does not invent a
- * regular interior price.
+ * Regular quotes use the shared catalog tier (`addOnPricing`, keyed by the
+ * regular exterior price) unless `preservedRegular` is set. That lock is the
+ * exact interior dollar a line already quoted before its exterior price moved.
+ * A missing tier stays $0 — this does not invent a regular interior price.
  *
- * Intro quotes use the flat $100 for every building. The catalog is global,
- * so a building-specific override would leave the same first-service path
- * showing $0 or a low tier everywhere else.
+ * Intro quotes use the flat $100 for every building and ignore both the
+ * catalog tier and any preserved regular dollar.
  */
 export function interiorGlassAddOn(
   catalogAddOn: number | undefined,
-  intro: boolean
+  intro: boolean,
+  preservedRegular?: number
 ): number {
   if (intro) return INTRO_INTERIOR_ADDON;
+  if (preservedRegular !== undefined) return preservedRegular;
   return catalogAddOn ?? 0;
+}
+
+/** Interior dollars for one catalog line. Intro ignores the preserved lock. */
+export function quoteInteriorAddOn(
+  building: string,
+  line: string,
+  exteriorPrice: number,
+  intro: boolean,
+  catalog: Record<number, number>,
+  preserved: Record<string, Record<string, number>>
+): number {
+  return interiorGlassAddOn(catalog[exteriorPrice], intro, preserved[building]?.[line]);
 }
 
 /**
