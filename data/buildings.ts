@@ -52,8 +52,8 @@ export const pricing: Record<string, BuildingPricing> = {
       lines: {
         "01": 300,
         "02": 180,
-        "03": 260,
-        "04": 260,
+        "03": 280,
+        "04": 280,
         "05": 180,
         "06": 300,
         "PH01": 420,
@@ -91,7 +91,7 @@ export const pricing: Record<string, BuildingPricing> = {
         "04": 180,
         "05": 180,
         "06": 180,
-        "07": 140,
+        "07": 280,
         "08": 120,
         "PH01": 420,
         "PH02": 360,
@@ -472,7 +472,7 @@ export const pricing: Record<string, BuildingPricing> = {
       penthouse: true,
     },
     "Aria on the Bay": {
-      lines: { "00": 220, "01": 220, "02": 160, "03": 160, "04": 160, "05": 160, "06": 180, "07": 180, "08": 180, "09": 220, "10": 260, "11": 220, "12": 300, "15": 300 },
+      lines: { "00": 220, "01": 280, "02": 160, "03": 160, "04": 160, "05": 160, "06": 180, "07": 180, "08": 180, "09": 220, "10": 260, "11": 220, "12": 300, "15": 300 },
       penthouse: true,
     },
     "Bay House": {
@@ -986,8 +986,9 @@ export const pricing: Record<string, BuildingPricing> = {
     },
     "Aria Reserve North": {
       lines: {
-        "01": 220,
+        "01": 280,
         "02": 220,
+        "07": 280,
         "PH01": 430,
         "PH02": 410,
         "PH03": 410,
@@ -997,8 +998,9 @@ export const pricing: Record<string, BuildingPricing> = {
     },
     "Aria Reserve South": {
       lines: {
-        "01": 220,
+        "01": 280,
         "02": 220,
+        "07": 280,
         "PH01": 430,
         "PH02": 410,
         "PH03": 410,
