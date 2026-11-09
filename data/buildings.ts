@@ -48,14 +48,24 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
+    // Approved balcony-glass flyer offer (Joe, 2026-11-09 5:27 PM ET).
+    // Lines 01 and 06 are $340 before discount. The widget applies the
+    // shared 20% first-service rate in lib/introPricing.ts (340 → 272).
+    // Lines 03 and 04 stay $280. The retired $300 offer is not this building.
+    // Regular interior on 01/06 stays the previous $100 quote
+    // (preservedRegularInterior) instead of the $340 catalog tier ($120).
+    // quote.preppyservices.com reads this map from the frontend bundle of
+    // PreppyServices/Preppy-Services-Instant-Pricing-Scheduling, deployed as
+    // Vercel project preppy-services-instant-pricing-scheduling on team
+    // preppyservices-projects. This quote path does not read Supabase.
     "One Paraiso": {
       lines: {
-        "01": 300,
+        "01": 340,
         "02": 180,
         "03": 280,
         "04": 280,
         "05": 180,
-        "06": 300,
+        "06": 340,
         "PH01": 420,
         "PH02": 450,
         "PH03": 450
@@ -5744,7 +5754,7 @@ export const addOnPricing: Record<number, number> = {
 // every other line. Intro quotes do not read this map.
 export const preservedRegularInterior: Record<string, Record<string, number>> = {
   "Aria on the Bay": { "01": 70 },
-  "One Paraiso": { "03": 80, "04": 80 },
+  "One Paraiso": { "01": 100, "03": 80, "04": 80, "06": 100 },
   "Paraiso Bay": { "07": 30 },
   "Aria Reserve North": { "01": 70 },
   "Aria Reserve South": { "01": 70 },
