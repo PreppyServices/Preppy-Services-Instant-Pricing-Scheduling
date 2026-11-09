@@ -93,10 +93,36 @@ check("confirmed increases", () => {
 check("higher existing prices preserved", () => {
   assertPrice("Paraiso Bay", "01", 300);
   assertPrice("Paraiso Bayviews", "06", 320);
-  assertPrice("One Paraiso", "01", 300);
-  assertPrice("One Paraiso", "06", 300);
   assertPrice("Aria on the Bay", "12", 300);
   assertPrice("Aria on the Bay", "15", 300);
+});
+
+check("One Paraiso flyer lines are 340 before discount and 272 after 20%", () => {
+  for (const line of ["01", "06"]) {
+    assertPrice("One Paraiso", line, 340);
+    const intro = firstServicePrice(linesOf("One Paraiso")[line]);
+    if (intro !== 272) {
+      throw new Error(`One Paraiso ${line} first service ${intro}, expected 272`);
+    }
+    if (interiorQuote("One Paraiso", line, 340, false) !== 100) {
+      throw new Error(`One Paraiso ${line} regular interior moved off the prior $100 quote`);
+    }
+    if (interiorQuote("One Paraiso", line, 340, true) !== 100) {
+      throw new Error(`One Paraiso ${line} intro interior moved off the flat $100 add-on`);
+    }
+  }
+  assertUnit("One Paraiso", "1201", "01", 340);
+  assertUnit("One Paraiso", "1206", "06", 340);
+  assertUnit("One Paraiso", "1203", "03", 280);
+  assertPrice("One Paraiso", "03", 280);
+  assertPrice("One Paraiso", "04", 280);
+  if (firstServicePrice(280) !== 224) {
+    throw new Error("One Paraiso 03/04 first-service math changed");
+  }
+  for (const [line, price] of Object.entries(linesOf("One Paraiso"))) {
+    if (price === 300) throw new Error(`One Paraiso ${line} still carries the retired 300 offer`);
+  }
+  assertPrice("Paraiso Bay", "01", 300);
 });
 
 check("provisional exclusions unchanged", () => {
@@ -209,8 +235,10 @@ type MovedLine = {
 
 const movedLines: MovedLine[] = [
   { building: "Aria on the Bay", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
+  { building: "One Paraiso", line: "01", oldExterior: 300, newExterior: 340, priorInterior: 100 },
   { building: "One Paraiso", line: "03", oldExterior: 260, newExterior: 280, priorInterior: 80 },
   { building: "One Paraiso", line: "04", oldExterior: 260, newExterior: 280, priorInterior: 80 },
+  { building: "One Paraiso", line: "06", oldExterior: 300, newExterior: 340, priorInterior: 100 },
   { building: "Paraiso Bay", line: "07", oldExterior: 140, newExterior: 280, priorInterior: 30 },
   { building: "Aria Reserve South", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
   { building: "Aria Reserve North", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
