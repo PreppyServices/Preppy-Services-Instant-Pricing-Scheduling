@@ -13,6 +13,13 @@ import {
 } from "../data/buildings";
 import { matchCatalogBuilding } from "../lib/catalogBuilding";
 import {
+  applyUtmToParams,
+  buildResidentialBookQuery,
+  captureLandingUtm,
+  utmSafeForRecord,
+  type UtmParams,
+} from "../lib/batchUtm";
+import {
   FLYER_ASSETS,
   firstServicePrice,
   quoteInteriorAddOn,
@@ -49,6 +56,11 @@ import HolidayFlyer from "./HolidayFlyer";
  *   ?service=painting      Land on painting consultation mode instead of glass
  *   ?service=custom        Land on custom job mode
  *   ?lang=en|es|fr         Override display language. Falls back to navigator.language.
+ *   ?utm_source=           Batch attribution. Also utm_medium, utm_campaign,
+ *   ?utm_medium=           utm_content, and utm_term. Captured on landing,
+ *   ?utm_campaign=         kept for the browser tab, and sent with the booking.
+ *   ?utm_content=
+ *   ?utm_term=
  *
  * Example morning-text links:
  *   Glass:   https://preppyservices.com/?b=Paraiso+Bay&line=04&unit=3204&lead=A1042&name=Alex
@@ -702,6 +714,16 @@ export default function PreppyLuxuryWidget() {
   const unitNumber = initialParams.unit;
   const leadId = initialParams.lead;
   const customerName = initialParams.name;
+  // First landing with UTM params wins. A building change or a later load in
+  // this tab that drops the query string still uses the stored batch.
+  const [batchUtm] = React.useState<UtmParams>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      return captureLandingUtm(window.location.search, window.sessionStorage);
+    } catch {
+      return {};
+    }
+  });
   // Building captured on first paint, including a ?b= / ?building= deep link.
   // The line-sync effect must not clear that selection on mount.
   const deepLinkBuildingRef = React.useRef(building);
@@ -841,9 +863,10 @@ export default function PreppyLuxuryWidget() {
     if (unitNumber) p.set("unit", unitNumber);
     if (total) p.set("quote", String(total));
     if (customerName) p.set("name", customerName);
+    applyUtmToParams(p, utmSafeForRecord(batchUtm, [customerName]));
     const qs = p.toString();
     return qs ? `${base}?${qs}` : base;
-  }, [serviceType, leadId, building, unitLine, unitNumber, total, customerName]);
+  }, [serviceType, leadId, building, unitLine, unitNumber, total, customerName, batchUtm]);
 
   const buildIMessageURL = React.useCallback(
     (mode: "question" | "photo" | "custom") => {
@@ -881,6 +904,7 @@ export default function PreppyLuxuryWidget() {
         intro: glassIntro,
         interior: includeInterior,
         lang,
+        ...utmSafeForRecord(batchUtm, [customerName]),
       };
       const existing = JSON.parse(window.localStorage.getItem("preppy_clicks") || "[]");
       existing.push(record);
@@ -888,7 +912,7 @@ export default function PreppyLuxuryWidget() {
     } catch {
       // safe to ignore
     }
-  }, [leadId, customerName, building, unitLine, unitNumber, serviceType, total, glassIntro, includeInterior, lang]);
+  }, [leadId, customerName, building, unitLine, unitNumber, serviceType, total, glassIntro, includeInterior, lang, batchUtm]);
 
   const loadSlots = React.useCallback(async () => {
     setSlotState("loading");
@@ -936,31 +960,23 @@ export default function PreppyLuxuryWidget() {
     const note = notes.trim();
     const email = contactEmail.trim();
     const phone = contactPhone.trim();
-    // Rich service/plan string — packs every operational field the engine
-    // surfaces (it has no separate unit/line/price/notes columns).
-    const svc =
-      (serviceType === "glass" ? "Balcony glass cleaning" : "Residential service") +
-      (building ? " · " + building : "") +
-      (unitLine ? " · line " + unitLine : "") +
-      (unit ? " · Unit " + unit : "") +
-      (total ? " · $" + total + (glassIntro ? " first service" : "") : "") +
-      (note ? " · Notes: " + note : "");
-    const addr = [building, unit ? "Unit " + unit : ""].filter(Boolean).join(" · ");
-    const p = new URLSearchParams();
-    p.set("mode", "book");
-    p.set("type", "residential");
-    p.set("start", chosenSlot.start);
-    if (building) p.set("business", building);
-    p.set("name", name);
-    p.set("contact", name);
-    p.set("email", email);
-    p.set("phone", phone);
-    if (addr) p.set("address", addr);
-    p.set("plan", svc);
-    p.set("service", svc);
-    p.set("signer", name);
-    p.set("signedType", "typed");
-    if (leadId) p.set("lead", leadId);
+    // plan and service carry the operational fields the engine stores,
+    // including the batch UTM values when this visit came from one.
+    const p = buildResidentialBookQuery({
+      start: chosenSlot.start,
+      building,
+      name,
+      email,
+      phone,
+      unitLine,
+      unit,
+      total,
+      glassIntro,
+      note,
+      serviceType,
+      leadId,
+      utm: batchUtm,
+    });
     try {
       const res = await preppyJsonp(SCHEDULER_EXEC_URL + "?" + p.toString());
       if (res && res.ok) {
@@ -990,6 +1006,7 @@ export default function PreppyLuxuryWidget() {
     contactEmail,
     contactPhone,
     leadId,
+    batchUtm,
     loadSlots,
     SCHEDULER_EXEC_URL,
   ]);
