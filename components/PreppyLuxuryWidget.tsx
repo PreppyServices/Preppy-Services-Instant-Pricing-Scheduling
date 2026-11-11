@@ -13,6 +13,11 @@ import {
 } from "../data/buildings";
 import { matchCatalogBuilding } from "../lib/catalogBuilding";
 import {
+  SELECT_BUILDING_LABEL,
+  initialBuildingName,
+  residentialBookingAllowed,
+} from "../lib/buildingSelection";
+import {
   applyUtmToParams,
   buildResidentialBookQuery,
   captureLandingUtm,
@@ -113,6 +118,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "badge.custom": "Custom Job — Direct Quote",
     "selectResidence": "Select Residence",
     "search.placeholder": "Search by building name…",
+    "search.selectBuilding": SELECT_BUILDING_LABEL,
     "search.footer": "{count} residences · Type to filter",
     "unit.labelWithUnit": "Unit {unit} — Line",
     "unit.label": "Select Unit / Line",
@@ -226,6 +232,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "badge.custom": "Trabajo a Medida — Cotización Directa",
     "selectResidence": "Seleccione Residencia",
     "search.placeholder": "Buscar por nombre del edificio…",
+    "search.selectBuilding": "Seleccione su edificio",
     "search.footer": "{count} residencias · Escriba para filtrar",
     "unit.labelWithUnit": "Unidad {unit} — Línea",
     "unit.label": "Seleccionar Unidad / Línea",
@@ -338,6 +345,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "badge.custom": "Travail Sur Mesure — Devis Direct",
     "selectResidence": "Sélectionner la Résidence",
     "search.placeholder": "Rechercher par nom de bâtiment…",
+    "search.selectBuilding": "Sélectionnez votre immeuble",
     "search.footer": "{count} résidences · Tapez pour filtrer",
     "unit.labelWithUnit": "Unité {unit} — Ligne",
     "unit.label": "Sélectionner Unité / Ligne",
@@ -684,12 +692,10 @@ export default function PreppyLuxuryWidget() {
         : "glass";
 
   const [serviceType, setServiceType] = React.useState<ServiceType>(resolvedService);
-  // Core fix: only fall back to buildings[0] for an organic visit with no
-  // building param. When a building param was supplied but did not match, keep
-  // the selection empty and surface a neutral unmatched state — never default
-  // to "1 Hotel & Homes" verified pricing.
+  // No building param stays empty. A matched ?building= or ?b= still preselects.
+  // An unmatched name stays empty and shows the neutral unmatched state.
   const [building, setBuilding] = React.useState<string>(
-    initialParams.building || (initialParams.buildingUnmatched ? "" : buildings[0] || "")
+    initialBuildingName(initialParams.building)
   );
   const [unmatched, setUnmatched] = React.useState<boolean>(initialParams.buildingUnmatched);
   const unmatchedName = initialParams.buildingParamRaw.slice(0, 48);
@@ -933,6 +939,7 @@ export default function PreppyLuxuryWidget() {
   }, [SCHEDULER_EXEC_URL]);
 
   const openScheduler = React.useCallback(() => {
+    if (!building) return;
     setSchedOpen(true);
     setBookState("idle");
     setChosenSlot(null);
@@ -940,20 +947,22 @@ export default function PreppyLuxuryWidget() {
     setFullUnit((prev) => prev || unitNumber || "");
     handleBookingClick();
     loadSlots();
-  }, [customerName, unitNumber, handleBookingClick, loadSlots]);
+  }, [building, customerName, unitNumber, handleBookingClick, loadSlots]);
 
   // Required-contact validation before a residential booking is allowed.
   const phoneDigits = contactPhone.replace(/\D/g, "");
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail.trim());
-  const canBook =
-    !!chosenSlot &&
-    signer.trim().length >= 2 &&
-    phoneDigits.length >= 10 &&
-    emailOk &&
-    fullUnit.trim().length >= 1;
+  const canBook = residentialBookingAllowed({
+    building,
+    hasSlot: !!chosenSlot,
+    signer,
+    phoneDigits: phoneDigits.length,
+    emailOk,
+    unit: fullUnit,
+  });
 
   const reserveSlot = React.useCallback(async () => {
-    if (!chosenSlot || !canBook) return;
+    if (!building || !chosenSlot || !canBook) return;
     setBookState("booking");
     const name = signer.trim();
     const unit = fullUnit.trim();
@@ -1279,7 +1288,11 @@ export default function PreppyLuxuryWidget() {
                     setBuildingQuery("");
                     setShowBuildingDropdown(true);
                   }}
-                  placeholder={t("search.placeholder")}
+                  placeholder={
+                    !building && !showBuildingDropdown
+                      ? t("search.selectBuilding")
+                      : t("search.placeholder")
+                  }
                   className="w-full rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-4 py-3 text-[16px] font-medium outline-none transition focus:border-[#0F7C82] focus:bg-white"
                 />
                 <AnimatePresence>
@@ -1333,7 +1346,7 @@ export default function PreppyLuxuryWidget() {
                   }}
                   disabled={!hasLines}
                 >
-                  <option value="">{hasLines ? t("unit.chooseLine") : t("unit.pending")}</option>
+                  <option value="">{!building || hasLines ? t("unit.chooseLine") : t("unit.pending")}</option>
                   {lineOptions.map((line) => (
                     <option key={line} value={line}>
                       {line}
@@ -1487,6 +1500,10 @@ export default function PreppyLuxuryWidget() {
                       {t("price.reserveSub")}
                     </div>
                   </div>
+                ) : !building ? (
+                  <div className="text-center text-[16px] text-[#5E6C75]">
+                    {t("price.selectResidenceFirst")}
+                  </div>
                 ) : !hasLines ? (
                   <div className="text-center">
                     <div className="text-[16px] text-[#5E6C75]">{t("price.residenceFinalizing")}</div>
@@ -1572,11 +1589,20 @@ export default function PreppyLuxuryWidget() {
               </a>
             ) : serviceType === "painting" ? (
               <a
-                href={scheduleUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleBookingClick}
-                className="group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D]"
+                href={building ? scheduleUrl : undefined}
+                target={building ? "_blank" : undefined}
+                rel={building ? "noopener noreferrer" : undefined}
+                aria-disabled={!building}
+                onClick={(event) => {
+                  if (!building) {
+                    event.preventDefault();
+                    return;
+                  }
+                  handleBookingClick();
+                }}
+                className={`group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D]${
+                  building ? "" : " pointer-events-none opacity-50"
+                }`}
               >
                 <span
                   aria-hidden="true"
@@ -1589,7 +1615,8 @@ export default function PreppyLuxuryWidget() {
               <button
                 type="button"
                 onClick={openScheduler}
-                className="group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D]"
+                disabled={!building}
+                className={`group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D] disabled:opacity-50`}
               >
                 <span
                   aria-hidden="true"
