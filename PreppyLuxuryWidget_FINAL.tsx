@@ -79,8 +79,8 @@ export default function PreppyLuxuryWidget() {
     document.head.appendChild(link);
   }, []);
 
-  const BOOKING_URL = "https://calendar.app.google/97k4hgLwC48JXJJn8";
-  const PAINTING_URL = "https://calendar.app.google/J4uMHEH2VTtuw8Xh8";
+  const BOOKING_URL = "";
+  const PAINTING_URL = "";
   const LIVE_AGENT_NUMBER = "+13054140305";
 
   // ---------------------------------------------------------------------------

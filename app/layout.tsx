@@ -46,25 +46,13 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   icons: {
-    icon: [
-      {
-        url: "https://quote.preppyservices.com/preppy-icon-512.png",
-        type: "image/png",
-        sizes: "512x512",
-      },
-    ],
-    apple: [
-      {
-        url: "https://quote.preppyservices.com/preppy-icon-512.png",
-        type: "image/png",
-        sizes: "512x512",
-      },
-    ],
+    icon: [{ url: "/preppy-icon-512.png", type: "image/png", sizes: "512x512" }],
+    apple: [{ url: "/preppy-icon-512.png", type: "image/png", sizes: "512x512" }],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B1A24",
+  themeColor: "#F5F1EA",
   width: "device-width",
   initialScale: 1,
 };

@@ -6,7 +6,12 @@ module.exports = {
     "./*.{js,ts,jsx,tsx,mdx}"
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+        wordmark: ['"Cormorant Garamond"', "Georgia", "serif"],
+      },
+    },
   },
   plugins: [],
 }
