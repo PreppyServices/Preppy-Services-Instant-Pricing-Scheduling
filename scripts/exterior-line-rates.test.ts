@@ -82,7 +82,7 @@ function check(name: string, fn: () => void) {
 }
 
 check("confirmed increases", () => {
-  assertPrice("Aria on the Bay", "01", 280);
+  assertPrice("Aria on the Bay", "01", 300);
   assertPrice("One Paraiso", "03", 280);
   assertPrice("One Paraiso", "04", 280);
   assertPrice("Paraiso Bay", "07", 280);
@@ -92,9 +92,9 @@ check("confirmed increases", () => {
 
 check("higher existing prices preserved", () => {
   assertPrice("Paraiso Bay", "01", 300);
-  assertPrice("Paraiso Bayviews", "06", 320);
-  assertPrice("Aria on the Bay", "12", 300);
-  assertPrice("Aria on the Bay", "15", 300);
+  assertPrice("Paraiso Bayviews", "06", 330);
+  assertPrice("Aria on the Bay", "12", 310);
+  assertPrice("Aria on the Bay", "15", 310);
 });
 
 check("One Paraiso flyer lines are 340 before discount and 272 after 20%", () => {
@@ -126,12 +126,12 @@ check("One Paraiso flyer lines are 340 before discount and 272 after 20%", () =>
 });
 
 check("provisional exclusions unchanged", () => {
-  assertAbsent("Aria Reserve South", "05");
+  assertPrice("Aria Reserve South", "05", 190);
   assertPrice("Paramount Bay", "01", 220);
   assertPrice("Paraiso Bayviews", "01", 260);
   assertPrice("Paraiso Bayviews", "08", 220);
   assertPrice("Paraiso Bayviews", "10", 280);
-  assertPrice("Paraiso Bayviews", "07", 140);
+  assertPrice("Paraiso Bayviews", "07", 180);
 });
 
 check("blocked floor band and compass lines", () => {
@@ -142,24 +142,20 @@ check("blocked floor band and compass lines", () => {
   assertUnit("Aria Reserve North", "2702", "02", 220);
   assertUnit("Aria Reserve North", "5602", "02", 220);
   assertUnit("Aria Reserve North", "2701", "01", 280);
-  assertAbsent("Aria Reserve North", "07");
-  assertAbsent("Aria Reserve South", "07");
-  if (lineForUnit("Aria Reserve South", "1207") !== null) {
-    throw new Error("South unit 1207 must not resolve; line 07 was not in the catalog");
-  }
-  if (lineForUnit("Aria Reserve North", "2707") !== null) {
-    throw new Error("North unit 2707 must not resolve; line 07 was not in the catalog");
-  }
+  assertPrice("Aria Reserve North", "07", 220);
+  assertPrice("Aria Reserve South", "07", 220);
+  assertUnit("Aria Reserve South", "1207", "07", 220);
+  assertUnit("Aria Reserve North", "2707", "07", 220);
 
   for (const building of ["Elysee", "Elysee Miami"]) {
     assertAbsent(building, "01");
     assertAbsent(building, "02");
-    assertPrice(building, "NE", 280);
-    assertPrice(building, "SE", 280);
-    assertPrice(building, "NE-SKY", 300);
+    assertPrice(building, "NE", 450);
+    assertPrice(building, "SE", 410);
+    assertPrice(building, "NE-SKY", 450);
     assertPrice(building, "SE-SKY", 300);
-    assertPrice(building, "NE-GRAND", 320);
-    assertPrice(building, "SE-GRAND", 320);
+    assertPrice(building, "NE-GRAND", 450);
+    assertPrice(building, "SE-GRAND", 450);
   }
 });
 
@@ -172,17 +168,21 @@ check("untouched neighbors and penthouses", () => {
   assertPrice("Aria Reserve North", "PH04", 440);
   assertPrice("Aria Reserve South", "PH02", 410);
   assertPrice("Paraiso Bay", "PH01", 420);
-  assertPrice("Paraiso Bay", "08", 120);
-  assertPrice("Paraiso Bay", "02", 180);
-  assertPrice("One Paraiso", "02", 180);
-  assertPrice("One Paraiso", "05", 180);
+  assertPrice("Paraiso Bay", "08", 200);
+  assertPrice("Paraiso Bay", "02", 210);
+  assertPrice("One Paraiso", "02", 200);
+  assertPrice("One Paraiso", "05", 200);
   assertPrice("One Paraiso", "PH01", 420);
   assertPrice("Aria on the Bay", "00", 220);
-  assertPrice("Aria on the Bay", "02", 160);
-  assertPrice("Aria on the Bay", "07", 180);
-  assertPrice("Gran Paraiso", "01", 350);
-  assertPrice("Gran Paraiso", "07", 350);
-  assertPrice("Paramount Bay", "02", 300);
+  assertPrice("Aria on the Bay", "02", 180);
+  assertPrice("Aria on the Bay", "07", 200);
+  assertPrice("Gran Paraiso", "01", 450);
+  assertPrice("Gran Paraiso", "07", 450);
+  assertPrice("Gran Paraiso", "PH01", 550);
+  assertPrice("Gran Paraiso", "PH02", 360);
+  assertPrice("Gran Paraiso", "PH03", 400);
+  assertPrice("Gran Paraiso", "PH04", 550);
+  assertPrice("Paramount Bay", "02", 340);
 });
 
 check("interior catalog and other services untouched", () => {
@@ -233,15 +233,114 @@ type MovedLine = {
   priorInterior: number;
 };
 
+function lock(
+  building: string,
+  line: string,
+  oldExterior: number,
+  newExterior: number,
+  priorInterior: number
+): MovedLine {
+  return { building, line, oldExterior, newExterior, priorInterior };
+}
+
+function locks(building: string, rows: Array<[string, number, number, number]>): MovedLine[] {
+  return rows.map(([line, oldExterior, newExterior, priorInterior]) =>
+    lock(building, line, oldExterior, newExterior, priorInterior)
+  );
+}
+
+const iconLocks: Array<[string, number, number, number]> = [
+  ["02", 160, 190, 40],
+  ["03", 180, 190, 40],
+  ["04", 180, 210, 40],
+  ["06", 180, 200, 40],
+  ["07", 180, 200, 40],
+  ["08", 220, 250, 70],
+];
+
+const elyseeLocks: Array<[string, number, number, number]> = [
+  ["NE", 280, 450, 90],
+  ["NE-GRAND", 320, 450, 110],
+  ["NE-SKY", 300, 450, 100],
+  ["SE", 280, 410, 90],
+  ["SE-GRAND", 320, 450, 110],
+];
+
 const movedLines: MovedLine[] = [
-  { building: "Aria on the Bay", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
-  { building: "One Paraiso", line: "01", oldExterior: 300, newExterior: 340, priorInterior: 100 },
-  { building: "One Paraiso", line: "03", oldExterior: 260, newExterior: 280, priorInterior: 80 },
-  { building: "One Paraiso", line: "04", oldExterior: 260, newExterior: 280, priorInterior: 80 },
-  { building: "One Paraiso", line: "06", oldExterior: 300, newExterior: 340, priorInterior: 100 },
-  { building: "Paraiso Bay", line: "07", oldExterior: 140, newExterior: 280, priorInterior: 30 },
-  { building: "Aria Reserve South", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
-  { building: "Aria Reserve North", line: "01", oldExterior: 220, newExterior: 280, priorInterior: 70 },
+  ...locks("Aria on the Bay", [
+    ["01", 220, 300, 70],
+    ["06", 180, 200, 40],
+    ["07", 180, 200, 40],
+    ["08", 180, 190, 40],
+    ["12", 300, 310, 100],
+    ["15", 300, 310, 100],
+  ]),
+  ...locks("One Paraiso", [
+    ["01", 300, 340, 100],
+    ["02", 180, 200, 40],
+    ["03", 260, 280, 80],
+    ["04", 260, 280, 80],
+    ["05", 180, 200, 40],
+    ["06", 300, 340, 100],
+  ]),
+  ...locks("Paraiso Bay", [
+    ["02", 180, 210, 40],
+    ["03", 180, 210, 40],
+    ["04", 180, 210, 40],
+    ["05", 180, 210, 40],
+    ["06", 180, 210, 40],
+    ["07", 140, 280, 30],
+    ["08", 120, 200, 30],
+  ]),
+  ...locks("Aria Reserve South", [["01", 220, 280, 70]]),
+  ...locks("Aria Reserve North", [["01", 220, 280, 70]]),
+  ...locks("Gran Paraiso", [
+    ["01", 350, 450, 0],
+    ["02", 180, 210, 40],
+    ["03", 180, 210, 40],
+    ["04", 180, 210, 40],
+    ["05", 180, 210, 40],
+    ["06", 180, 210, 40],
+    ["07", 350, 450, 0],
+    ["PH01", 420, 550, 150],
+    ["PH04", 450, 550, 170],
+  ]),
+  ...locks("Paraiso Bayviews", [
+    ["02", 120, 170, 30],
+    ["03", 120, 170, 30],
+    ["04", 120, 170, 30],
+    ["05", 120, 170, 30],
+    ["06", 320, 330, 110],
+    ["07", 140, 180, 30],
+    ["09", 120, 170, 30],
+    ["PH05", 120, 150, 30],
+    ["PH06", 120, 150, 30],
+  ]),
+  ...locks("Missoni Baia", [
+    ["02", 320, 330, 110],
+    ["03", 260, 340, 80],
+    ["04", 120, 150, 30],
+    ...Array.from({ length: 19 }, (_, index): [string, number, number, number] => [
+      `${38 + index}02`,
+      320,
+      330,
+      110,
+    ]),
+  ]),
+  ...locks("Paramount Bay", [
+    ["02", 300, 340, 100],
+    ["03", 240, 270, 80],
+    ["04", 180, 210, 40],
+    ["05", 180, 210, 40],
+    ["06", 240, 270, 80],
+    ["07", 240, 270, 80],
+    ["08", 180, 210, 40],
+    ["10", 240, 270, 80],
+  ]),
+  ...locks("Icon Bay", iconLocks),
+  ...locks("Icons on the Bay", iconLocks),
+  ...locks("Elysee", elyseeLocks),
+  ...locks("Elysee Miami", elyseeLocks),
 ];
 
 function interiorQuote(building: string, line: string, exterior: number, intro: boolean): number {
@@ -259,7 +358,8 @@ check("moved lines keep the original regular interior quote", () => {
     if (locked !== row.priorInterior) {
       throw new Error(`${row.building} ${row.line} lock is ${locked}, prior quote was ${row.priorInterior}`);
     }
-    if (addOnPricing[row.oldExterior] !== row.priorInterior) {
+    const priorCatalog = addOnPricing[row.oldExterior] ?? 0;
+    if (priorCatalog !== row.priorInterior) {
       throw new Error(`${row.oldExterior} catalog tier is not the prior interior ${row.priorInterior}`);
     }
     assertPrice(row.building, row.line, row.newExterior);
@@ -274,7 +374,8 @@ check("moved lines keep the original regular interior quote", () => {
         `${row.building} ${row.line} regular interior ${regularInterior}, expected ${row.priorInterior}`
       );
     }
-    if (regularInterior === addOnPricing[row.newExterior]) {
+    const newCatalog = addOnPricing[row.newExterior] ?? 0;
+    if (regularInterior === newCatalog) {
       throw new Error(`${row.building} ${row.line} followed the new exterior tier`);
     }
     if (introInterior !== 100) {
@@ -338,7 +439,11 @@ check("canonical Aria Reserve South is not South Tower", () => {
   assertPrice(south, "01", 280);
   assertPrice(tower, "01", 220);
   assertPrice(tower, "02", 220);
-  assertAbsent(south, "07");
+  assertPrice(south, "07", 220);
+  assertAbsent(tower, "03");
+  assertAbsent(tower, "04");
+  assertAbsent(tower, "05");
+  assertAbsent(tower, "06");
   assertAbsent(tower, "07");
   if (preservedRegularInterior[tower]) throw new Error("South Tower must not have an interior lock");
   if (interiorQuote(tower, "01", 220, false) !== 70) {
@@ -346,6 +451,58 @@ check("canonical Aria Reserve South is not South Tower", () => {
   }
   if (verifiedBuildings.includes(south) || verifiedBuildings.includes(tower)) {
     throw new Error("OG verified list must not include Aria Reserve South or South Tower");
+  }
+});
+
+check("Nov 13 2026 approved balcony quotes", () => {
+  const quotes: Array<[string, string, number, number]> = [
+    ["Gran Paraiso", "01", 450, 360],
+    ["Gran Paraiso", "PH01", 550, 440],
+    ["Paraiso Bay", "08", 200, 160],
+    ["Paraiso Bayviews", "02", 170, 136],
+    ["Missoni Baia", "04", 150, 120],
+    ["Elysee", "NE", 450, 360],
+    ["Elysee Miami", "NE", 450, 360],
+    ["Paraiso Bay", "07", 280, 224],
+    ["One Paraiso", "01", 340, 272],
+  ];
+  for (const [building, line, regular, intro] of quotes) {
+    assertPrice(building, line, regular);
+    const first = firstServicePrice(linesOf(building)[line]);
+    if (first !== intro) {
+      throw new Error(`${building} ${line} first service ${first}, expected ${intro}`);
+    }
+  }
+
+  assertPrice("Aria Reserve North", "03", 200);
+  assertPrice("Aria Reserve North", "04", 180);
+  assertPrice("Aria Reserve North", "05", 190);
+  assertPrice("Aria Reserve North", "06", 200);
+  assertPrice("Aria Reserve South", "03", 200);
+  assertPrice("Aria Reserve South", "04", 190);
+  assertPrice("Aria Reserve South", "06", 200);
+  assertPrice("Missoni Baia", "01", 300);
+  assertPrice("Missoni Baia", "05", 220);
+  assertPrice("Missoni Baia", "06", 220);
+  assertPrice("Missoni Baia", "3801", 300);
+  assertPrice("Missoni Baia", "3803", 450);
+  assertPrice("Missoni Baia", "5606", 220);
+  assertPrice("Aria on the Bay", "03", 180);
+  assertPrice("Aria on the Bay", "04", 180);
+  assertPrice("Aria on the Bay", "05", 160);
+  assertPrice("Icon Bay", "01", 220);
+  assertPrice("Icon Bay", "05", 180);
+  assertPrice("Icons on the Bay", "05", 180);
+  assertPrice("Paramount Bay", "09", 180);
+  assertPrice("Paraiso Bayviews", "PH04", 220);
+  if (interiorQuote("Gran Paraiso", "PH01", 550, false) !== 150) {
+    throw new Error("Gran Paraiso PH01 interior moved off 150");
+  }
+  if (interiorQuote("Gran Paraiso", "PH04", 550, false) !== 170) {
+    throw new Error("Gran Paraiso PH04 interior moved off 170");
+  }
+  if (interiorQuote("Gran Paraiso", "01", 450, false) !== 0) {
+    throw new Error("Gran Paraiso 01 interior moved off 0");
   }
 });
 
