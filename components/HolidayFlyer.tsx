@@ -15,6 +15,8 @@ type HolidayFlyerProps = {
   zoomOutLabel: string;
   resetLabel: string;
   hintLabel: string;
+  /** Bottom band scrolls to pricing when the artwork still has a price button. */
+  priceBand?: boolean;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -34,6 +36,7 @@ export default function HolidayFlyer({
   zoomOutLabel,
   resetLabel,
   hintLabel,
+  priceBand = true,
 }: HolidayFlyerProps) {
   const [open, setOpen] = React.useState(false);
   const closeLightbox = React.useCallback(() => setOpen(false), []);
@@ -63,23 +66,29 @@ export default function HolidayFlyer({
               data-flyer-zone="photo"
               onClick={() => setOpen(true)}
               aria-label={openLabel}
-              className="absolute inset-x-0 top-0 h-[74%] cursor-zoom-in bg-transparent"
+              className={
+                priceBand
+                  ? "absolute inset-x-0 top-0 h-[74%] cursor-zoom-in bg-transparent"
+                  : "absolute inset-0 cursor-zoom-in bg-transparent"
+              }
             >
               <span className="sr-only">{openLabel}</span>
               <span className="pointer-events-none absolute right-3 top-3 rounded-full border border-white/15 bg-[#0B1C2E]/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F2E5BE] shadow-sm backdrop-blur-sm">
                 {tapLabel}
               </span>
             </button>
-            <a
-              href="#unit-price"
-              data-see-price="true"
-              data-flyer-zone="price"
-              aria-label={seePriceLabel}
-              onClick={scrollToPrice}
-              className="absolute inset-x-0 bottom-0 h-[26%] cursor-pointer"
-            >
-              <span className="sr-only">{seePriceLabel}</span>
-            </a>
+            {priceBand ? (
+              <a
+                href="#unit-price"
+                data-see-price="true"
+                data-flyer-zone="price"
+                aria-label={seePriceLabel}
+                onClick={scrollToPrice}
+                className="absolute inset-x-0 bottom-0 h-[26%] cursor-pointer"
+              >
+                <span className="sr-only">{seePriceLabel}</span>
+              </a>
+            ) : null}
           </div>
         </div>
       </section>

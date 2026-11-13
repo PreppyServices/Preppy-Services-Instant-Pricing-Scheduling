@@ -48,7 +48,7 @@ import HolidayFlyer from "./HolidayFlyer";
  *                          glass add-on. Also accepts ?first=1 or ?promo=intro.
  *                          The resident can toggle it off. Regular interior
  *                          prices stay on addOnPricing.
- *   /november              Real Edgewater mirrored balcony card above the
+ *   /november              Clean Edgewater balcony photo above the
  *                          calculator, with the 20% first-service rate already
  *                          applied. ?flyer=1, ?flyer=november, ?promo=november,
  *                          and ?promo=holiday do the same. ?view=daylight or
@@ -110,38 +110,38 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.custom.sub": "Pics | Chat",
     "badge.glass": "Balcony Glass Detailing",
     "badge.painting": "Interior Painting Consultation",
-    "badge.custom": "Custom Job — Direct Quote",
+    "badge.custom": "Custom Job · Direct Quote",
     "selectResidence": "Select Residence",
     "search.placeholder": "Search by building name…",
     "search.footer": "{count} residences · Type to filter",
-    "unit.labelWithUnit": "Unit {unit} — Line",
+    "unit.labelWithUnit": "Unit {unit} · Line",
     "unit.label": "Select Unit / Line",
     "unit.chooseLine": "Choose line",
     "unit.pending": "Share your unit for a quote",
-    "unit.autoDetectedLast2": "Line {line} detected from unit {unit} — tap to change",
+    "unit.autoDetectedLast2": "Line {line} detected from unit {unit}, tap to change",
     "unit.autoDetectedExact": "Matched unit {unit} · Line {line}",
     "services.header": "Services",
     "glass.complete": "Complete Balcony Glass & Frame Detailing",
     "glass.exterior": "Exterior",
     "glass.included": "Included",
     "glass.interior": "Add interior glass",
-    "glass.addon": "Add-on",
+    "glass.addon": "Add on",
     "glass.selectUnitFirst": "Select unit first",
     "paint.header": "Consultation",
     "paint.title": "Interior Paint Consultation",
-    "paint.walkthrough": "15-minute walkthrough",
+    "paint.walkthrough": "15 minute walkthrough",
     "paint.schedule": "Schedule",
     "custom.header": "Tell us what you need",
     "custom.placeholder":
-      "Describe your job — install window treatments, change light fixtures, change out all light bulbs to a warmer color, sync smart home automations, pressure washing, floor polishing, specialty cleaning, post-construction detailing, maintenance scheduling while traveling, and more. Send pics and schedule an on-site walkthrough.",
+      "Describe your job. Install window treatments, change light fixtures, change out all light bulbs to a warmer color, sync smart home automations, pressure washing, floor polishing, specialty cleaning, post construction detailing, maintenance scheduling while traveling, and more. Send pics and schedule an on site walkthrough.",
     "custom.tappingSend": "Tapping send opens Messages with your building & unit already filled in.",
     "price.directQuote": "Direct quote",
-    "price.directHeadline": "Send your details — we'll reply with a tailored quote.",
-    "price.directSub": "Photos, floor plan, scope — whatever you have.",
+    "price.directHeadline": "Send your details, and we'll reply with a tailored quote.",
+    "price.directSub": "Photos, floor plan, scope, whatever you have.",
     "price.private": "Private consultation",
-    "price.reserveHeadline": "Discuss your project on-site.",
+    "price.reserveHeadline": "Discuss your project on site.",
     "price.reserveSub": "Finalize details, get quote and coordinate scheduling.",
-    "price.residenceFinalizing": "We'll confirm line-specific pricing before you book.",
+    "price.residenceFinalizing": "We'll confirm pricing for your line before you book.",
     "price.textPrivate": "Text us for a private quote.",
     "price.selectResidenceFirst": "Select your residence and unit line to view pricing",
     "unmatched.kicker": "Building not verified yet",
@@ -153,7 +153,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.estimated": "Estimated total",
     "price.regular": "Regular",
     "price.firstService": "First service",
-    "price.firstServiceNote": "New-customer pricing · 20% off",
+    "price.firstServiceNote": "New customer pricing · 20% off",
     "intro.toggle": "First service / new customer",
     "intro.toggle.sub": "20% off balcony glass",
     "intro.on": "On",
@@ -171,10 +171,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "flyer.zoomIn": "Zoom in",
     "flyer.zoomOut": "Zoom out",
     "flyer.reset": "Fit",
-    "flyer.hint": "Pinch or double-tap to zoom",
+    "flyer.hint": "Pinch or double tap to zoom",
     "cta.sendImessage": "Send via iMessage",
     "cta.checkAvailability": "Check Availability",
-    "cta.reserveConsultation": "Reserve On-Site Walkthrough",
+    "cta.reserveConsultation": "Reserve On Site Walkthrough",
     "cta.textSendPhoto": "Text us · Send a photo",
     "trust.whiteGlove": "White Glove",
     "trust.whiteGlove.sub": "Service",
@@ -223,15 +223,15 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.custom.sub": "Fotos | Chat",
     "badge.glass": "Detallado de Cristal de Balcón",
     "badge.painting": "Consulta de Pintura Interior",
-    "badge.custom": "Trabajo a Medida — Cotización Directa",
+    "badge.custom": "Trabajo a Medida · Cotización Directa",
     "selectResidence": "Seleccione Residencia",
     "search.placeholder": "Buscar por nombre del edificio…",
     "search.footer": "{count} residencias · Escriba para filtrar",
-    "unit.labelWithUnit": "Unidad {unit} — Línea",
+    "unit.labelWithUnit": "Unidad {unit} · Línea",
     "unit.label": "Seleccionar Unidad / Línea",
     "unit.chooseLine": "Elegir línea",
     "unit.pending": "Comparte tu unidad para una cotización",
-    "unit.autoDetectedLast2": "Línea {line} detectada de la unidad {unit} — toque para cambiar",
+    "unit.autoDetectedLast2": "Línea {line} detectada de la unidad {unit}, toque para cambiar",
     "unit.autoDetectedExact": "Unidad {unit} coincidente · Línea {line}",
     "services.header": "Servicios",
     "glass.complete": "Detallado Completo de Cristal y Marco del Balcón",
@@ -245,11 +245,11 @@ const I18N: Record<Lang, Record<string, string>> = {
     "paint.walkthrough": "Recorrido de 15 minutos",
     "paint.schedule": "Agendar",
     "custom.header": "Cuéntenos qué necesita",
-    "custom.placeholder": "Describa el trabajo — habitaciones, superficies, estado, fechas. Fotos bienvenidas por mensaje.",
+    "custom.placeholder": "Describa el trabajo. Habitaciones, superficies, estado, fechas. Fotos bienvenidas por mensaje.",
     "custom.tappingSend": "Al enviar se abre Mensajes con su edificio y unidad ya completados.",
     "price.directQuote": "Cotización directa",
-    "price.directHeadline": "Envíenos los detalles — responderemos con una cotización personalizada.",
-    "price.directSub": "Fotos, plano, alcance — lo que tenga.",
+    "price.directHeadline": "Envíenos los detalles y responderemos con una cotización personalizada.",
+    "price.directSub": "Fotos, plano, alcance, lo que tenga.",
     "price.private": "Consulta privada",
     "price.reserveHeadline": "Converse sobre su proyecto en sitio.",
     "price.reserveSub": "Finalize detalles, reciba una cotización y coordine la programación.",
@@ -335,15 +335,15 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.custom.sub": "Photos | Chat",
     "badge.glass": "Détaillage du Verre de Balcon",
     "badge.painting": "Consultation de Peinture Intérieure",
-    "badge.custom": "Travail Sur Mesure — Devis Direct",
+    "badge.custom": "Travail Sur Mesure · Devis Direct",
     "selectResidence": "Sélectionner la Résidence",
     "search.placeholder": "Rechercher par nom de bâtiment…",
     "search.footer": "{count} résidences · Tapez pour filtrer",
-    "unit.labelWithUnit": "Unité {unit} — Ligne",
+    "unit.labelWithUnit": "Unité {unit} · Ligne",
     "unit.label": "Sélectionner Unité / Ligne",
     "unit.chooseLine": "Choisir la ligne",
     "unit.pending": "Indiquez votre unité pour un devis",
-    "unit.autoDetectedLast2": "Ligne {line} détectée de l'unité {unit} — touchez pour changer",
+    "unit.autoDetectedLast2": "Ligne {line} détectée de l'unité {unit}, touchez pour changer",
     "unit.autoDetectedExact": "Unité {unit} correspondante · Ligne {line}",
     "services.header": "Services",
     "glass.complete": "Détaillage Complet du Verre et Cadre de Balcon",
@@ -357,11 +357,11 @@ const I18N: Record<Lang, Record<string, string>> = {
     "paint.walkthrough": "Visite de 15 minutes",
     "paint.schedule": "Planifier",
     "custom.header": "Dites-nous ce dont vous avez besoin",
-    "custom.placeholder": "Décrivez le travail — pièces, surfaces, état, délais. Photos bienvenues par message.",
+    "custom.placeholder": "Décrivez le travail. Pièces, surfaces, état, délais. Photos bienvenues par message.",
     "custom.tappingSend": "En appuyant sur envoyer, Messages s'ouvre avec votre bâtiment et unité déjà remplis.",
     "price.directQuote": "Devis direct",
-    "price.directHeadline": "Envoyez vos détails — nous répondrons avec un devis sur mesure.",
-    "price.directSub": "Photos, plan, portée — tout ce que vous avez.",
+    "price.directHeadline": "Envoyez vos détails, et nous répondrons avec un devis sur mesure.",
+    "price.directSub": "Photos, plan, portée, tout ce que vous avez.",
     "price.private": "Consultation privée",
     "price.reserveHeadline": "Discutez de votre projet sur place.",
     "price.reserveSub": "Finalisez les détails, obtenez un devis et coordonnez la planification.",
@@ -383,8 +383,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "intro.on": "Oui",
     "intro.off": "Non",
     "discount.deal": "✓ Offre de 20 % appliquée",
-    "discount.offer": "Offre newsletter de novembre · Verre · Sols · Cadres · Garde-corps",
-    "discount.offerShort": "Verre · Sols · Cadres · Garde-corps",
+    "discount.offer": "Offre newsletter de novembre · Verre · Sols · Cadres · Rambarde",
+    "discount.offerShort": "Verre · Sols · Cadres · Rambarde",
     "discount.heading": "Sélectionnez votre propriété et votre ligne pour le prix",
     "discount.viewFlyer": "Voir le flyer des fêtes",
     "discount.hideFlyer": "Masquer le flyer",
@@ -870,7 +870,7 @@ export default function PreppyLuxuryWidget() {
 
   const buildIMessageURL = React.useCallback(
     (mode: "question" | "photo" | "custom") => {
-      const parts: string[] = ["Hi Preppy —"];
+      const parts: string[] = ["Hi Preppy,"];
       const ctx: string[] = [];
       if (customerName) ctx.push(`this is ${customerName}`);
       if (building && building !== buildings[0]) ctx.push(`at ${building}`);
@@ -878,7 +878,7 @@ export default function PreppyLuxuryWidget() {
       else if (unitLine) ctx.push(`line ${unitLine}`);
       if (ctx.length) parts.push(ctx.join(", ") + ".");
       if (mode === "custom") {
-        parts.push(customDescription.trim() || "I'd like a custom quote — details to follow.");
+        parts.push(customDescription.trim() || "I'd like a custom quote. Details to follow.");
       } else if (mode === "photo") {
         parts.push("Sending photos for a quote.");
       } else {
@@ -1121,6 +1121,7 @@ export default function PreppyLuxuryWidget() {
             width={flyerAsset.width}
             height={flyerAsset.height}
             seePriceLabel={t("discount.heading")}
+            priceBand={flyerAsset.priceBand}
             openLabel={t("flyer.open")}
             tapLabel={t("flyer.tap")}
             closeLabel={t("flyer.close")}
