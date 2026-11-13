@@ -18,7 +18,7 @@ import {
 import { matchCatalogBuilding } from "../lib/catalogBuilding.ts";
 import {
   firstServicePrice,
-  INTRO_INTERIOR_ADDON,
+  interiorTier,
   INTRO_RATE,
   quoteInteriorAddOn,
 } from "../lib/introPricing.ts";
@@ -104,11 +104,11 @@ check("One Paraiso flyer lines are 340 before discount and 272 after 20%", () =>
     if (intro !== 272) {
       throw new Error(`One Paraiso ${line} first service ${intro}, expected 272`);
     }
-    if (interiorQuote("One Paraiso", line, 340, false) !== 100) {
-      throw new Error(`One Paraiso ${line} regular interior moved off the prior $100 quote`);
+    if (interiorQuote("One Paraiso", line, 340, false) !== interiorTier(340)) {
+      throw new Error(`One Paraiso ${line} regular interior left the balcony tier`);
     }
-    if (interiorQuote("One Paraiso", line, 340, true) !== 100) {
-      throw new Error(`One Paraiso ${line} intro interior moved off the flat $100 add-on`);
+    if (interiorQuote("One Paraiso", line, 340, true) !== firstServicePrice(interiorTier(340))) {
+      throw new Error(`One Paraiso ${line} intro interior left 20% off the tier`);
     }
   }
   assertUnit("One Paraiso", "1201", "01", 340);
@@ -220,10 +220,10 @@ check("interior catalog and other services untouched", () => {
       throw new Error(`addOnPricing ${key}: expected ${expected[key]}, got ${addOnPricing[key]}`);
     }
   }
-  if (INTRO_INTERIOR_ADDON !== 100) {
-    throw new Error(`intro interior add-on changed to ${INTRO_INTERIOR_ADDON}`);
-  }
   if (INTRO_RATE !== 0.8) throw new Error(`intro rate changed to ${INTRO_RATE}`);
+  if (interiorTier(150) !== 50 || interiorTier(851) !== 450) {
+    throw new Error("interior tier boundaries moved");
+  }
 });
 
 type MovedLine = {
@@ -344,8 +344,8 @@ const movedLines: MovedLine[] = [
   ...locks("Elysee Miami", elyseeLocks),
 ];
 
-function interiorQuote(building: string, line: string, exterior: number, intro: boolean): number {
-  return quoteInteriorAddOn(building, line, exterior, intro, addOnPricing, preservedRegularInterior);
+function interiorQuote(_building: string, _line: string, exterior: number, intro: boolean): number {
+  return quoteInteriorAddOn(exterior, intro);
 }
 
 check("moved lines keep the original regular interior quote", () => {
@@ -370,22 +370,20 @@ check("moved lines keep the original regular interior quote", () => {
     const regularInterior = interiorQuote(row.building, row.line, row.newExterior, false);
     const introInterior = interiorQuote(row.building, row.line, row.newExterior, true);
     const introExterior = firstServicePrice(row.newExterior);
-    if (regularInterior !== row.priorInterior) {
+    const expectedInterior = interiorTier(row.newExterior);
+    const expectedIntroInterior = firstServicePrice(expectedInterior);
+    if (regularInterior !== expectedInterior) {
       throw new Error(
-        `${row.building} ${row.line} regular interior ${regularInterior}, expected ${row.priorInterior}`
+        `${row.building} ${row.line} regular interior ${regularInterior}, expected ${expectedInterior}`
       );
     }
-    const newCatalog = addOnPricing[row.newExterior] ?? 0;
-    if (regularInterior === newCatalog && regularInterior !== row.priorInterior) {
-      throw new Error(`${row.building} ${row.line} followed the new exterior tier`);
-    }
-    if (introInterior !== 100) {
+    if (introInterior !== expectedIntroInterior) {
       throw new Error(`${row.building} ${row.line} intro interior ${introInterior}`);
     }
     const regularTotal = row.newExterior + regularInterior;
     const introTotal = introExterior + introInterior;
-    const expectedRegular = row.newExterior + row.priorInterior;
-    const expectedIntro = introExterior + 100;
+    const expectedRegular = row.newExterior + expectedInterior;
+    const expectedIntro = introExterior + expectedIntroInterior;
     if (regularTotal !== expectedRegular || introTotal !== expectedIntro) {
       throw new Error(`${row.building} ${row.line} totals ${regularTotal} / ${introTotal}`);
     }
@@ -398,19 +396,26 @@ check("moved lines keep the original regular interior quote", () => {
   }
 });
 
-check("every other line keeps its catalog interior and intro stays 100", () => {
+check("every line uses the balcony-price interior tier", () => {
   let scanned = 0;
   for (const [building, entry] of Object.entries(pricing)) {
     for (const [line, exterior] of Object.entries(entry.lines)) {
       scanned += 1;
-      const intro = interiorQuote(building, line, exterior, true);
-      if (intro !== 100) throw new Error(`${building} ${line} intro interior ${intro}`);
-      const moved = movedLines.some((row) => row.building === building && row.line === line);
-      if (moved) continue;
       const regular = interiorQuote(building, line, exterior, false);
-      const catalog = addOnPricing[exterior] ?? 0;
-      if (regular !== catalog) {
-        throw new Error(`${building} ${line} interior ${regular}, catalog ${catalog}`);
+      const intro = interiorQuote(building, line, exterior, true);
+      const expected = interiorTier(exterior);
+      if (regular !== expected) {
+        throw new Error(`${building} ${line} interior ${regular}, tier ${expected}`);
+      }
+      if (intro !== firstServicePrice(expected)) {
+        throw new Error(`${building} ${line} intro interior ${intro}`);
+      }
+    }
+    for (const band of entry.floorBands ?? []) {
+      const regular = quoteInteriorAddOn(band.regular, false);
+      const intro = quoteInteriorAddOn(band.regular, true);
+      if (regular !== interiorTier(band.regular) || intro !== firstServicePrice(regular)) {
+        throw new Error(`${building} band ${band.regular} interior ${regular}/${intro}`);
       }
     }
   }
@@ -447,8 +452,8 @@ check("canonical Aria Reserve South is not South Tower", () => {
   assertAbsent(tower, "06");
   assertAbsent(tower, "07");
   if (preservedRegularInterior[tower]) throw new Error("South Tower must not have an interior lock");
-  if (interiorQuote(tower, "01", 220, false) !== 70) {
-    throw new Error("South Tower line 01 interior moved");
+  if (interiorQuote(tower, "01", 220, false) !== interiorTier(220)) {
+    throw new Error("South Tower line 01 interior left the balcony tier");
   }
   if (verifiedBuildings.includes(south) || verifiedBuildings.includes(tower)) {
     throw new Error("OG verified list must not include Aria Reserve South or South Tower");
@@ -496,14 +501,14 @@ check("Nov 13 2026 approved balcony quotes", () => {
   assertPrice("Icons on the Bay", "05", 180);
   assertPrice("Paramount Bay", "09", 180);
   assertPrice("Paraiso Bayviews", "PH04", 220);
-  if (interiorQuote("Gran Paraiso", "PH01", 550, false) !== 150) {
-    throw new Error("Gran Paraiso PH01 interior moved off 150");
+  if (interiorQuote("Gran Paraiso", "PH01", 550, false) !== interiorTier(550)) {
+    throw new Error("Gran Paraiso PH01 interior left the balcony tier");
   }
-  if (interiorQuote("Gran Paraiso", "PH04", 550, false) !== 170) {
-    throw new Error("Gran Paraiso PH04 interior moved off 170");
+  if (interiorQuote("Gran Paraiso", "PH04", 550, false) !== interiorTier(550)) {
+    throw new Error("Gran Paraiso PH04 interior left the balcony tier");
   }
-  if (interiorQuote("Gran Paraiso", "01", 450, false) !== 0) {
-    throw new Error("Gran Paraiso 01 interior moved off 0");
+  if (interiorQuote("Gran Paraiso", "01", 450, false) !== interiorTier(450)) {
+    throw new Error("Gran Paraiso 01 interior left the balcony tier");
   }
 });
 

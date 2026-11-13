@@ -4,8 +4,6 @@ import {
   pricing,
   verifiedBuildings,
   placeholderBuildings,
-  addOnPricing,
-  preservedRegularInterior,
   activePlaceholderBuildings,
   verifiedBuildingSet,
   safeMappedPricing,
@@ -28,6 +26,7 @@ import {
   setIntroSearch,
   type HolidayFlyerId,
 } from "../lib/introPricing";
+import { quotesByUnit, resolveUnitQuote, type PricedSource } from "../lib/lineResolver";
 import HolidayFlyer from "./HolidayFlyer";
 /**
  * Preppy Services — Luxury Quote Widget
@@ -40,14 +39,15 @@ import HolidayFlyer from "./HolidayFlyer";
  *                          a CONSERVATIVE derivation (last-two-digits rule
  *                          for standard floorplans only; PH / UPH / LPH / TH
  *                          and irregular units never auto-map).
+ *                          Neo Vertika and Chateau Beach price from the floor
+ *                          plus the line, after an exact unit override.
  *   ?lead=A1042            Lead ID for conversion tracking (stored locally + forwarded)
  *   ?name=Alex             Customer first name for personalization
  *   ?interior=1            Pre-toggle interior add-on (requires a valid line)
  *   ?intro=1               First-service / new-customer balcony glass: 20% off
- *                          the regular line price, plus a flat $100 interior
- *                          glass add-on. Also accepts ?first=1 or ?promo=intro.
- *                          The resident can toggle it off. Regular interior
- *                          prices stay on addOnPricing.
+ *                          the regular line price, and the same 20% off the
+ *                          interior-glass tier. Also accepts ?first=1 or
+ *                          ?promo=intro. The resident can toggle it off.
  *   /november              Real Edgewater mirrored balcony card above the
  *                          calculator, with the 20% first-service rate already
  *                          applied. ?flyer=1, ?flyer=november, ?promo=november,
@@ -124,7 +124,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.complete": "Complete Balcony Glass & Frame Detailing",
     "glass.exterior": "Exterior",
     "glass.included": "Included",
-    "glass.interior": "Add interior glass",
+    "glass.interior": "Interior glass (sliders and windows)",
     "glass.addon": "Add-on",
     "glass.selectUnitFirst": "Select unit first",
     "paint.header": "Consultation",
@@ -144,12 +144,16 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.residenceFinalizing": "We'll confirm line-specific pricing before you book.",
     "price.textPrivate": "Text us for a private quote.",
     "price.selectResidenceFirst": "Select your residence and unit line to view pricing",
+    "price.enterUnit": "Enter your unit to view pricing",
+    "price.call": "Text or call 305-414-0305",
+    "unit.number": "Unit",
+    "unit.numberPlaceholder": "2809 or PHI10",
     "unmatched.kicker": "Building not verified yet",
     "unmatched.body": "We don't have {building} verified yet. Preppy can still review your unit manually.",
     "unmatched.search": "Search above to find your building, or text us for a manual review.",
     "unmatched.cta": "Text us for a manual review",
     "price.exterior": "Exterior detailing",
-    "price.interiorAddon": "Interior glass",
+    "price.interiorAddon": "Interior glass (sliders and windows)",
     "price.estimated": "Estimated total",
     "price.regular": "Regular",
     "price.firstService": "First service",
@@ -237,7 +241,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.complete": "Detallado Completo de Cristal y Marco del Balcón",
     "glass.exterior": "Exterior",
     "glass.included": "Incluido",
-    "glass.interior": "Agregar cristal interior",
+    "glass.interior": "Cristal interior (correderas y ventanas)",
     "glass.addon": "Complemento",
     "glass.selectUnitFirst": "Seleccione unidad primero",
     "paint.header": "Consulta",
@@ -256,12 +260,16 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.residenceFinalizing": "Confirmamos el precio por línea antes de reservar.",
     "price.textPrivate": "Escríbanos para una cotización privada.",
     "price.selectResidenceFirst": "Seleccione residencia y línea de unidad para ver precios",
+    "price.enterUnit": "Ingrese su unidad para ver el precio",
+    "price.call": "Escriba o llame al 305-414-0305",
+    "unit.number": "Unidad",
+    "unit.numberPlaceholder": "2809 o PHI10",
     "unmatched.kicker": "Edificio aún no verificado",
     "unmatched.body": "Todavía no tenemos {building} verificado. Preppy puede revisar su unidad manualmente.",
     "unmatched.search": "Busque arriba para encontrar su edificio, o escríbanos para una revisión manual.",
     "unmatched.cta": "Escríbanos para una revisión manual",
     "price.exterior": "Detallado exterior",
-    "price.interiorAddon": "Cristal interior",
+    "price.interiorAddon": "Cristal interior (correderas y ventanas)",
     "price.estimated": "Total estimado",
     "price.regular": "Regular",
     "price.firstService": "Primer servicio",
@@ -349,7 +357,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.complete": "Détaillage Complet du Verre et Cadre de Balcon",
     "glass.exterior": "Extérieur",
     "glass.included": "Inclus",
-    "glass.interior": "Ajouter le verre intérieur",
+    "glass.interior": "Verre intérieur (baies coulissantes et fenêtres)",
     "glass.addon": "Option",
     "glass.selectUnitFirst": "Sélectionnez l'unité d'abord",
     "paint.header": "Consultation",
@@ -368,12 +376,16 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.residenceFinalizing": "Nous confirmons le tarif par ligne avant votre réservation.",
     "price.textPrivate": "Écrivez-nous pour un devis privé.",
     "price.selectResidenceFirst": "Sélectionnez votre résidence et ligne d'unité pour voir les tarifs",
+    "price.enterUnit": "Saisissez votre unité pour voir le tarif",
+    "price.call": "Écrivez ou appelez le 305-414-0305",
+    "unit.number": "Unité",
+    "unit.numberPlaceholder": "2809 ou PHI10",
     "unmatched.kicker": "Bâtiment pas encore vérifié",
     "unmatched.body": "Nous n'avons pas encore vérifié {building}. Preppy peut tout de même évaluer votre logement manuellement.",
     "unmatched.search": "Recherchez ci-dessus pour trouver votre bâtiment, ou écrivez-nous pour une évaluation manuelle.",
     "unmatched.cta": "Écrivez-nous pour une évaluation manuelle",
     "price.exterior": "Détaillage extérieur",
-    "price.interiorAddon": "Verre intérieur",
+    "price.interiorAddon": "Verre intérieur (baies coulissantes et fenêtres)",
     "price.estimated": "Total estimé",
     "price.regular": "Tarif habituel",
     "price.firstService": "Premier service",
@@ -444,38 +456,7 @@ function translate(key: string, lang: Lang, vars?: Record<string, string | numbe
   );
 }
 
-function resolveUnitToLine(
-  unit: string | null | undefined,
-  buildingName: string
-): { line: string; source: "exact" | "last2" | "none" } {
-  if (!unit || !buildingName) return { line: "", source: "none" };
-  const lines = pricing[buildingName]?.lines;
-  if (!lines) return { line: "", source: "none" };
-  const u = unit.trim().toUpperCase();
-  if (!u) return { line: "", source: "none" };
-
-  if (lines[u] !== undefined) return { line: u, source: "exact" };
-
-  if (/^(PH|UPH|LPH|TH|TS|TOWNHOUSE|TOWNHOME|PENTHOUSE)/i.test(u)) {
-    return { line: "", source: "none" };
-  }
-
-  if (!/^\d+$/.test(u)) return { line: "", source: "none" };
-
-  if (/^\d{3,5}$/.test(u)) {
-    const last2 = u.slice(-2);
-    if (/^\d{2}$/.test(last2) && lines[last2] !== undefined) {
-      return { line: last2, source: "last2" };
-    }
-  }
-
-  if (/^\d{1,2}$/.test(u)) {
-    const padded = u.padStart(2, "0");
-    if (lines[padded] !== undefined) return { line: padded, source: "exact" };
-  }
-
-  return { line: "", source: "none" };
-}
+type WidgetLineSource = "none" | "url" | PricedSource;
 
 // ── Shared scheduling engine (Apps Script). One calendar: info@preprock.com. ──
 // JSONP because Apps Script sends no CORS headers, so a cross-origin fetch response
@@ -602,7 +583,9 @@ export default function PreppyLuxuryWidget() {
         buildingParamRaw: "",
         buildingUnmatched: false,
         line: "",
-        lineSource: "none" as "none" | "url" | "exact" | "last2",
+        lineSource: "none" as WidgetLineSource,
+        bandPrice: null as number | null,
+        callForQuote: false,
         unit: null as string | null,
         lead: null as string | null,
         name: null as string | null,
@@ -631,14 +614,19 @@ export default function PreppyLuxuryWidget() {
     const rawLine = p.get("line") || p.get("l") || "";
     let resolvedLine =
       matchedB && rawLine && pricing[matchedB]?.lines[rawLine] !== undefined ? rawLine : "";
-    let lineSource: "none" | "url" | "exact" | "last2" = resolvedLine ? "url" : "none";
+    let lineSource: WidgetLineSource = resolvedLine ? "url" : "none";
+    let bandPrice: number | null = null;
+    let callForQuote = false;
 
     const rawUnit = p.get("unit") || p.get("u");
     if (!resolvedLine && matchedB && rawUnit) {
-      const attempt = resolveUnitToLine(rawUnit, matchedB);
-      if (attempt.line) {
+      const attempt = resolveUnitQuote(matchedB, rawUnit, pricing);
+      if (attempt.status === "priced") {
         resolvedLine = attempt.line;
         lineSource = attempt.source;
+        if (quotesByUnit(pricing[matchedB])) bandPrice = attempt.regular;
+      } else if (attempt.status === "call" && quotesByUnit(pricing[matchedB])) {
+        callForQuote = true;
       }
     }
 
@@ -662,6 +650,8 @@ export default function PreppyLuxuryWidget() {
       buildingUnmatched,
       line: resolvedLine,
       lineSource,
+      bandPrice,
+      callForQuote,
       unit: rawUnit,
       lead: p.get("lead"),
       name: p.get("name"),
@@ -694,9 +684,10 @@ export default function PreppyLuxuryWidget() {
   const [unmatched, setUnmatched] = React.useState<boolean>(initialParams.buildingUnmatched);
   const unmatchedName = initialParams.buildingParamRaw.slice(0, 48);
   const [unitLine, setUnitLine] = React.useState<string>(initialParams.line);
-  const [lineSource, setLineSource] = React.useState<"none" | "url" | "exact" | "last2">(
-    initialParams.lineSource
-  );
+  const [lineSource, setLineSource] = React.useState<WidgetLineSource>(initialParams.lineSource);
+  const [bandPrice, setBandPrice] = React.useState<number | null>(initialParams.bandPrice);
+  const [callForQuote, setCallForQuote] = React.useState(initialParams.callForQuote);
+  const [unitDraft, setUnitDraft] = React.useState(initialParams.unit ?? "");
   const [lang, setLang] = React.useState<Lang>(initialParams.lang);
   const [includeInterior, setIncludeInterior] = React.useState<boolean>(initialParams.interior);
   const [introPricing, setIntroPricing] = React.useState<boolean>(initialParams.intro);
@@ -760,6 +751,8 @@ export default function PreppyLuxuryWidget() {
   const [notes, setNotes] = React.useState<string>("");
 
   const currentBuilding = pricing[building];
+  const usesUnitQuote = quotesByUnit(currentBuilding);
+  const activeUnit = usesUnitQuote ? unitDraft.trim() || null : unitNumber;
   const hasLines = currentBuilding ? Object.keys(currentBuilding.lines).length > 0 : false;
   const lineOptions = hasLines ? sortLineLabels(Object.keys(currentBuilding.lines)) : [];
 
@@ -802,6 +795,32 @@ export default function PreppyLuxuryWidget() {
   }, [buildingQuery, buildings]);
 
   React.useEffect(() => {
+    if (usesUnitQuote) {
+      const unit = unitDraft.trim();
+      if (!unit) {
+        setUnitLine("");
+        setLineSource("none");
+        setBandPrice(null);
+        setCallForQuote(false);
+        return;
+      }
+      const attempt = resolveUnitQuote(building, unit, pricing);
+      if (attempt.status === "priced") {
+        setUnitLine(attempt.line);
+        setLineSource(attempt.source);
+        setBandPrice(attempt.regular);
+        setCallForQuote(false);
+        return;
+      }
+      setUnitLine("");
+      setLineSource("none");
+      setBandPrice(null);
+      setCallForQuote(attempt.status === "call");
+      return;
+    }
+
+    setBandPrice(null);
+    setCallForQuote(false);
     // ?line= is applied as initial state. Clearing it on mount left
     // ?b=Gran%20Paraiso&line=01 with an empty quote. Re-sync only after the
     // resident changes building, or when a unit number can derive a line.
@@ -810,8 +829,8 @@ export default function PreppyLuxuryWidget() {
     setIncludeInterior(false);
 
     if (unitNumber) {
-      const attempt = resolveUnitToLine(unitNumber, building);
-      if (attempt.line) {
+      const attempt = resolveUnitQuote(building, unitNumber, pricing);
+      if (attempt.status === "priced") {
         setUnitLine(attempt.line);
         setLineSource(attempt.source);
         return;
@@ -820,31 +839,22 @@ export default function PreppyLuxuryWidget() {
 
     setUnitLine("");
     setLineSource("none");
-  }, [building, unitNumber]);
+  }, [building, unitNumber, unitDraft, usesUnitQuote]);
 
   React.useEffect(() => {
     if (serviceType !== "glass") setIncludeInterior(false);
   }, [serviceType]);
 
-  const regularPrice =
-    unitLine && currentBuilding ? currentBuilding.lines[unitLine] ?? null : null;
+  const regularPrice = usesUnitQuote
+    ? bandPrice
+    : unitLine && currentBuilding
+      ? currentBuilding.lines[unitLine] ?? null
+      : null;
   const introPrice = regularPrice != null ? firstServicePrice(regularPrice) : null;
-  // Intro discounts the exterior line only. Interior glass on that path is a
-  // flat $100. Regular interior dollars use the shared catalog unless this
-  // line has a preserved pre-change add-on.
+  // The 20% first-service rate applies to the balcony and to interior glass.
   const glassIntro = introPricing && serviceType === "glass";
   const chargedPrice = glassIntro && introPrice != null ? introPrice : regularPrice;
-  const interiorAddOn =
-    regularPrice != null
-      ? quoteInteriorAddOn(
-          building,
-          unitLine,
-          regularPrice,
-          glassIntro,
-          addOnPricing,
-          preservedRegularInterior
-        )
-      : 0;
+  const interiorAddOn = regularPrice != null ? quoteInteriorAddOn(regularPrice, glassIntro) : 0;
   const total =
     chargedPrice != null ? chargedPrice + (includeInterior ? interiorAddOn : 0) : null;
   const quoteLabel =
@@ -860,13 +870,13 @@ export default function PreppyLuxuryWidget() {
     if (leadId) p.set("lead", leadId);
     if (building) p.set("building", building);
     if (unitLine) p.set("line", unitLine);
-    if (unitNumber) p.set("unit", unitNumber);
+    if (activeUnit) p.set("unit", activeUnit);
     if (total) p.set("quote", String(total));
     if (customerName) p.set("name", customerName);
     applyUtmToParams(p, utmSafeForRecord(batchUtm, [customerName]));
     const qs = p.toString();
     return qs ? `${base}?${qs}` : base;
-  }, [serviceType, leadId, building, unitLine, unitNumber, total, customerName, batchUtm]);
+  }, [serviceType, leadId, building, unitLine, activeUnit, total, customerName, batchUtm]);
 
   const buildIMessageURL = React.useCallback(
     (mode: "question" | "photo" | "custom") => {
@@ -874,7 +884,7 @@ export default function PreppyLuxuryWidget() {
       const ctx: string[] = [];
       if (customerName) ctx.push(`this is ${customerName}`);
       if (building && building !== buildings[0]) ctx.push(`at ${building}`);
-      if (unitNumber) ctx.push(`unit ${unitNumber}`);
+      if (activeUnit) ctx.push(`unit ${activeUnit}`);
       else if (unitLine) ctx.push(`line ${unitLine}`);
       if (ctx.length) parts.push(ctx.join(", ") + ".");
       if (mode === "custom") {
@@ -886,7 +896,7 @@ export default function PreppyLuxuryWidget() {
       }
       return `sms:${LIVE_AGENT_NUMBER}?&body=${encodeURIComponent(parts.join(" "))}`;
     },
-    [customerName, building, buildings, unitNumber, unitLine, customDescription]
+    [customerName, building, buildings, activeUnit, unitLine, customDescription]
   );
 
   const handleBookingClick = React.useCallback(() => {
@@ -898,7 +908,7 @@ export default function PreppyLuxuryWidget() {
         name: customerName,
         building,
         line: unitLine,
-        unit: unitNumber,
+        unit: activeUnit,
         service: serviceType,
         quote: total,
         intro: glassIntro,
@@ -912,7 +922,7 @@ export default function PreppyLuxuryWidget() {
     } catch {
       // safe to ignore
     }
-  }, [leadId, customerName, building, unitLine, unitNumber, serviceType, total, glassIntro, includeInterior, lang, batchUtm]);
+  }, [leadId, customerName, building, unitLine, activeUnit, serviceType, total, glassIntro, includeInterior, lang, batchUtm]);
 
   const loadSlots = React.useCallback(async () => {
     setSlotState("loading");
@@ -937,10 +947,10 @@ export default function PreppyLuxuryWidget() {
     setBookState("idle");
     setChosenSlot(null);
     setSigner((prev) => prev || customerName || "");
-    setFullUnit((prev) => prev || unitNumber || "");
+    setFullUnit((prev) => prev || activeUnit || "");
     handleBookingClick();
     loadSlots();
-  }, [customerName, unitNumber, handleBookingClick, loadSlots]);
+  }, [customerName, activeUnit, handleBookingClick, loadSlots]);
 
   // Required-contact validation before a residential booking is allowed.
   const phoneDigits = contactPhone.replace(/\D/g, "");
@@ -1011,12 +1021,13 @@ export default function PreppyLuxuryWidget() {
     SCHEDULER_EXEC_URL,
   ]);
 
-  const hasPersonalization = !!(customerName || unitNumber);
-  const personalizationLabel = [customerName, unitNumber ? `Unit ${unitNumber}` : null]
+  const hasPersonalization = !!(customerName || activeUnit);
+  const personalizationLabel = [customerName, activeUnit ? `Unit ${activeUnit}` : null]
     .filter(Boolean)
     .join(" · ");
 
-  const showAutoDetectedHint = unitLine && (lineSource === "exact" || lineSource === "last2");
+  const showAutoDetectedHint =
+    !!unitLine && lineSource !== "none" && lineSource !== "url";
 
   return (
     <div
@@ -1318,33 +1329,53 @@ export default function PreppyLuxuryWidget() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+                {currentBuilding?.address && !showBuildingDropdown && (
+                  <div className="mt-2 text-[13px] text-[#5E6C75]" data-building-address={currentBuilding.address}>
+                    {currentBuilding.address}
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="mb-2 block text-[12px] uppercase tracking-[0.22em] text-[#5A6972]">
-                  {unitNumber ? t("unit.labelWithUnit", { unit: unitNumber }) : t("unit.label")}
+                  {usesUnitQuote
+                    ? t("unit.number")
+                    : unitNumber
+                      ? t("unit.labelWithUnit", { unit: unitNumber })
+                      : t("unit.label")}
                 </label>
-                <select
-                  className="w-full rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-4 py-3 text-[18px] font-medium outline-none focus:border-[#0F7C82]"
-                  value={unitLine}
-                  onChange={(e) => {
-                    setUnitLine(e.target.value);
-                    setLineSource(e.target.value ? "url" : "none");
-                  }}
-                  disabled={!hasLines}
-                >
-                  <option value="">{hasLines ? t("unit.chooseLine") : t("unit.pending")}</option>
-                  {lineOptions.map((line) => (
-                    <option key={line} value={line}>
-                      {line}
-                    </option>
-                  ))}
-                </select>
+                {usesUnitQuote ? (
+                  <input
+                    type="text"
+                    value={unitDraft}
+                    data-unit-input="true"
+                    placeholder={t("unit.numberPlaceholder")}
+                    onChange={(e) => setUnitDraft(e.target.value)}
+                    className="w-full rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-4 py-3 text-[18px] font-medium outline-none focus:border-[#0F7C82]"
+                  />
+                ) : (
+                  <select
+                    className="w-full rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-4 py-3 text-[18px] font-medium outline-none focus:border-[#0F7C82]"
+                    value={unitLine}
+                    onChange={(e) => {
+                      setUnitLine(e.target.value);
+                      setLineSource(e.target.value ? "url" : "none");
+                    }}
+                    disabled={!hasLines}
+                  >
+                    <option value="">{hasLines ? t("unit.chooseLine") : t("unit.pending")}</option>
+                    {lineOptions.map((line) => (
+                      <option key={line} value={line}>
+                        {line}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 {showAutoDetectedHint && (
                   <div className="mt-2 text-[11px] tracking-[0.02em] text-[#8B9399]">
-                    {lineSource === "last2"
-                      ? t("unit.autoDetectedLast2", { line: unitLine, unit: unitNumber || "" })
-                      : t("unit.autoDetectedExact", { line: unitLine, unit: unitNumber || "" })}
+                    {lineSource === "last2" || lineSource === "floor-band"
+                      ? t("unit.autoDetectedLast2", { line: unitLine, unit: activeUnit || "" })
+                      : t("unit.autoDetectedExact", { line: unitLine, unit: activeUnit || "" })}
                   </div>
                 )}
               </div>
@@ -1487,7 +1518,15 @@ export default function PreppyLuxuryWidget() {
                       {t("price.reserveSub")}
                     </div>
                   </div>
-                ) : !hasLines ? (
+                ) : usesUnitQuote && callForQuote ? (
+                  <div className="text-center" data-quote-call="true">
+                    <a href="tel:+13054140305" className="text-[18px] font-semibold text-[#0F7C82]">
+                      {t("price.call")}
+                    </a>
+                  </div>
+                ) : usesUnitQuote && regularPrice == null ? (
+                  <div className="text-center text-[16px] text-[#5E6C75]">{t("price.enterUnit")}</div>
+                ) : !hasLines && !usesUnitQuote ? (
                   <div className="text-center">
                     <div className="text-[16px] text-[#5E6C75]">{t("price.residenceFinalizing")}</div>
                     <div className="mt-2 text-[14px] text-[#0F7C82]">{t("price.textPrivate")}</div>
@@ -1504,6 +1543,7 @@ export default function PreppyLuxuryWidget() {
                     data-charged-price={chargedPrice ?? ""}
                     data-interior-addon={interiorAddOn}
                     data-quote-amount={total ?? ""}
+                    data-quote-unit={activeUnit ?? ""}
                   >
                     {glassIntro ? (
                       <>
@@ -1727,9 +1767,9 @@ export default function PreppyLuxuryWidget() {
                   </button>
                 </div>
 
-                {(building || unitNumber || total) && (
+                {(building || activeUnit || total) && (
                   <div className="mt-1 text-[12px] text-[#6B7880]">
-                    {[building, unitNumber ? "Unit " + unitNumber : "", quoteLabel]
+                    {[building, activeUnit ? "Unit " + activeUnit : "", quoteLabel]
                       .filter(Boolean)
                       .join(" · ")}
                   </div>

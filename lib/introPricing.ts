@@ -148,43 +148,28 @@ export function firstServicePrice(regular: number): number {
 }
 
 /**
- * Flat interior-glass add-on on first-service / new-customer quotes.
- * Matches the Gran Paraiso balcony-glass flyer ("Add interior glass" $100).
- * The 20% intro rate applies only to the exterior line, not to this add-on.
+ * Interior glass (sliders and windows), from the unit's regular balcony price.
+ * The same tiers apply to every building. Large double-height interior glass
+ * is not priced here; that stays a custom quote.
  */
-export const INTRO_INTERIOR_ADDON = 100;
-
-/**
- * Interior glass dollars once a line is priced (the add-on is offered).
- *
- * Regular quotes use the shared catalog tier (`addOnPricing`, keyed by the
- * regular exterior price) unless `preservedRegular` is set. That lock is the
- * exact interior dollar a line already quoted before its exterior price moved.
- * A missing tier stays $0 — this does not invent a regular interior price.
- *
- * Intro quotes use the flat $100 for every building and ignore both the
- * catalog tier and any preserved regular dollar.
- */
-export function interiorGlassAddOn(
-  catalogAddOn: number | undefined,
-  intro: boolean,
-  preservedRegular?: number
-): number {
-  if (intro) return INTRO_INTERIOR_ADDON;
-  if (preservedRegular !== undefined) return preservedRegular;
-  return catalogAddOn ?? 0;
+export function interiorTier(regularBalcony: number): number {
+  if (regularBalcony <= 150) return 50;
+  if (regularBalcony <= 250) return 100;
+  if (regularBalcony <= 365) return 150;
+  if (regularBalcony <= 550) return 225;
+  if (regularBalcony <= 850) return 325;
+  return 450;
 }
 
-/** Interior dollars for one catalog line. Intro ignores the preserved lock. */
-export function quoteInteriorAddOn(
-  building: string,
-  line: string,
-  exteriorPrice: number,
-  intro: boolean,
-  catalog: Record<number, number>,
-  preserved: Record<string, Record<string, number>>
-): number {
-  return interiorGlassAddOn(catalog[exteriorPrice], intro, preserved[building]?.[line]);
+/** Regular tier, or the same 20% first-service rate used on the balcony. */
+export function interiorGlassAddOn(regularBalcony: number, intro: boolean): number {
+  const addon = interiorTier(regularBalcony);
+  return intro ? firstServicePrice(addon) : addon;
+}
+
+/** Interior dollars for a resolved regular balcony price. */
+export function quoteInteriorAddOn(exteriorPrice: number, intro: boolean): number {
+  return interiorGlassAddOn(exteriorPrice, intro);
 }
 
 /**

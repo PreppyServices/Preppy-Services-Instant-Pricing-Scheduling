@@ -28,7 +28,7 @@ for (const [building, entry] of Object.entries(pricing)) {
   }
 }
 
-check(buildings === 422, `building count changed to ${buildings}`);
+check(buildings === 423, `building count changed to ${buildings}`);
 check(lines > 3000, `line count looks short: ${lines}`);
 
 const granPh = pricing["Gran Paraiso"]?.lines["PH01"];
