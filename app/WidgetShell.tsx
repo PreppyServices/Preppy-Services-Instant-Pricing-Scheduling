@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { QuoteTracking } from "../components/QuoteTracking";
 
 const PreppyLuxuryWidget = dynamic(
   () => import("../components/PreppyLuxuryWidget"),
@@ -8,5 +9,10 @@ const PreppyLuxuryWidget = dynamic(
 );
 
 export default function WidgetShell() {
-  return <PreppyLuxuryWidget />;
+  return (
+    <>
+      <QuoteTracking />
+      <PreppyLuxuryWidget />
+    </>
+  );
 }

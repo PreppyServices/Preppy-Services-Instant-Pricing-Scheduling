@@ -19,6 +19,8 @@ import {
   utmSafeForRecord,
   type UtmParams,
 } from "../lib/batchUtm";
+import { captureClickIds, applyClickIds, type ClickIds } from "../lib/clickIds";
+import { trackQuoteView, trackSchedule } from "../components/QuoteTracking";
 import {
   FLYER_ASSETS,
   firstServicePrice,
@@ -724,6 +726,14 @@ export default function PreppyLuxuryWidget() {
       return {};
     }
   });
+  const [clickIds] = React.useState<ClickIds>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      return captureClickIds(window.location.search, window.sessionStorage);
+    } catch {
+      return {};
+    }
+  });
   // Building captured on first paint, including a ?b= / ?building= deep link.
   // The line-sync effect must not clear that selection on mount.
   const deepLinkBuildingRef = React.useRef(building);
@@ -847,6 +857,20 @@ export default function PreppyLuxuryWidget() {
       : 0;
   const total =
     chargedPrice != null ? chargedPrice + (includeInterior ? interiorAddOn : 0) : null;
+  const quoteSeenRef = React.useRef("");
+  React.useEffect(() => {
+    if (total == null || !building || !unitLine) return;
+    const key = `${building}|${unitLine}|${total}`;
+    if (quoteSeenRef.current === key) return;
+    quoteSeenRef.current = key;
+    trackQuoteView({ building, line: unitLine, value: total });
+  }, [building, unitLine, total]);
+  const scheduleTrackedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (bookState !== "done" || scheduleTrackedRef.current) return;
+    scheduleTrackedRef.current = true;
+    trackSchedule({ building, value: total });
+  }, [bookState, building, total]);
   const quoteLabel =
     total != null
       ? glassIntro
@@ -977,6 +1001,7 @@ export default function PreppyLuxuryWidget() {
       leadId,
       utm: batchUtm,
     });
+    applyClickIds(p, clickIds);
     try {
       const res = await preppyJsonp(SCHEDULER_EXEC_URL + "?" + p.toString());
       if (res && res.ok) {
@@ -1007,6 +1032,7 @@ export default function PreppyLuxuryWidget() {
     contactPhone,
     leadId,
     batchUtm,
+    clickIds,
     loadSlots,
     SCHEDULER_EXEC_URL,
   ]);
