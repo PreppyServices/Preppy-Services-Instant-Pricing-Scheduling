@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/exterior-line-rates.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/batch-utm.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/price-floor.test.ts"
+    "test": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/exterior-line-rates.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/batch-utm.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/price-floor.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/neo-vertika.test.ts"
   },
   "dependencies": {
     "framer-motion": "^11.18.2",

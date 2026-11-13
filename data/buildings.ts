@@ -26,10 +26,34 @@
 // -----------------------------------------------------------------------------
 export type BuildingStatus = "raw" | "researched" | "mapped" | "priced" | "verified";
 
+export type FloorBand = {
+  lines: string[];
+  floors: [number, number];
+  regular: number;
+  also?: string[];
+};
+
 export type BuildingPricing = {
   lines: Record<string, number>;
   penthouse: boolean;
+  address?: string;
+  floorBands?: FloorBand[];
+  /** Exact unit code → regular price. Wins over a floor band. */
+  unitOverrides?: Record<string, number>;
+  /** Floors inside a band range that stay unquoted. */
+  skipFloors?: number[];
 };
+
+function twoDigitLines(min: number, max: number, extras: number[] = []): string[] {
+  const lines: string[] = [];
+  for (let n = min; n <= max; n += 1) lines.push(String(n).padStart(2, "0"));
+  for (const n of extras) lines.push(String(n).padStart(2, "0"));
+  return lines;
+}
+
+function phiAlso(lines: readonly string[]): string[] {
+  return lines.flatMap((line) => [`PHI${line}`, `PHII${line}`]);
+}
 
 export const pricing: Record<string, BuildingPricing> = {
     "Gran Paraiso": {
@@ -52,8 +76,7 @@ export const pricing: Record<string, BuildingPricing> = {
     // Lines 01 and 06 are $340 before discount. The widget applies the
     // shared 20% first-service rate in lib/introPricing.ts (340 → 272).
     // Lines 03 and 04 stay $280. The retired $300 offer is not this building.
-    // Regular interior on 01/06 stays the previous $100 quote
-    // (preservedRegularInterior) instead of the $340 catalog tier ($120).
+    // Interior glass follows interiorTier() on the regular balcony price.
     // quote.preppyservices.com reads this map from the frontend bundle of
     // PreppyServices/Preppy-Services-Instant-Pricing-Scheduling, deployed as
     // Vercel project preppy-services-instant-pricing-scheduling on team
@@ -2454,15 +2477,34 @@ export const pricing: Record<string, BuildingPricing> = {
       penthouse: false,
     },
     "Chateau Beach": {
-      lines: {
-        "01": 430,
-        "02": 380,
-        "03": 320,
-        "04": 320,
-        "05": 380,
-        "06": 430
+      lines: {},
+      penthouse: true,
+      skipFloors: [13],
+      unitOverrides: {
+        "302": 365,
+        "1002": 365,
+        "1502": 365,
+        "2002": 365,
+        "2502": 365,
+        "403": 550,
+        "1001": 550,
+        "1501": 550,
+        "2001": 550,
+        "1203": 850,
+        "2201": 850,
+        "2401": 1200,
+        "3201": 1200,
+        "PH3201": 1200,
       },
-      penthouse: false,
+      floorBands: [
+        { lines: ["03"], floors: [3, 11], regular: 230 },
+        { lines: ["04"], floors: [3, 11], regular: 295 },
+        { lines: ["01"], floors: [3, 23], regular: 365 },
+        { lines: ["03"], floors: [14, 23], regular: 365 },
+        { lines: ["02"], floors: [26, 31], regular: 450 },
+        { lines: ["02"], floors: [5, 23], regular: 550 },
+        { lines: ["01"], floors: [25, 31], regular: 650 },
+      ],
     },
     "Ocean 4": {
       lines: {
@@ -5358,6 +5400,48 @@ export const pricing: Record<string, BuildingPricing> = {
     "The Point South Tower": {
       lines: {},
       penthouse: false,
+    },
+    // 690 SW 1st Ct, Miami 33130. Price is the floor plus the line.
+    // Floors 1–2 are not quoted. PHI / PHII codes are listed on `also`.
+    "Neo Vertika": {
+      address: "690 SW 1st Ct, Miami 33130",
+      lines: {},
+      penthouse: true,
+      floorBands: [
+        { lines: ["21", "23", "25", "26", "28", "30", "32"], floors: [10, 27], regular: 150 },
+        { lines: ["27", "34", "29", "31", "33"], floors: [10, 20], regular: 150 },
+        { lines: ["01", "02"], floors: [3, 11], regular: 190 },
+        { lines: twoDigitLines(3, 8), floors: [3, 7], regular: 230 },
+        { lines: twoDigitLines(3, 20, [22, 24]), floors: [10, 20], regular: 355 },
+        {
+          lines: twoDigitLines(3, 8),
+          floors: [21, 36],
+          regular: 355,
+          also: phiAlso(twoDigitLines(3, 8)),
+        },
+        {
+          lines: ["01", "02"],
+          floors: [12, 36],
+          regular: 330,
+          also: ["PHI01", "PHI02", "PHII01", "PHII02"],
+        },
+        { lines: twoDigitLines(9, 20, [22, 24]), floors: [21, 27], regular: 330 },
+        { lines: ["27", "34", "29", "31", "33"], floors: [21, 35], regular: 290 },
+        { lines: ["21", "23", "25", "26", "28", "30", "32"], floors: [28, 35], regular: 290 },
+        { lines: twoDigitLines(9, 20, [22, 24]), floors: [28, 35], regular: 440 },
+        {
+          lines: twoDigitLines(9, 20, [22, 24]),
+          floors: [36, 36],
+          regular: 550,
+          also: phiAlso(twoDigitLines(9, 20, [22, 24])),
+        },
+        {
+          lines: twoDigitLines(21, 34),
+          floors: [36, 36],
+          regular: 550,
+          also: phiAlso(twoDigitLines(21, 34)),
+        },
+      ],
     }
   };
 
@@ -5438,7 +5522,8 @@ export const verifiedBuildings: string[] = [
     "Hyde Midtown Miami",
     "Icon Bay",
     "Platinum Condominium",
-    "The Crimson"
+    "The Crimson",
+    "Neo Vertika"
   ];
 
 export const placeholderBuildings: string[] = [
@@ -5730,10 +5815,9 @@ export const placeholderBuildings: string[] = [
     "Fisher Island Bayview X"
   ];
 
-// Regular interior-glass add-on, keyed by the regular exterior line price.
-// One map for every building. A price missing from this map has no regular
-// interior tier (the widget shows $0). First-service / intro quotes do not
-// read this map — they use the flat INTRO_INTERIOR_ADDON in lib/introPricing.ts.
+// Historical regular interior map, keyed by the regular exterior line price.
+// Quotes no longer read it. Interior glass uses interiorTier() in
+// lib/introPricing.ts, including the 20% first-service rate on the add-on.
 // The $150 key keeps the $30 interior already used by the $120 and $140 tiers
 // after those line prices were raised to the floor. Do not backfill tiers here
 // to match the $100 flyer.
