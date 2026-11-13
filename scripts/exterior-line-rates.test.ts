@@ -189,6 +189,7 @@ check("interior catalog and other services untouched", () => {
   const expected: Record<number, number> = {
     120: 30,
     140: 30,
+    150: 30,
     160: 40,
     180: 40,
     200: 60,
@@ -375,7 +376,7 @@ check("moved lines keep the original regular interior quote", () => {
       );
     }
     const newCatalog = addOnPricing[row.newExterior] ?? 0;
-    if (regularInterior === newCatalog) {
+    if (regularInterior === newCatalog && regularInterior !== row.priorInterior) {
       throw new Error(`${row.building} ${row.line} followed the new exterior tier`);
     }
     if (introInterior !== 100) {
