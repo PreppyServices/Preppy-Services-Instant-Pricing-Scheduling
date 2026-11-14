@@ -98,8 +98,8 @@ export function PreppyOgCard({ name, building, unit, lang }: CardParams): ReactE
     hero = building;
     sub = "";
   } else {
-    // Neutral fallback — the brand lockup already says "Luxury Home Services",
-    // so suppress the kicker here to avoid a duplicated line.
+    // Neutral fallback. The brand lockup already names the service, so
+    // suppress the kicker here to avoid a duplicated line.
     kicker = "";
     hero = "Preppy Services";
     sub = "";
@@ -224,7 +224,7 @@ export function PreppyOgCard({ name, building, unit, lang }: CardParams): ReactE
               fontWeight: 600,
             }}
           >
-            LUXURY HOME SERVICES
+            BALCONY GLASS CLEANING
           </div>
         </div>
       </div>

@@ -4,9 +4,12 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://preppyservices.com";
-const SITE_TITLE = "Preppy Services — Luxury Home Services";
-const SITE_DESC = "Balcony glass, paint, and custom work for Miami's finest residences.";
+const SITE_URL = "https://quote.preppyservices.com";
+const SITE_TITLE = "Preppy Services | Balcony Glass Cleaning Price by Building";
+const SITE_DESC =
+  "Pick your building and see your price in seconds. Miami balcony glass cleaning.";
+const OG_IMAGE = `${SITE_URL}/og/building-picker.png`;
+const OG_ALT = "Preppy Services building picker. Pick your building, see your price.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -17,9 +20,9 @@ export const metadata: Metadata = {
   description: SITE_DESC,
   applicationName: "Preppy Services",
   keywords: [
-    "Miami luxury cleaning",
+    "Miami balcony glass cleaning",
     "balcony glass",
-    "high-rise window cleaning",
+    "high rise window cleaning",
     "interior painting",
     "condominium concierge",
   ],
@@ -27,22 +30,23 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "Preppy Services",
     title: SITE_TITLE,
-    description: "Your balcony, restored.",
+    description: SITE_DESC,
     url: SITE_URL,
     images: [
       {
-        url: "/og/preppy",
+        url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: "Preppy Services — Luxury Home Services",
+        alt: OG_ALT,
+        type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
-    description: "Your balcony, restored.",
-    images: ["/og/preppy"],
+    description: SITE_DESC,
+    images: [OG_IMAGE],
   },
   robots: { index: true, follow: true },
   icons: {
