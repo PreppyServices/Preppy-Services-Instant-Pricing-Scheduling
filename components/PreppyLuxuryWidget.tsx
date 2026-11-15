@@ -98,7 +98,7 @@ type Lang = "en" | "es" | "fr";
 const I18N: Record<Lang, Record<string, string>> = {
   en: {
     "brand.title": "Preppy Services",
-    "brand.subtitle": "Luxury Home Services",
+    "brand.subtitle": "Balcony Glass Cleaning",
     "brand.insured": "Fully Insured",
     "preparedFor": "Prepared for",
     "service.label": "Service",
@@ -215,7 +215,7 @@ const I18N: Record<Lang, Record<string, string>> = {
   },
   es: {
     "brand.title": "Preppy Services",
-    "brand.subtitle": "Servicios de Lujo para el Hogar",
+    "brand.subtitle": "Limpieza de Cristal de Balcón",
     "brand.insured": "Totalmente Asegurado",
     "preparedFor": "Preparado para",
     "service.label": "Servicio",
@@ -331,7 +331,7 @@ const I18N: Record<Lang, Record<string, string>> = {
   },
   fr: {
     "brand.title": "Preppy Services",
-    "brand.subtitle": "Services de Luxe pour la Maison",
+    "brand.subtitle": "Nettoyage de Verre de Balcon",
     "brand.insured": "Entièrement Assuré",
     "preparedFor": "Préparé pour",
     "service.label": "Service",
