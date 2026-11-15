@@ -161,9 +161,6 @@ check("blocked floor band and compass lines", () => {
 
 check("untouched neighbors and penthouses", () => {
   assertPrice("Aria Reserve South", "02", 220);
-  assertPrice("Aria Reserve South Tower", "01", 220);
-  assertPrice("Aria Reserve South Tower", "02", 220);
-  assertAbsent("Aria Reserve South Tower", "07");
   assertPrice("Aria Reserve North", "PH01", 430);
   assertPrice("Aria Reserve North", "PH04", 440);
   assertPrice("Aria Reserve South", "PH02", 410);
@@ -422,12 +419,17 @@ check("every line uses the balcony-price interior tier", () => {
   if (scanned < 100) throw new Error(`scanned only ${scanned} lines`);
 });
 
-check("canonical Aria Reserve South is not South Tower", () => {
+check("Aria Reserve South Tower shares the South price entry", () => {
   const names = Object.keys(pricing);
   const south = "Aria Reserve South";
   const tower = "Aria Reserve South Tower";
   if (south === tower) throw new Error("names collapsed");
-  if (pricing[south] === pricing[tower]) throw new Error("South and South Tower share one entry");
+  if (pricing[south] !== pricing[tower]) {
+    throw new Error("South Tower must share the South price entry");
+  }
+  if (pricing["Aria Reserve North"] === pricing[south]) {
+    throw new Error("North must not share the South entry");
+  }
   if (matchCatalogBuilding(names, south) !== south) throw new Error("South did not match itself");
   if (matchCatalogBuilding(names, tower) !== tower) throw new Error("South Tower did not match itself");
   if (matchCatalogBuilding(names, "aria reserve south") !== south) {
@@ -442,22 +444,43 @@ check("canonical Aria Reserve South is not South Tower", () => {
   if (matchCatalogBuilding(names, "Aria Reserve South T") !== null) {
     throw new Error("partial South Tower name must not match");
   }
-  assertPrice(south, "01", 280);
-  assertPrice(tower, "01", 220);
-  assertPrice(tower, "02", 220);
-  assertPrice(south, "07", 220);
-  assertAbsent(tower, "03");
-  assertAbsent(tower, "04");
-  assertAbsent(tower, "05");
-  assertAbsent(tower, "06");
-  assertAbsent(tower, "07");
+  const expected: Record<string, number> = {
+    "01": 280,
+    "02": 220,
+    "03": 200,
+    "04": 190,
+    "05": 190,
+    "06": 200,
+    "07": 220,
+    PH01: 430,
+    PH02: 410,
+    PH03: 410,
+    PH04: 440,
+  };
+  const southLines = Object.keys(linesOf(south)).sort();
+  const expectedLines = Object.keys(expected).sort();
+  if (southLines.join() !== expectedLines.join()) {
+    throw new Error(`South lines drifted: ${southLines.join(",")}`);
+  }
+  for (const line of expectedLines) {
+    assertPrice(south, line, expected[line]);
+    assertPrice(tower, line, expected[line]);
+  }
+  const first = firstServicePrice(linesOf(tower)["01"]);
+  if (first !== 224) {
+    throw new Error(`South Tower line 01 first service ${first}, expected 224`);
+  }
+  if (linesOf(tower)["01"] < 150 || first < 120) {
+    throw new Error("South Tower line 01 broke the price floor");
+  }
   if (preservedRegularInterior[tower]) throw new Error("South Tower must not have an interior lock");
-  if (interiorQuote(tower, "01", 220, false) !== interiorTier(220)) {
+  if (interiorQuote(tower, "01", 280, false) !== interiorTier(280)) {
     throw new Error("South Tower line 01 interior left the balcony tier");
   }
   if (verifiedBuildings.includes(south) || verifiedBuildings.includes(tower)) {
     throw new Error("OG verified list must not include Aria Reserve South or South Tower");
   }
+  assertPrice("Aria Reserve North", "04", 180);
 });
 
 check("Nov 13 2026 approved balcony quotes", () => {
