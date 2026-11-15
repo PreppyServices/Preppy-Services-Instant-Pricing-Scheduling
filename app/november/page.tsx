@@ -4,6 +4,7 @@
 // widget reads them. No SPA rewrite is required — this repo has no vercel.json.
 
 import type { Metadata } from "next";
+import QuoteCrawl from "../../components/QuoteCrawl";
 import WidgetShell from "../WidgetShell";
 import { resolveVerifiedBuilding } from "../../lib/ogBuilding";
 
@@ -91,5 +92,10 @@ export async function generateMetadata({
 }
 
 export default function NovemberLandingPage() {
-  return <WidgetShell />;
+  return (
+    <>
+      <QuoteCrawl />
+      <WidgetShell />
+    </>
+  );
 }

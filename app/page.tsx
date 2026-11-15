@@ -4,6 +4,7 @@
 // and image.
 
 import type { Metadata } from "next";
+import QuoteCrawl from "../components/QuoteCrawl";
 import WidgetShell from "./WidgetShell";
 import { resolveVerifiedBuilding } from "../lib/ogBuilding";
 
@@ -124,5 +125,10 @@ export async function generateMetadata({
 }
 
 export default function HomePage() {
-  return <WidgetShell />;
+  return (
+    <>
+      <QuoteCrawl />
+      <WidgetShell />
+    </>
+  );
 }
