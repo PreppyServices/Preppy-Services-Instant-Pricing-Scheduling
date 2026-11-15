@@ -55,6 +55,25 @@ function phiAlso(lines: readonly string[]): string[] {
   return lines.flatMap((line) => [`PHI${line}`, `PHII${line}`]);
 }
 
+// Aria Reserve South Tower is the same tower as Aria Reserve South.
+// Both catalog keys share this object so a line price cannot drift.
+const ariaReserveSouthPricing: BuildingPricing = {
+  lines: {
+    "01": 280,
+    "02": 220,
+    "03": 200,
+    "04": 190,
+    "05": 190,
+    "06": 200,
+    "07": 220,
+    "PH01": 430,
+    "PH02": 410,
+    "PH03": 410,
+    "PH04": 440
+  },
+  penthouse: false,
+};
+
 export const pricing: Record<string, BuildingPricing> = {
     "Gran Paraiso": {
       lines: {
@@ -1033,33 +1052,8 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
-    "Aria Reserve South": {
-      lines: {
-        "01": 280,
-        "02": 220,
-        "03": 200,
-        "04": 190,
-        "05": 190,
-        "06": 200,
-        "07": 220,
-        "PH01": 430,
-        "PH02": 410,
-        "PH03": 410,
-        "PH04": 440
-      },
-      penthouse: false,
-    },
-    "Aria Reserve South Tower": {
-      lines: {
-        "01": 220,
-        "02": 220,
-        "PH01": 430,
-        "PH02": 410,
-        "PH03": 410,
-        "PH04": 440
-      },
-      penthouse: false,
-    },
+    "Aria Reserve South": ariaReserveSouthPricing,
+    "Aria Reserve South Tower": ariaReserveSouthPricing,
     "Carbonell": {
       lines: {
         "01": 160,
