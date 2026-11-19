@@ -1549,16 +1549,20 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
+    // Approved exterior rates (Joe, 2026-11-19). Drexel A, Drexel B, Drexel D,
+    // Lenox B, and Lenox C are $180. First service is the shared 20% rate
+    // ($144). Interior glass follows interiorTier() on that regular price
+    // ($180 → $100, first service $80). Other lines stay as they were.
     "Flamingo South Beach Center Tower": {
       lines: {
         "Collins A": 320,
-        "Drexel A": 150,
-        "Drexel B": 150,
-        "Drexel D": 150,
+        "Drexel A": 180,
+        "Drexel B": 180,
+        "Drexel D": 180,
         "Drexel F": 180,
         "Lenox A": 180,
-        "Lenox B": 150,
-        "Lenox C": 160,
+        "Lenox B": 180,
+        "Lenox C": 180,
         "Lenox D": 180,
         "Lenox G": 220,
         "Lenox H": 200,
@@ -1569,16 +1573,17 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
+    // Same approved exterior rates as the Center Tower (Joe, 2026-11-19).
     "Flamingo South Beach North Tower": {
       lines: {
         "Collins A": 320,
-        "Drexel A": 150,
-        "Drexel B": 150,
-        "Drexel D": 150,
+        "Drexel A": 180,
+        "Drexel B": 180,
+        "Drexel D": 180,
         "Drexel F": 180,
         "Lenox A": 180,
-        "Lenox B": 150,
-        "Lenox C": 160,
+        "Lenox B": 180,
+        "Lenox C": 180,
         "Lenox D": 180,
         "Lenox G": 220,
         "Lenox H": 200,
@@ -2275,17 +2280,21 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
+    // Approved exterior rates (Joe, 2026-11-19). Lines 01–09 are $180.
+    // First service is the shared 20% rate ($144). Interior glass follows
+    // interiorTier() on that regular price ($180 → $100, first service $80).
+    // Lines 10–16 stay as they were.
     "Harbour House": {
       lines: {
-        "01": 150,
-        "02": 150,
-        "03": 150,
-        "04": 150,
-        "05": 150,
-        "06": 150,
-        "07": 150,
-        "08": 150,
-        "09": 150,
+        "01": 180,
+        "02": 180,
+        "03": 180,
+        "04": 180,
+        "05": 180,
+        "06": 180,
+        "07": 180,
+        "08": 180,
+        "09": 180,
         "10": 180,
         "11": 180,
         "12": 180,
