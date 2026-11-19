@@ -1549,11 +1549,15 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
-    // Approved exterior rates (Joe, 2026-11-19). Drexel A, Drexel B, Drexel D,
-    // Lenox B, and Lenox C are $180. First service is the shared 20% rate
-    // ($144). Interior glass follows interiorTier() on that regular price
-    // ($180 → $100, first service $80). Other lines stay as they were.
-    "Flamingo South Beach Center Tower": {
+    // Tower split approved by Joe on 2026-11-19 at 4:15 PM ET.
+    // South Tower is the condo, Flamingo South Beach I Condominium at 1500 Bay Rd.
+    // Its Collins/Drexel/Lenox/Sheridan prices are the flyer that was just sent.
+    // Center and North are Flamingo Point rentals at 1508 Bay Rd.
+    // A known line number is labeled like "01-A" / "09+10" (number, then plan).
+    // A plan with no line number keeps the plan name. First service is the
+    // shared 20% rate. Interior glass stays on interiorTier().
+    "Flamingo South Beach South Tower": {
+      address: "Flamingo South Beach I Condominium, 1500 Bay Rd",
       lines: {
         "Collins A": 320,
         "Drexel A": 180,
@@ -1573,24 +1577,86 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
-    // Same approved exterior rates as the Center Tower (Joe, 2026-11-19).
-    "Flamingo South Beach North Tower": {
+    "Flamingo South Beach Center Tower": {
+      address: "Flamingo Point, 1508 Bay Rd",
       lines: {
-        "Collins A": 320,
-        "Drexel A": 180,
-        "Drexel B": 180,
-        "Drexel D": 180,
-        "Drexel F": 180,
-        "Lenox A": 180,
-        "Lenox B": 180,
-        "Lenox C": 180,
-        "Lenox D": 180,
-        "Lenox G": 220,
-        "Lenox H": 200,
-        "Sheridan A": 240,
-        "Sheridan B": 220,
-        "Sheridan C": 220,
-        "Sheridan D": 240
+        "01-Dunes/Surf EB": 190,
+        "02-Dunes/Surf 2J": 250,
+        "03+09-Dunes/Surf 1C": 190,
+        "04+08+10-Dunes/Surf 2J": 240,
+        "05-Dunes 2N": 280, // 2/2 large, lower floors
+        "05-Dunes/Surf 1I": 200, // 1/1, some floors
+        "06-Dunes/Surf EA": 180,
+        "07-Dunes/Surf 2C": 230,
+        "11-Dunes/Surf 1G": 200,
+        "12-Surf 2A/2B": 230,
+        "Dunes 2E": 240,
+        "Surf 2L": 260,
+        "Surf 3A": 360, // 3-bed corner wraparound
+        "City Villas 3B": 380, // 3-bed corner wraparound, x20 line
+        "City Villas 3A": 300,
+        "City Villas 2J": 240,
+        "City Villas 2I": 240,
+        "City Villas 2B": 230,
+        "City Villas 2D": 240,
+        "City Villas 2K": 260,
+        "City Villas 1C": 190,
+        "City Villas 1E": 190,
+        "City Villas 1F": 200,
+        "City Villas 1B": 190,
+        "Bay Villas 1D": 190,
+        "Bay Villas 1A": 200,
+        "Bay Villas 2F": 240,
+        "Bay Villas 2G": 250,
+        "The Towns 1J": 220, // townhome
+        "The Towns 2A": 260 // townhome
+      },
+      penthouse: false,
+    },
+    "Flamingo South Beach North Tower": {
+      address: "Flamingo Point, 1508 Bay Rd",
+      lines: {
+        "02-Sunset Villas 3A": 260,
+        "04-Horizon 1J": 190,
+        "04-Sunset Villas 2L": 220,
+        "05-Horizon 1F": 190,
+        "05-Sunset Villas 2D": 220,
+        "06-Sunset Villas 2M": 220,
+        "10-Horizon 1E": 180,
+        "14-Horizon 1L": 200,
+        "17-Gardens 2K": 210,
+        "22-Gardens 1O": 180,
+        "23-Gardens 1P": 180,
+        "27-Park 2F": 210,
+        "29-Park 3B": 260,
+        "30-Park 1R": 190,
+        "Horizon 1B": 180,
+        "Horizon 1C": 180,
+        "Horizon 1G": 180,
+        "Horizon 1I": 190,
+        "Horizon 1N": 210,
+        "Horizon 1Q": 220,
+        "Horizon 2B": 210,
+        "Horizon 2E": 240,
+        "Horizon 2O": 240, // corner wrap
+        "Gardens 1A": 180,
+        "Gardens 1K": 180,
+        "Gardens 1M": 180,
+        "Gardens 1D": 180,
+        "Gardens 2A": 200,
+        "Park 1M": 180,
+        "Park 1S": 190,
+        "Park 2G": 210,
+        "Park 2J": 210,
+        "Park 2N": 200,
+        "Sunset Villas 2C": 200,
+        "Sunset Villas 2K": 220,
+        "City Lofts 2I": 210,
+        "City Lofts 3G": 300,
+        "City Lofts 3I": 300,
+        "Sunset Villas Penthouse 3Q/3R/3S/3T": 320,
+        "Bay Lofts 3D": 380,
+        "Bay Lofts 5A": 450
       },
       penthouse: false,
     },

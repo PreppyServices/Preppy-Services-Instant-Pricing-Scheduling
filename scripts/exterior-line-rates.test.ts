@@ -535,62 +535,194 @@ check("Nov 13 2026 approved balcony quotes", () => {
   }
 });
 
-check("Nov 19 2026 Harbour House and Flamingo exterior rates", () => {
-  const raised: Array<[string, string]> = [
-    ["Harbour House", "01"],
-    ["Harbour House", "02"],
-    ["Harbour House", "03"],
-    ["Harbour House", "04"],
-    ["Harbour House", "05"],
-    ["Harbour House", "06"],
-    ["Harbour House", "07"],
-    ["Harbour House", "08"],
-    ["Harbour House", "09"],
-    ["Flamingo South Beach Center Tower", "Drexel A"],
-    ["Flamingo South Beach Center Tower", "Drexel B"],
-    ["Flamingo South Beach Center Tower", "Drexel D"],
-    ["Flamingo South Beach Center Tower", "Lenox B"],
-    ["Flamingo South Beach Center Tower", "Lenox C"],
-    ["Flamingo South Beach North Tower", "Drexel A"],
-    ["Flamingo South Beach North Tower", "Drexel B"],
-    ["Flamingo South Beach North Tower", "Drexel D"],
-    ["Flamingo South Beach North Tower", "Lenox B"],
-    ["Flamingo South Beach North Tower", "Lenox C"],
-  ];
-  for (const [building, line] of raised) {
-    assertPrice(building, line, 180);
-    if (preservedRegularInterior[building]?.[line] != null) {
-      throw new Error(`${building} ${line} must follow interiorTier, not a line lock`);
+check("Nov 19 2026 Harbour House exterior rates", () => {
+  const raised = ["01", "02", "03", "04", "05", "06", "07", "08", "09"];
+  for (const line of raised) {
+    assertPrice("Harbour House", line, 180);
+    if (preservedRegularInterior["Harbour House"]?.[line] != null) {
+      throw new Error(`Harbour House ${line} must follow interiorTier, not a line lock`);
     }
-    const regularInterior = interiorQuote(building, line, 180, false);
-    const introInterior = interiorQuote(building, line, 180, true);
+    const regularInterior = interiorQuote("Harbour House", line, 180, false);
+    const introInterior = interiorQuote("Harbour House", line, 180, true);
     if (regularInterior !== 100 || introInterior !== 80) {
       throw new Error(
-        `${building} ${line} interior ${regularInterior}/${introInterior}, expected 100/80`
+        `Harbour House ${line} interior ${regularInterior}/${introInterior}, expected 100/80`
       );
     }
     if (firstServicePrice(180) !== 144) {
-      throw new Error(`${building} ${line} first service left $144`);
+      throw new Error(`Harbour House ${line} first service left $144`);
     }
   }
   assertPrice("Harbour House", "10", 180);
   assertPrice("Harbour House", "14", 200);
   assertPrice("Harbour House", "15", 220);
   assertPrice("Harbour House", "16", 220);
-  for (const building of [
-    "Flamingo South Beach Center Tower",
-    "Flamingo South Beach North Tower",
-  ]) {
-    assertPrice(building, "Collins A", 320);
-    assertPrice(building, "Drexel F", 180);
-    assertPrice(building, "Lenox A", 180);
-    assertPrice(building, "Lenox D", 180);
-    assertPrice(building, "Lenox G", 220);
-    assertPrice(building, "Lenox H", 200);
-    assertPrice(building, "Sheridan A", 240);
-    assertPrice(building, "Sheridan B", 220);
-    assertPrice(building, "Sheridan C", 220);
-    assertPrice(building, "Sheridan D", 240);
+});
+
+check("Flamingo South Beach towers keep flyer prices and new tower lines", () => {
+  const south = "Flamingo South Beach South Tower";
+  const center = "Flamingo South Beach Center Tower";
+  const north = "Flamingo South Beach North Tower";
+  const names = Object.keys(pricing);
+
+  const flyer: Record<string, number> = {
+    "Collins A": 320,
+    "Drexel A": 180,
+    "Drexel B": 180,
+    "Drexel D": 180,
+    "Drexel F": 180,
+    "Lenox A": 180,
+    "Lenox B": 180,
+    "Lenox C": 180,
+    "Lenox D": 180,
+    "Lenox G": 220,
+    "Lenox H": 200,
+    "Sheridan A": 240,
+    "Sheridan B": 220,
+    "Sheridan C": 220,
+    "Sheridan D": 240,
+  };
+  const centerLines: Record<string, number> = {
+    "01-Dunes/Surf EB": 190,
+    "02-Dunes/Surf 2J": 250,
+    "03+09-Dunes/Surf 1C": 190,
+    "04+08+10-Dunes/Surf 2J": 240,
+    "05-Dunes 2N": 280,
+    "05-Dunes/Surf 1I": 200,
+    "06-Dunes/Surf EA": 180,
+    "07-Dunes/Surf 2C": 230,
+    "11-Dunes/Surf 1G": 200,
+    "12-Surf 2A/2B": 230,
+    "Dunes 2E": 240,
+    "Surf 2L": 260,
+    "Surf 3A": 360,
+    "City Villas 3B": 380,
+    "City Villas 3A": 300,
+    "City Villas 2J": 240,
+    "City Villas 2I": 240,
+    "City Villas 2B": 230,
+    "City Villas 2D": 240,
+    "City Villas 2K": 260,
+    "City Villas 1C": 190,
+    "City Villas 1E": 190,
+    "City Villas 1F": 200,
+    "City Villas 1B": 190,
+    "Bay Villas 1D": 190,
+    "Bay Villas 1A": 200,
+    "Bay Villas 2F": 240,
+    "Bay Villas 2G": 250,
+    "The Towns 1J": 220,
+    "The Towns 2A": 260,
+  };
+  const northLines: Record<string, number> = {
+    "02-Sunset Villas 3A": 260,
+    "04-Horizon 1J": 190,
+    "04-Sunset Villas 2L": 220,
+    "05-Horizon 1F": 190,
+    "05-Sunset Villas 2D": 220,
+    "06-Sunset Villas 2M": 220,
+    "10-Horizon 1E": 180,
+    "14-Horizon 1L": 200,
+    "17-Gardens 2K": 210,
+    "22-Gardens 1O": 180,
+    "23-Gardens 1P": 180,
+    "27-Park 2F": 210,
+    "29-Park 3B": 260,
+    "30-Park 1R": 190,
+    "Horizon 1B": 180,
+    "Horizon 1C": 180,
+    "Horizon 1G": 180,
+    "Horizon 1I": 190,
+    "Horizon 1N": 210,
+    "Horizon 1Q": 220,
+    "Horizon 2B": 210,
+    "Horizon 2E": 240,
+    "Horizon 2O": 240,
+    "Gardens 1A": 180,
+    "Gardens 1K": 180,
+    "Gardens 1M": 180,
+    "Gardens 1D": 180,
+    "Gardens 2A": 200,
+    "Park 1M": 180,
+    "Park 1S": 190,
+    "Park 2G": 210,
+    "Park 2J": 210,
+    "Park 2N": 200,
+    "Sunset Villas 2C": 200,
+    "Sunset Villas 2K": 220,
+    "City Lofts 2I": 210,
+    "City Lofts 3G": 300,
+    "City Lofts 3I": 300,
+    "Sunset Villas Penthouse 3Q/3R/3S/3T": 320,
+    "Bay Lofts 3D": 380,
+    "Bay Lofts 5A": 450,
+  };
+
+  function assertLines(building: string, expected: Record<string, number>) {
+    const actual = linesOf(building);
+    const actualKeys = Object.keys(actual).sort();
+    const expectedKeys = Object.keys(expected).sort();
+    if (actualKeys.join("|") !== expectedKeys.join("|")) {
+      throw new Error(`${building} lines drifted: ${actualKeys.join(", ")}`);
+    }
+    for (const line of expectedKeys) {
+      assertPrice(building, line, expected[line]);
+      if (preservedRegularInterior[building]?.[line] != null) {
+        throw new Error(`${building} ${line} must follow interiorTier, not a line lock`);
+      }
+      const regularInterior = interiorQuote(building, line, expected[line], false);
+      const introInterior = interiorQuote(building, line, expected[line], true);
+      if (regularInterior !== interiorTier(expected[line])) {
+        throw new Error(`${building} ${line} interior left the balcony tier`);
+      }
+      if (introInterior !== firstServicePrice(regularInterior)) {
+        throw new Error(`${building} ${line} intro interior left 20% off the tier`);
+      }
+      if (firstServicePrice(expected[line]) !== Math.round(expected[line] * 0.8)) {
+        throw new Error(`${building} ${line} first service left the shared 20% rate`);
+      }
+    }
+  }
+
+  assertLines(south, flyer);
+  assertLines(center, centerLines);
+  assertLines(north, northLines);
+
+  for (const line of Object.keys(flyer)) {
+    assertAbsent(center, line);
+    assertAbsent(north, line);
+  }
+  if (pricing[south]?.address !== "Flamingo South Beach I Condominium, 1500 Bay Rd") {
+    throw new Error(`South Tower address is ${pricing[south]?.address}`);
+  }
+  for (const building of [center, north]) {
+    if (pricing[building]?.address !== "Flamingo Point, 1508 Bay Rd") {
+      throw new Error(`${building} address is ${pricing[building]?.address}`);
+    }
+  }
+  if (matchCatalogBuilding(names, south) !== south) throw new Error("South Tower key did not resolve");
+  if (matchCatalogBuilding(names, center) !== center) throw new Error("Center Tower key did not resolve");
+  if (matchCatalogBuilding(names, north) !== north) throw new Error("North Tower key did not resolve");
+  if (matchCatalogBuilding(names, "  flamingo south beach center tower  ") !== center) {
+    throw new Error("old Center Tower link did not resolve");
+  }
+  if (matchCatalogBuilding(names, "flamingo south beach north tower") !== north) {
+    throw new Error("old North Tower link did not resolve");
+  }
+  if (matchCatalogBuilding(names, "Flamingo South Beach") !== null) {
+    throw new Error("Flamingo South Beach must not prefix-match a tower");
+  }
+
+  if (interiorTier(260) !== 150 || interiorTier(380) !== 225 || interiorTier(450) !== 225) {
+    throw new Error(
+      `interiorTier moved: 260→${interiorTier(260)}, 380→${interiorTier(380)}, 450→${interiorTier(450)}`
+    );
+  }
+  assertPrice(center, "Surf 2L", 260);
+  assertPrice(center, "City Villas 3B", 380);
+  assertPrice(north, "Bay Lofts 5A", 450);
+  if (firstServicePrice(260) !== 208 || firstServicePrice(380) !== 304 || firstServicePrice(450) !== 360) {
+    throw new Error("first-service math for 260/380/450 changed");
   }
 });
 
