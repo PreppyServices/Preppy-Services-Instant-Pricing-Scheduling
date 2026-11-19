@@ -1315,9 +1315,12 @@ export default function PreppyLuxuryWidget() {
                               setBuildingQuery("");
                               setShowBuildingDropdown(false);
                             }}
-                            className="flex w-full items-center justify-between px-4 py-2.5 text-left transition hover:bg-[#F7F3EE]"
+                            className="flex w-full flex-col items-start px-4 py-2.5 text-left transition hover:bg-[#F7F3EE]"
                           >
                             <span className="text-[15px] font-medium text-[#0D1B24]">{name}</span>
+                            {pricing[name]?.address ? (
+                              <span className="text-[12px] text-[#5E6C75]">{pricing[name].address}</span>
+                            ) : null}
                           </button>
                         ))}
                       </div>
