@@ -535,6 +535,65 @@ check("Nov 13 2026 approved balcony quotes", () => {
   }
 });
 
+check("Nov 19 2026 Harbour House and Flamingo exterior rates", () => {
+  const raised: Array<[string, string]> = [
+    ["Harbour House", "01"],
+    ["Harbour House", "02"],
+    ["Harbour House", "03"],
+    ["Harbour House", "04"],
+    ["Harbour House", "05"],
+    ["Harbour House", "06"],
+    ["Harbour House", "07"],
+    ["Harbour House", "08"],
+    ["Harbour House", "09"],
+    ["Flamingo South Beach Center Tower", "Drexel A"],
+    ["Flamingo South Beach Center Tower", "Drexel B"],
+    ["Flamingo South Beach Center Tower", "Drexel D"],
+    ["Flamingo South Beach Center Tower", "Lenox B"],
+    ["Flamingo South Beach Center Tower", "Lenox C"],
+    ["Flamingo South Beach North Tower", "Drexel A"],
+    ["Flamingo South Beach North Tower", "Drexel B"],
+    ["Flamingo South Beach North Tower", "Drexel D"],
+    ["Flamingo South Beach North Tower", "Lenox B"],
+    ["Flamingo South Beach North Tower", "Lenox C"],
+  ];
+  for (const [building, line] of raised) {
+    assertPrice(building, line, 180);
+    if (preservedRegularInterior[building]?.[line] != null) {
+      throw new Error(`${building} ${line} must follow interiorTier, not a line lock`);
+    }
+    const regularInterior = interiorQuote(building, line, 180, false);
+    const introInterior = interiorQuote(building, line, 180, true);
+    if (regularInterior !== 100 || introInterior !== 80) {
+      throw new Error(
+        `${building} ${line} interior ${regularInterior}/${introInterior}, expected 100/80`
+      );
+    }
+    if (firstServicePrice(180) !== 144) {
+      throw new Error(`${building} ${line} first service left $144`);
+    }
+  }
+  assertPrice("Harbour House", "10", 180);
+  assertPrice("Harbour House", "14", 200);
+  assertPrice("Harbour House", "15", 220);
+  assertPrice("Harbour House", "16", 220);
+  for (const building of [
+    "Flamingo South Beach Center Tower",
+    "Flamingo South Beach North Tower",
+  ]) {
+    assertPrice(building, "Collins A", 320);
+    assertPrice(building, "Drexel F", 180);
+    assertPrice(building, "Lenox A", 180);
+    assertPrice(building, "Lenox D", 180);
+    assertPrice(building, "Lenox G", 220);
+    assertPrice(building, "Lenox H", 200);
+    assertPrice(building, "Sheridan A", 240);
+    assertPrice(building, "Sheridan B", 220);
+    assertPrice(building, "Sheridan C", 220);
+    assertPrice(building, "Sheridan D", 240);
+  }
+});
+
 if (failures.length) {
   console.error(failures.join("\n"));
   process.exit(1);
