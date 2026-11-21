@@ -14,6 +14,43 @@ function check(cond: boolean, message: string) {
   if (!cond) failures.push(message);
 }
 
+// Hyphen, nonbreaking hyphen, figure dash, en dash, em dash, horizontal bar, minus.
+const DASH = /[\u002D\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/;
+
+/** Customer-facing prose. URLs, markdown link targets, and code spans are ignored. */
+function customerProse(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/https?:\/\/[^\s)]+/g, " ")
+    .replace(/^[ \t]*-[ \t]+/gm, "");
+}
+
+function checkNoDash(text: string, label: string) {
+  const prose = customerProse(text);
+  const at = prose.search(DASH);
+  if (at === -1) return;
+  const snippet = prose.slice(Math.max(0, at - 30), at + 31);
+  failures.push(`${label} still has a hyphen or dash near: ${JSON.stringify(snippet)}`);
+}
+
+function collectSchemaProse(value: unknown, out: string[]) {
+  if (typeof value === "string") {
+    if (!/^https?:\/\/\S+$/.test(value.trim())) out.push(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectSchemaProse(item, out);
+    return;
+  }
+  if (value && typeof value === "object") {
+    for (const child of Object.values(value as Record<string, unknown>)) {
+      collectSchemaProse(child, out);
+    }
+  }
+}
+
 function walk(value: unknown, visit: (record: Record<string, unknown>) => void) {
   if (Array.isArray(value)) {
     for (const item of value) walk(item, visit);
@@ -89,11 +126,14 @@ const business = graph[0] as {
 };
 check(
   business.description ===
-    "Preppy Services is a Miami field services company. Core work is balcony glass cleaning for residential towers. Balcony glass is cleaned from inside the unit or on the balcony with water-fed poles, never from the building exterior. Interior glass is an add on priced by tier, not included in the balcony price.",
+    "Preppy Services is a Miami field services company. Core work is balcony glass cleaning for residential towers. Balcony glass is cleaned from inside the unit or on the balcony with water fed poles, never from the building exterior. Interior glass is an add on priced by tier, not included in the balcony price.",
   "LocalBusiness description"
 );
 check(!business.description?.includes("$"), "description must not include dollar amounts");
 check(!html.includes("add-on"), "JSON-LD must spell add on without a hyphen");
+const schemaProse: string[] = [];
+collectSchemaProse(businessGraph, schemaProse);
+checkNoDash(schemaProse.join("\n"), "JSON-LD customer-facing text");
 check(business.telephone === "+13054140305", "telephone must be +13054140305");
 check(!business.address?.streetAddress, "address must not include streetAddress");
 check(business.address?.addressLocality === "Miami", "address locality");
@@ -149,12 +189,17 @@ check(route.includes("llmsTxtResponse"), "/llms.txt route must return the public
 const llmsRes = llmsTxtResponse();
 const llmsBody = await llmsRes.text();
 check(llmsRes.status === 200, `/llms.txt status ${llmsRes.status}, expected 200`);
+check(llmsBody.includes("# Preppy Services: unit pricing"), "/llms.txt H1 must use a colon");
+check(
+  llmsBody.includes("building exterior high rise window cleaning"),
+  "/llms.txt notes must not hyphenate building exterior or high rise"
+);
 check(llmsBody.includes("Preppy Services"), "/llms.txt must contain Preppy Services");
 check(llmsBody.includes("https://quote.preppyservices.com"), "/llms.txt missing quote URL");
 check(llmsBody.includes("info@preppyservices.com"), "/llms.txt missing email");
 check(
   llmsBody.includes(
-    "cleaned from inside the unit or on the balcony with water-fed poles, never from the building exterior"
+    "cleaned from inside the unit or on the balcony with water fed poles, never from the building exterior"
   ),
   "/llms.txt missing the work method"
 );
@@ -184,6 +229,7 @@ check(
   "/llms.txt must spell add on without a hyphen"
 );
 check(!llmsBody.includes("add-on"), "/llms.txt must not hyphenate add on");
+checkNoDash(llmsBody, "/llms.txt prose");
 
 const origin = process.env.SCHEMA_ORIGIN;
 if (origin) {
