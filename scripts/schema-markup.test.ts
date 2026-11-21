@@ -79,6 +79,7 @@ check(!types.includes("AggregateRating"), "JSON-LD must not include AggregateRat
 const graph = businessGraph["@graph"];
 check(graph.length === 1, "JSON-LD graph must be the LocalBusiness only");
 const business = graph[0] as {
+  description?: string;
   telephone?: string;
   sameAs?: string[];
   address?: Record<string, string>;
@@ -86,6 +87,13 @@ const business = graph[0] as {
   areaServed?: { name: string }[];
   openingHoursSpecification?: { opens: string; closes: string; dayOfWeek: string[] }[];
 };
+check(
+  business.description ===
+    "Preppy Services is a Miami field services company. Core work is balcony glass cleaning for residential towers. Balcony glass is cleaned from inside the unit or on the balcony with water-fed poles, never from the building exterior. Interior glass is an add on priced by tier, not included in the balcony price.",
+  "LocalBusiness description"
+);
+check(!business.description?.includes("$"), "description must not include dollar amounts");
+check(!html.includes("add-on"), "JSON-LD must spell add on without a hyphen");
 check(business.telephone === "+13054140305", "telephone must be +13054140305");
 check(!business.address?.streetAddress, "address must not include streetAddress");
 check(business.address?.addressLocality === "Miami", "address locality");
@@ -171,6 +179,11 @@ check(!/\bBTR\b/.test(llmsBody), "/llms.txt must not claim a BTR");
 check(!/\blicen[sc]ed\b/i.test(llmsBody), "/llms.txt must not claim a license");
 check(!/paint/i.test(llmsBody), "/llms.txt must not mention painting");
 check(!/\d(?:\.\d)?\s*stars?/i.test(llmsBody), "/llms.txt must not include a star count");
+check(
+  llmsBody.includes("Interior glass is an add on priced by tier, not included in the balcony price."),
+  "/llms.txt must spell add on without a hyphen"
+);
+check(!llmsBody.includes("add-on"), "/llms.txt must not hyphenate add on");
 
 const origin = process.env.SCHEMA_ORIGIN;
 if (origin) {

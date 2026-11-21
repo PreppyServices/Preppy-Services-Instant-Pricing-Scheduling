@@ -11,6 +11,8 @@ const business = {
   "@type": "LocalBusiness",
   "@id": BUSINESS_ID,
   name: "Preppy Services",
+  description:
+    "Preppy Services is a Miami field services company. Core work is balcony glass cleaning for residential towers. Balcony glass is cleaned from inside the unit or on the balcony with water-fed poles, never from the building exterior. Interior glass is an add on priced by tier, not included in the balcony price.",
   legalName: "PREPROCK HOLDINGS LLC",
   url: QUOTE_URL,
   email: "info@preppyservices.com",
