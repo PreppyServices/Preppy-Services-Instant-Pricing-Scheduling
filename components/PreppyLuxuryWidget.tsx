@@ -99,7 +99,6 @@ const I18N: Record<Lang, Record<string, string>> = {
   en: {
     "brand.title": "Preppy Services",
     "brand.subtitle": "Balcony Glass Cleaning",
-    "brand.insured": "Fully Insured",
     "preparedFor": "Prepared for",
     "service.label": "Service",
     "service.glass.title": "Balcony Glass",
@@ -179,7 +178,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.sendImessage": "Send via iMessage",
     "cta.checkAvailability": "Check Availability",
     "cta.reserveConsultation": "Reserve On-Site Walkthrough",
-    "cta.textSendPhoto": "Text us · Send a photo",
+    "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "White Glove",
     "trust.whiteGlove.sub": "Service",
     "trust.coverage": "$2M Coverage",
@@ -216,7 +215,6 @@ const I18N: Record<Lang, Record<string, string>> = {
   es: {
     "brand.title": "Preppy Services",
     "brand.subtitle": "Limpieza de Cristal de Balcón",
-    "brand.insured": "Totalmente Asegurado",
     "preparedFor": "Preparado para",
     "service.label": "Servicio",
     "service.glass.title": "Cristal de Balcón",
@@ -295,7 +293,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.sendImessage": "Enviar por iMessage",
     "cta.checkAvailability": "Ver Disponibilidad",
     "cta.reserveConsultation": "Reservar Visita en Sitio",
-    "cta.textSendPhoto": "Escríbanos · Envíe una foto",
+    "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Guante Blanco",
     "trust.whiteGlove.sub": "Servicio",
     "trust.coverage": "Cobertura $2M",
@@ -332,7 +330,6 @@ const I18N: Record<Lang, Record<string, string>> = {
   fr: {
     "brand.title": "Preppy Services",
     "brand.subtitle": "Nettoyage de Verre de Balcon",
-    "brand.insured": "Entièrement Assuré",
     "preparedFor": "Préparé pour",
     "service.label": "Service",
     "service.glass.title": "Verre de Balcon",
@@ -411,7 +408,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.sendImessage": "Envoyer via iMessage",
     "cta.checkAvailability": "Vérifier la Disponibilité",
     "cta.reserveConsultation": "Réserver la Visite sur Place",
-    "cta.textSendPhoto": "Écrivez-nous · Envoyez une photo",
+    "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Gant Blanc",
     "trust.whiteGlove.sub": "Service",
     "trust.coverage": "Couverture 2M$",
@@ -696,7 +693,6 @@ export default function PreppyLuxuryWidget() {
   const flyerAsset = FLYER_ASSETS[initialParams.flyerId];
   const [customDescription, setCustomDescription] = React.useState<string>("");
   const [showSupport, setShowSupport] = React.useState(false);
-  const [isMobile, setIsMobile] = React.useState(false);
   const [buildingQuery, setBuildingQuery] = React.useState("");
   const [showBuildingDropdown, setShowBuildingDropdown] = React.useState(false);
   const buildingInputRef = React.useRef<HTMLInputElement>(null);
@@ -760,12 +756,6 @@ export default function PreppyLuxuryWidget() {
     (key: string, vars?: Record<string, string | number>) => translate(key, lang, vars),
     [lang]
   );
-
-  React.useEffect(() => {
-    if (typeof navigator !== "undefined") {
-      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-    }
-  }, []);
 
   React.useEffect(() => {
     if (!flyerPeek) return;
@@ -1094,16 +1084,6 @@ export default function PreppyLuxuryWidget() {
             className="mt-2.5 text-[22px] md:text-2xl font-medium tracking-tight text-[#243740]"
           >
             {t("brand.subtitle")}
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            custom={1.45}
-            variants={fadeUp}
-            className="mt-2.5 text-[12px] md:text-sm uppercase tracking-[0.24em] text-[#5B6870]"
-          >
-            {t("brand.insured")}
           </motion.div>
         </div>
         )}
@@ -1643,24 +1623,13 @@ export default function PreppyLuxuryWidget() {
               </button>
             )}
 
-            {isMobile ? (
-              <a
-                href={buildIMessageURL(serviceType === "custom" ? "custom" : "photo")}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#D8CEBF] bg-white px-5 py-3.5 text-[15px] font-medium tracking-tight text-[#0D1B24] transition hover:border-[#C5A572] hover:bg-[#FDFCF9]"
-              >
-                <span className="text-[#0F7C82]">✉</span>
-                {t("cta.textSendPhoto")}
-              </a>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowSupport(true)}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#D8CEBF] bg-white px-5 py-3.5 text-[15px] font-medium tracking-tight text-[#0D1B24] transition hover:border-[#C5A572] hover:bg-[#FDFCF9]"
-              >
-                <span className="text-[#0F7C82]">✉</span>
-                {t("cta.textSendPhoto")}
-              </button>
-            )}
+            <a
+              href="mailto:info@preppyservices.com"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#D8CEBF] bg-white px-5 py-3.5 text-[15px] font-medium tracking-tight text-[#0D1B24] transition hover:border-[#C5A572] hover:bg-[#FDFCF9]"
+            >
+              <span className="text-[#0F7C82]">✉</span>
+              {t("cta.textSendPhoto")}
+            </a>
           </div>
         </div>
 
