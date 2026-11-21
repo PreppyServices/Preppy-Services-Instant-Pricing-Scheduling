@@ -1,7 +1,7 @@
 /**
  * Production quote widget contact copy.
- * The Fully Insured label is gone, and the photo CTA is an email link.
- * Other "Text us" strings (private quote, manual review, scheduler) stay.
+ * No Fully Insured label, no "Text us", and no sms: links.
+ * Contact actions use mailto:info@preppyservices.com.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -16,10 +16,12 @@ function check(cond: boolean, message: string) {
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const widget = readFileSync(join(root, "components/PreppyLuxuryWidget.tsx"), "utf8");
 
-check(!/fully insured/i.test(widget), 'rendered widget source still contains "Fully Insured"');
+check(!/fully insured/i.test(widget), "production widget still contains the insured label");
 check(!widget.includes("Totalmente Asegurado"), "Spanish insured label still in the widget");
 check(!widget.includes("Entièrement Assuré"), "French insured label still in the widget");
 check(!widget.includes("brand.insured"), "brand.insured is still in the widget");
+check(!/text us/i.test(widget), 'production widget still contains "Text us"');
+check(!widget.includes("sms:"), "production widget still contains an sms: link");
 
 const photoLabels = [...widget.matchAll(/"cta\.textSendPhoto": "([^"]*)"/g)].map((match) => match[1]);
 check(
@@ -31,30 +33,36 @@ for (const label of photoLabels) {
     label === "Email info@preppyservices.com",
     `photo CTA visible text is ${JSON.stringify(label)}`
   );
-  check(!label.includes("Text us"), 'photo CTA still contains "Text us"');
-  check(!/[·•–—]/.test(label), "photo CTA visible text has a separator character");
+  check(!/[·•–—-]/.test(label), "photo CTA visible text has a separator character");
+}
+
+const emailLabels = [...widget.matchAll(/"cta\.sendImessage": "([^"]*)"/g)].map((match) => match[1]);
+check(emailLabels.length === 3, `expected 3 custom email labels, found ${emailLabels.length}`);
+for (const label of emailLabels) {
+  check(label === "Email", `custom job label is ${JSON.stringify(label)}`);
+  check(!/[·•–—-]/.test(label), "custom job label has a separator character");
 }
 
 check(
-  widget.includes("mailto:info@preppyservices.com"),
-  "rendered widget source missing mailto:info@preppyservices.com"
+  widget.includes("mailto:info@preppyservices.com") || widget.includes("mailto:${INFO_EMAIL}"),
+  "production widget missing mailto:info@preppyservices.com"
 );
-check(!widget.includes("Text us · Send a photo"), 'rendered widget source still contains "Text us"');
-check(!/send a photo/i.test(widget), 'rendered widget source still contains "Send a photo"');
+check(widget.includes('encodeURIComponent("Custom quote")'), "custom email is missing its subject");
+check(widget.includes("buildCustomEmailURL"), "custom job control is missing the email builder");
+check(!widget.includes("buildIMessageURL"), "custom job control still builds an sms link");
 
-const labelAt = widget.indexOf('{t("cta.textSendPhoto")}');
-check(labelAt !== -1, "photo CTA is not rendered");
-const control = widget.slice(Math.max(0, labelAt - 700), labelAt);
-check(
-  control.includes('href="mailto:info@preppyservices.com"'),
-  "photo CTA href is not mailto:info@preppyservices.com"
-);
-check(!control.includes("sms:"), "photo CTA still has an sms: href");
-check(!control.includes("buildIMessageURL"), "photo CTA still builds an sms link");
-check(
-  widget.indexOf('{t("cta.textSendPhoto")}', labelAt + 1) === -1,
-  "photo CTA is rendered more than once"
-);
+const newCopy = [
+  "Email us for a private quote.",
+  "or email us for a manual review.",
+  "Email us for a manual review.",
+  "Email us a photo.",
+  "Email us and we'll place you.",
+  "or email us.",
+];
+for (const line of newCopy) {
+  check(widget.includes(line), `production widget missing ${JSON.stringify(line)}`);
+  check(!/[·•–—-]/.test(line), `new copy has a separator: ${JSON.stringify(line)}`);
+}
 
 if (failures.length) {
   console.error(failures.join("\n"));

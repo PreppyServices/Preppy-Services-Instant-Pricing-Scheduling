@@ -362,7 +362,7 @@ export function PreppyOgCard({ name, building, unit, lang }: CardParams): ReactE
         }}
       />
 
-      {/* Footer — locale (left) + trust (right), larger than before so it survives compression */}
+      {/* Footer locale, larger than before so it survives compression */}
       <div
         style={{
           position: "absolute",
@@ -375,19 +375,6 @@ export function PreppyOgCard({ name, building, unit, lang }: CardParams): ReactE
         }}
       >
         MIAMI · MIAMI BEACH
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          right: SAFE_LEFT,
-          bottom: 26,
-          fontSize: 17,
-          letterSpacing: "0.16em",
-          color: "rgba(200,172,114,0.82)",
-          fontWeight: 600,
-        }}
-      >
-        FULLY INSURED · $2M COVERAGE
       </div>
     </div>
   );
