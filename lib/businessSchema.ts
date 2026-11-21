@@ -23,9 +23,12 @@ const business = {
     addressCountry: "US",
   },
   areaServed: [
-    { "@type": "AdministrativeArea", name: "Miami-Dade County, FL" },
-    { "@type": "City", name: "Miami" },
-    { "@type": "City", name: "Miami Beach" },
+    { "@type": "City", name: "Miami", addressRegion: "FL", addressCountry: "US" },
+    { "@type": "City", name: "Miami Beach", addressRegion: "FL", addressCountry: "US" },
+    { "@type": "Place", name: "Brickell", addressRegion: "FL", addressCountry: "US" },
+    { "@type": "Place", name: "Edgewater", addressRegion: "FL", addressCountry: "US" },
+    { "@type": "Place", name: "Downtown Miami", addressRegion: "FL", addressCountry: "US" },
+    { "@type": "City", name: "Coral Gables", addressRegion: "FL", addressCountry: "US" },
   ],
   openingHoursSpecification: [
     {

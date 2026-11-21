@@ -108,9 +108,15 @@ check(
 );
 check(
   business.areaServed?.map((area) => area.name).join("|") ===
-    "Miami-Dade County, FL|Miami|Miami Beach",
-  "areaServed must be Miami-Dade County, Miami, and Miami Beach"
+    "Miami|Miami Beach|Brickell|Edgewater|Downtown Miami|Coral Gables",
+  "areaServed must be Miami, Miami Beach, Brickell, Edgewater, Downtown Miami, and Coral Gables"
 );
+check(
+  business.areaServed?.every((area) => (area as { addressRegion?: string }).addressRegion === "FL") ===
+    true,
+  "areaServed places must be in FL"
+);
+check(!/paint/i.test(html), "JSON-LD must not mention painting");
 check(
   business.sameAs?.join("|") ===
     [
@@ -137,13 +143,34 @@ const llmsBody = await llmsRes.text();
 check(llmsRes.status === 200, `/llms.txt status ${llmsRes.status}, expected 200`);
 check(llmsBody.includes("Preppy Services"), "/llms.txt must contain Preppy Services");
 check(llmsBody.includes("https://quote.preppyservices.com"), "/llms.txt missing quote URL");
-check(llmsBody.includes("https://preppyservices.com/faq"), "/llms.txt missing FAQ URL");
-check(llmsBody.includes("COI"), "/llms.txt missing COI");
-check(llmsBody.includes("Monday to Saturday, 08:00-18:00"), "/llms.txt missing hours");
+check(llmsBody.includes("info@preppyservices.com"), "/llms.txt missing email");
+check(
+  llmsBody.includes(
+    "cleaned from inside the unit or on the balcony with water-fed poles, never from the building exterior"
+  ),
+  "/llms.txt missing the work method"
+);
+check(
+  llmsBody.includes("Monday through Saturday, 8:00 a.m. to 6:00 p.m. ET, closed Sunday"),
+  "/llms.txt missing hours"
+);
 check(llmsBody.includes("https://www.tiktok.com/@preppyservices"), "/llms.txt missing TikTok");
+check(llmsBody.includes("https://instagram.com/preppyservices/"), "/llms.txt missing Instagram");
+check(
+  llmsBody.includes("https://www.facebook.com/profile.php?id=61580467193527"),
+  "/llms.txt missing Facebook"
+);
 check(!llmsBody.includes("$"), "/llms.txt must not include prices");
-check(!llmsBody.includes("2915 Biscayne"), "/llms.txt must not include a street address");
-check(!/review count|stars|rating/i.test(llmsBody), "/llms.txt must not include review counts");
+check(!llmsBody.includes("2915"), "/llms.txt must not include a street address");
+check(!llmsBody.includes("Biscayne Blvd"), "/llms.txt must not include a street address");
+check(!llmsBody.includes("+13054140305"), "/llms.txt must not include the phone number");
+check(!/305-414-0305/.test(llmsBody), "/llms.txt must not include the phone number");
+check(!/workers'?\s*comp/i.test(llmsBody), "/llms.txt must not mention workers' compensation");
+check(!/\binsured\b/i.test(llmsBody), "/llms.txt must not use an insured shorthand");
+check(!/\bBTR\b/.test(llmsBody), "/llms.txt must not claim a BTR");
+check(!/\blicen[sc]ed\b/i.test(llmsBody), "/llms.txt must not claim a license");
+check(!/paint/i.test(llmsBody), "/llms.txt must not mention painting");
+check(!/\d(?:\.\d)?\s*stars?/i.test(llmsBody), "/llms.txt must not include a star count");
 
 const origin = process.env.SCHEMA_ORIGIN;
 if (origin) {
