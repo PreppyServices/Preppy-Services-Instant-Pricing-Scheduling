@@ -144,7 +144,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.textPrivate": "Email us for a private quote.",
     "price.selectResidenceFirst": "Select your residence and unit line to view pricing",
     "price.enterUnit": "Enter your unit to view pricing",
-    "price.call": "Text or call 305-414-0305",
+    "price.call": "Call 305-414-0305",
     "unit.number": "Unit",
     "unit.numberPlaceholder": "2809 or PHI10",
     "unmatched.kicker": "Building not verified yet",
@@ -181,8 +181,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "White Glove",
     "trust.whiteGlove.sub": "Service",
-    "trust.coverage": "$2M Coverage",
-    "trust.coverage.sub": "Liability",
+    "trust.coverage": "Certificate of insurance on request",
+    "trust.coverage.sub": "",
     "trust.sameWeek": "Same Week",
     "trust.sameWeek.sub": "Booking",
     "footer.region": "Miami · Miami Beach",
@@ -259,7 +259,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.textPrivate": "Escríbanos por correo para una cotización privada.",
     "price.selectResidenceFirst": "Seleccione residencia y línea de unidad para ver precios",
     "price.enterUnit": "Ingrese su unidad para ver el precio",
-    "price.call": "Escriba o llame al 305-414-0305",
+    "price.call": "Llame al 305-414-0305",
     "unit.number": "Unidad",
     "unit.numberPlaceholder": "2809 o PHI10",
     "unmatched.kicker": "Edificio aún no verificado",
@@ -296,8 +296,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Guante Blanco",
     "trust.whiteGlove.sub": "Servicio",
-    "trust.coverage": "Cobertura $2M",
-    "trust.coverage.sub": "Responsabilidad",
+    "trust.coverage": "Certificado de seguro a petición",
+    "trust.coverage.sub": "",
     "trust.sameWeek": "Misma Semana",
     "trust.sameWeek.sub": "Reserva",
     "footer.region": "Miami · Miami Beach",
@@ -374,7 +374,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.textPrivate": "Envoyez un courriel pour un devis privé.",
     "price.selectResidenceFirst": "Sélectionnez votre résidence et ligne d'unité pour voir les tarifs",
     "price.enterUnit": "Saisissez votre unité pour voir le tarif",
-    "price.call": "Écrivez ou appelez le 305-414-0305",
+    "price.call": "Appelez le 305-414-0305",
     "unit.number": "Unité",
     "unit.numberPlaceholder": "2809 ou PHI10",
     "unmatched.kicker": "Bâtiment pas encore vérifié",
@@ -411,8 +411,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Gant Blanc",
     "trust.whiteGlove.sub": "Service",
-    "trust.coverage": "Couverture 2M$",
-    "trust.coverage.sub": "Responsabilité",
+    "trust.coverage": "Attestation d'assurance sur demande",
+    "trust.coverage.sub": "",
     "trust.sameWeek": "Même Semaine",
     "trust.sameWeek.sub": "Réservation",
     "footer.region": "Miami · Miami Beach",
@@ -515,6 +515,20 @@ function groupSchedSlots(slots: SchedSlot[]) {
     groups[day].push({ ...s, time });
   }
   return groups;
+}
+
+const CALL_PHONE = "305-414-0305";
+
+function CallLabel({ label }: { label: string }) {
+  const at = label.indexOf(CALL_PHONE);
+  if (at < 0) return label;
+  return (
+    <>
+      {label.slice(0, at)}
+      <span className="whitespace-nowrap">{CALL_PHONE}</span>
+      {label.slice(at + CALL_PHONE.length)}
+    </>
+  );
 }
 
 export default function PreppyLuxuryWidget() {
@@ -1496,7 +1510,7 @@ export default function PreppyLuxuryWidget() {
                 ) : usesUnitQuote && callForQuote ? (
                   <div className="text-center" data-quote-call="true">
                     <a href="tel:+13054140305" className="text-[18px] font-semibold text-[#0F7C82]">
-                      {t("price.call")}
+                      <CallLabel label={t("price.call")} />
                     </a>
                   </div>
                 ) : usesUnitQuote && regularPrice == null ? (
@@ -1633,9 +1647,16 @@ export default function PreppyLuxuryWidget() {
               { key: "coverage", label: t("trust.coverage"), sub: t("trust.coverage.sub") },
               { key: "sameWeek", label: t("trust.sameWeek"), sub: t("trust.sameWeek.sub") },
             ].map((item) => (
-              <div key={item.key} className="px-3 py-1 text-center">
+              <div
+                key={item.key}
+                className={`min-w-0 py-1 text-center ${item.key === "coverage" ? "px-1" : "px-3"}`}
+              >
                 <div
-                  className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                  className={
+                    item.key === "coverage"
+                      ? "text-balance break-words text-[9px] font-semibold uppercase leading-snug tracking-[0.04em] sm:text-[10px]"
+                      : "text-[11px] font-semibold uppercase tracking-[0.18em]"
+                  }
                   style={{
                     background: "linear-gradient(135deg, #C5A572 0%, #A8884E 50%, #C5A572 100%)",
                     WebkitBackgroundClip: "text",
@@ -1644,9 +1665,11 @@ export default function PreppyLuxuryWidget() {
                 >
                   {item.label}
                 </div>
-                <div className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-[#8B9399]">
-                  {item.sub}
-                </div>
+                {item.sub ? (
+                  <div className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-[#8B9399]">
+                    {item.sub}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
