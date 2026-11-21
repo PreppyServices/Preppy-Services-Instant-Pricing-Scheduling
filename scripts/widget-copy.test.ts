@@ -3,8 +3,8 @@
  * No Fully Insured label, no "Text us", and no sms: links.
  * Contact actions use mailto:info@preppyservices.com.
  */
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const failures: string[] = [];
@@ -117,6 +117,30 @@ const newCopy = [
 for (const line of newCopy) {
   check(widget.includes(line), `production widget missing ${JSON.stringify(line)}`);
   check(!/[·•–—-]/.test(line), `new copy has a separator: ${JSON.stringify(line)}`);
+}
+
+function listFiles(dir: string): string[] {
+  const files: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...listFiles(full));
+      continue;
+    }
+    if (entry.isFile()) files.push(full);
+  }
+  return files;
+}
+
+const bannedTokens = ["sms:", "$2M", "2M$"] as const;
+for (const dirName of ["app", "components"]) {
+  for (const file of listFiles(join(root, dirName))) {
+    const text = readFileSync(file, "utf8");
+    const rel = relative(root, file);
+    for (const token of bannedTokens) {
+      check(!text.includes(token), `${rel} contains ${JSON.stringify(token)}`);
+    }
+  }
 }
 
 if (failures.length) {
