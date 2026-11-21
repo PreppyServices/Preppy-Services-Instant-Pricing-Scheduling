@@ -1,7 +1,8 @@
 // Site-wide business graph for quote.preppyservices.com.
 // Facts only: no prices, discounts, review counts, or ratings.
-// The telephone is the number already shown on the quote page
-// (noscript text and the call link): 305-414-0305.
+// No FAQPage: those questions are not visible on the quote site.
+// Preppy is a service-area business, so the address has no street.
+// The telephone is the number already shown on the quote page: 305-414-0305.
 
 const QUOTE_URL = "https://quote.preppyservices.com";
 const BUSINESS_ID = "https://preppyservices.com/#business";
@@ -13,25 +14,31 @@ const business = {
   legalName: "PREPROCK HOLDINGS LLC",
   url: QUOTE_URL,
   email: "info@preppyservices.com",
-  telephone: "+1-305-414-0305",
+  telephone: "+13054140305",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "2915 Biscayne Blvd, Ste 300",
     addressLocality: "Miami",
     addressRegion: "FL",
     postalCode: "33137",
     addressCountry: "US",
   },
   areaServed: [
+    { "@type": "AdministrativeArea", name: "Miami-Dade County, FL" },
     { "@type": "City", name: "Miami" },
     { "@type": "City", name: "Miami Beach" },
-    { "@type": "Place", name: "Brickell" },
-    { "@type": "Place", name: "Downtown Miami" },
-    { "@type": "Place", name: "Edgewater" },
+  ],
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      opens: "08:00",
+      closes: "18:00",
+    },
   ],
   sameAs: [
     "https://instagram.com/preppyservices/",
     "https://www.facebook.com/profile.php?id=61580467193527",
+    "https://www.tiktok.com/@preppyservices",
   ],
   makesOffer: {
     "@type": "Offer",
@@ -47,50 +54,9 @@ const business = {
   },
 };
 
-const faq = {
-  "@type": "FAQPage",
-  "@id": `${QUOTE_URL}/#faq`,
-  url: QUOTE_URL,
-  about: { "@id": BUSINESS_ID },
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "How do I get a price for my unit?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Pick your building and enter your unit at https://quote.preppyservices.com. The page shows that unit's balcony glass cleaning price.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Are prices per unit?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Balcony glass cleaning is priced per unit. Enter your unit to view that unit's price.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "How do interior glass add-ons work?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Interior glass (sliders and windows) is an add-on. After you select your unit, the add-on follows the tier shown on the quote page for that unit.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Are you insured?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Preppy Services is fully insured. A certificate of insurance (COI) is available on request.",
-      },
-    },
-  ],
-};
-
 export const businessGraph = {
   "@context": "https://schema.org",
-  "@graph": [business, faq],
+  "@graph": [business],
 };
 
 /** JSON inserted into the site-wide application/ld+json script. */
