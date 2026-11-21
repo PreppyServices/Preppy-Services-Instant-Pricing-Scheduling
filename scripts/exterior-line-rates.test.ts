@@ -559,6 +559,39 @@ check("Nov 19 2026 Harbour House exterior rates", () => {
   assertPrice("Harbour House", "16", 220);
 });
 
+check("Nov 21 2026 Epic Residences Miami exterior rates", () => {
+  const unchanged: Record<string, number> = {
+    "01": 320,
+    "02": 320,
+    "03": 280,
+    "04": 280,
+    "05": 180,
+    "06": 180,
+    "07": 320,
+    "08": 320,
+  };
+  for (const [line, price] of Object.entries(unchanged)) {
+    assertPrice("Epic Residences Miami", line, price);
+  }
+  const raised = ["09", "10", "11", "12", "13", "14"];
+  for (const line of raised) {
+    assertPrice("Epic Residences Miami", line, 180);
+    if (preservedRegularInterior["Epic Residences Miami"]?.[line] != null) {
+      throw new Error(`Epic Residences Miami ${line} must follow interiorTier, not a line lock`);
+    }
+    const regularInterior = interiorQuote("Epic Residences Miami", line, 180, false);
+    const introInterior = interiorQuote("Epic Residences Miami", line, 180, true);
+    if (regularInterior !== 100 || introInterior !== 80) {
+      throw new Error(
+        `Epic Residences Miami ${line} interior ${regularInterior}/${introInterior}, expected 100/80`
+      );
+    }
+    if (firstServicePrice(linesOf("Epic Residences Miami")[line]) !== 144) {
+      throw new Error(`Epic Residences Miami ${line} first service left $144`);
+    }
+  }
+});
+
 check("Flamingo South Beach towers keep flyer prices and new tower lines", () => {
   const south = "Flamingo South Beach South Tower";
   const center = "Flamingo South Beach Center Tower";

@@ -1787,6 +1787,10 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
+    // Approved exterior rates (Joe, 2026-11-21). Lines 09–14 are $180.
+    // First service is the shared 20% rate ($144). Interior glass follows
+    // interiorTier() on that regular price ($180 → $100, first service $80).
+    // Lines 01–08 stay as they were.
     "Epic Residences Miami": {
       lines: {
         "01": 320,
@@ -1797,12 +1801,12 @@ export const pricing: Record<string, BuildingPricing> = {
         "06": 180,
         "07": 320,
         "08": 320,
-        "09": 150,
-        "10": 150,
-        "11": 160,
-        "12": 160,
-        "13": 150,
-        "14": 150
+        "09": 180,
+        "10": 180,
+        "11": 180,
+        "12": 180,
+        "13": 180,
+        "14": 180
       },
       penthouse: false,
     },
