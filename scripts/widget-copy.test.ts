@@ -22,6 +22,61 @@ check(!widget.includes("Entièrement Assuré"), "French insured label still in t
 check(!widget.includes("brand.insured"), "brand.insured is still in the widget");
 check(!/text us/i.test(widget), 'production widget still contains "Text us"');
 check(!widget.includes("sms:"), "production widget still contains an sms: link");
+check(!widget.includes("$2M"), "production widget still contains $2M");
+check(!widget.includes("2M$"), "production widget still contains 2M$");
+check(!widget.includes("Text or call"), 'production widget still contains "Text or call"');
+check(!widget.includes("Escriba o llame"), 'production widget still contains "Escriba o llame"');
+check(!widget.includes("Écrivez ou appelez"), 'production widget still contains "Écrivez ou appelez"');
+check(widget.includes('href="tel:+13054140305"'), "production widget missing tel:+13054140305");
+
+const callLabels = [...widget.matchAll(/"price\.call": "([^"]*)"/g)].map((match) => match[1]);
+check(callLabels.length === 3, `expected English, Spanish, and French call copy, found ${callLabels.length}`);
+const expectedCalls = [
+  "Call 305-414-0305",
+  "Llame al 305-414-0305",
+  "Appelez le 305-414-0305",
+];
+for (const expected of expectedCalls) {
+  check(callLabels.includes(expected), `production widget missing call copy ${JSON.stringify(expected)}`);
+}
+
+const coverageLabels = [...widget.matchAll(/"trust\.coverage": "([^"]*)"/g)].map((match) => match[1]);
+check(
+  coverageLabels.length === 3,
+  `expected English, Spanish, and French coverage copy, found ${coverageLabels.length}`
+);
+const expectedCoverage = [
+  "Certificate of insurance on request",
+  "Certificado de seguro a petición",
+  "Attestation d'assurance sur demande",
+];
+const retiredCoverage = ["Coverage", "Cobertura $2M", "Couverture 2M$", "$2M Coverage"];
+for (const expected of expectedCoverage) {
+  check(
+    coverageLabels.includes(expected),
+    `production widget missing coverage copy ${JSON.stringify(expected)}`
+  );
+}
+for (const label of coverageLabels) {
+  for (const retired of retiredCoverage) {
+    check(label !== retired, `coverage badge still uses retired copy ${JSON.stringify(label)}`);
+  }
+}
+
+const coverageSubs = [...widget.matchAll(/"trust\.coverage\.sub": "([^"]*)"/g)].map((match) => match[1]);
+check(coverageSubs.length === 3, `expected 3 empty coverage subtitles, found ${coverageSubs.length}`);
+for (const sub of coverageSubs) {
+  check(sub === "", `coverage subtitle is ${JSON.stringify(sub)}`);
+}
+
+const phone = "305-414-0305";
+for (const line of [...callLabels, ...coverageLabels, ...coverageSubs]) {
+  const withoutPhone = line.split(phone).join("");
+  check(
+    !/[·•–—-]/.test(withoutPhone),
+    `new visible copy has a hyphen or dash: ${JSON.stringify(line)}`
+  );
+}
 
 const photoLabels = [...widget.matchAll(/"cta\.textSendPhoto": "([^"]*)"/g)].map((match) => match[1]);
 check(
