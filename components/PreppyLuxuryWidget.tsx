@@ -99,7 +99,6 @@ const I18N: Record<Lang, Record<string, string>> = {
   en: {
     "brand.title": "Preppy Services",
     "brand.subtitle": "Balcony Glass Cleaning",
-    "brand.insured": "Fully Insured",
     "preparedFor": "Prepared for",
     "service.label": "Service",
     "service.glass.title": "Balcony Glass",
@@ -134,7 +133,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "custom.header": "Tell us what you need",
     "custom.placeholder":
       "Describe your job — install window treatments, change light fixtures, change out all light bulbs to a warmer color, sync smart home automations, pressure washing, floor polishing, specialty cleaning, post-construction detailing, maintenance scheduling while traveling, and more. Send pics and schedule an on-site walkthrough.",
-    "custom.tappingSend": "Tapping send opens Messages with your building & unit already filled in.",
+    "custom.tappingSend": "Email opens with your building and unit already filled in.",
     "price.directQuote": "Direct quote",
     "price.directHeadline": "Send your details — we'll reply with a tailored quote.",
     "price.directSub": "Photos, floor plan, scope — whatever you have.",
@@ -142,7 +141,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.reserveHeadline": "Discuss your project on-site.",
     "price.reserveSub": "Finalize details, get quote and coordinate scheduling.",
     "price.residenceFinalizing": "We'll confirm line-specific pricing before you book.",
-    "price.textPrivate": "Text us for a private quote.",
+    "price.textPrivate": "Email us for a private quote.",
     "price.selectResidenceFirst": "Select your residence and unit line to view pricing",
     "price.enterUnit": "Enter your unit to view pricing",
     "price.call": "Text or call 305-414-0305",
@@ -150,8 +149,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "unit.numberPlaceholder": "2809 or PHI10",
     "unmatched.kicker": "Building not verified yet",
     "unmatched.body": "We don't have {building} verified yet. Preppy can still review your unit manually.",
-    "unmatched.search": "Search above to find your building, or text us for a manual review.",
-    "unmatched.cta": "Text us for a manual review",
+    "unmatched.search": "Search above to find your building, or email us for a manual review.",
+    "unmatched.cta": "Email us for a manual review.",
     "price.exterior": "Exterior detailing",
     "price.interiorAddon": "Interior glass (sliders and windows)",
     "price.estimated": "Estimated total",
@@ -176,10 +175,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "flyer.zoomOut": "Zoom out",
     "flyer.reset": "Fit",
     "flyer.hint": "Pinch or double-tap to zoom",
-    "cta.sendImessage": "Send via iMessage",
+    "cta.sendImessage": "Email",
     "cta.checkAvailability": "Check Availability",
     "cta.reserveConsultation": "Reserve On-Site Walkthrough",
-    "cta.textSendPhoto": "Text us · Send a photo",
+    "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "White Glove",
     "trust.whiteGlove.sub": "Service",
     "trust.coverage": "$2M Coverage",
@@ -187,13 +186,13 @@ const I18N: Record<Lang, Record<string, string>> = {
     "trust.sameWeek": "Same Week",
     "trust.sameWeek.sub": "Booking",
     "footer.region": "Miami · Miami Beach",
-    "support.title": "Text us a photo",
+    "support.title": "Email us a photo.",
     "support.sub": "For penthouses, custom layouts, or buildings that need a quick quote review. Send photos for a faster quote.",
-    "support.copy": "Copy Number",
+    "support.copy": "Copy email",
     "support.close": "Close",
     "sched.title": "Choose your appointment",
     "sched.loading": "Loading available times…",
-    "sched.none": "No open times in the next two weeks. Text us and we'll place you.",
+    "sched.none": "No open times in the next two weeks. Email us and we'll place you.",
     "sched.confirmTitle": "Confirm your appointment",
     "sched.namePlaceholder": "Your name",
     "sched.phonePlaceholder": "Phone",
@@ -210,13 +209,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successBody": "We'll confirm your appointment details shortly, and we'll send arrival updates closer to your service time.",
     "sched.successConfirm": "We'll confirm your appointment details shortly.",
     "sched.takenMsg": "That time was just taken. Here are fresh times.",
-    "sched.errorMsg": "Could not reserve. Please try again, or text us.",
+    "sched.errorMsg": "Could not reserve. Please try again, or email us.",
     "sched.close": "Close",
   },
   es: {
     "brand.title": "Preppy Services",
     "brand.subtitle": "Limpieza de Cristal de Balcón",
-    "brand.insured": "Totalmente Asegurado",
     "preparedFor": "Preparado para",
     "service.label": "Servicio",
     "service.glass.title": "Cristal de Balcón",
@@ -250,7 +248,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "paint.schedule": "Agendar",
     "custom.header": "Cuéntenos qué necesita",
     "custom.placeholder": "Describa el trabajo — habitaciones, superficies, estado, fechas. Fotos bienvenidas por mensaje.",
-    "custom.tappingSend": "Al enviar se abre Mensajes con su edificio y unidad ya completados.",
+    "custom.tappingSend": "El correo se abre con su edificio y unidad ya completados.",
     "price.directQuote": "Cotización directa",
     "price.directHeadline": "Envíenos los detalles — responderemos con una cotización personalizada.",
     "price.directSub": "Fotos, plano, alcance — lo que tenga.",
@@ -258,7 +256,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.reserveHeadline": "Converse sobre su proyecto en sitio.",
     "price.reserveSub": "Finalize detalles, reciba una cotización y coordine la programación.",
     "price.residenceFinalizing": "Confirmamos el precio por línea antes de reservar.",
-    "price.textPrivate": "Escríbanos para una cotización privada.",
+    "price.textPrivate": "Escríbanos por correo para una cotización privada.",
     "price.selectResidenceFirst": "Seleccione residencia y línea de unidad para ver precios",
     "price.enterUnit": "Ingrese su unidad para ver el precio",
     "price.call": "Escriba o llame al 305-414-0305",
@@ -266,8 +264,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "unit.numberPlaceholder": "2809 o PHI10",
     "unmatched.kicker": "Edificio aún no verificado",
     "unmatched.body": "Todavía no tenemos {building} verificado. Preppy puede revisar su unidad manualmente.",
-    "unmatched.search": "Busque arriba para encontrar su edificio, o escríbanos para una revisión manual.",
-    "unmatched.cta": "Escríbanos para una revisión manual",
+    "unmatched.search": "Busque arriba para encontrar su edificio, o escríbanos por correo para una revisión manual.",
+    "unmatched.cta": "Escríbanos por correo para una revisión manual.",
     "price.exterior": "Detallado exterior",
     "price.interiorAddon": "Cristal interior (correderas y ventanas)",
     "price.estimated": "Total estimado",
@@ -292,10 +290,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "flyer.zoomOut": "Alejar",
     "flyer.reset": "Ajustar",
     "flyer.hint": "Pellizque o toque dos veces para ampliar",
-    "cta.sendImessage": "Enviar por iMessage",
+    "cta.sendImessage": "Email",
     "cta.checkAvailability": "Ver Disponibilidad",
     "cta.reserveConsultation": "Reservar Visita en Sitio",
-    "cta.textSendPhoto": "Escríbanos · Envíe una foto",
+    "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Guante Blanco",
     "trust.whiteGlove.sub": "Servicio",
     "trust.coverage": "Cobertura $2M",
@@ -303,13 +301,13 @@ const I18N: Record<Lang, Record<string, string>> = {
     "trust.sameWeek": "Misma Semana",
     "trust.sameWeek.sub": "Reserva",
     "footer.region": "Miami · Miami Beach",
-    "support.title": "Envíenos una foto",
+    "support.title": "Envíenos una foto por correo.",
     "support.sub": "Para penthouses, diseños a medida o edificios que necesitan una revisión rápida de cotización. Envíe fotos para una cotización más rápida.",
-    "support.copy": "Copiar Número",
+    "support.copy": "Copiar correo",
     "support.close": "Cerrar",
     "sched.title": "Elija su cita",
     "sched.loading": "Cargando horarios disponibles…",
-    "sched.none": "No hay horarios en las próximas dos semanas. Escríbanos y lo ubicamos.",
+    "sched.none": "No hay horarios en las próximas dos semanas. Escríbanos por correo y lo ubicamos.",
     "sched.confirmTitle": "Confirme su cita",
     "sched.namePlaceholder": "Su nombre",
     "sched.phonePlaceholder": "Teléfono",
@@ -326,13 +324,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successBody": "Confirmaremos los detalles de su cita en breve, y le enviaremos avisos de llegada cuando se acerque la fecha de su servicio.",
     "sched.successConfirm": "Confirmaremos los detalles de su cita en breve.",
     "sched.takenMsg": "Ese horario se acaba de ocupar. Aquí hay nuevos horarios.",
-    "sched.errorMsg": "No se pudo reservar. Intente de nuevo o escríbanos.",
+    "sched.errorMsg": "No se pudo reservar. Intente de nuevo o escríbanos por correo.",
     "sched.close": "Cerrar",
   },
   fr: {
     "brand.title": "Preppy Services",
     "brand.subtitle": "Nettoyage de Verre de Balcon",
-    "brand.insured": "Entièrement Assuré",
     "preparedFor": "Préparé pour",
     "service.label": "Service",
     "service.glass.title": "Verre de Balcon",
@@ -366,7 +363,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "paint.schedule": "Planifier",
     "custom.header": "Dites-nous ce dont vous avez besoin",
     "custom.placeholder": "Décrivez le travail — pièces, surfaces, état, délais. Photos bienvenues par message.",
-    "custom.tappingSend": "En appuyant sur envoyer, Messages s'ouvre avec votre bâtiment et unité déjà remplis.",
+    "custom.tappingSend": "Le courriel s'ouvre avec votre bâtiment et votre unité déjà remplis.",
     "price.directQuote": "Devis direct",
     "price.directHeadline": "Envoyez vos détails — nous répondrons avec un devis sur mesure.",
     "price.directSub": "Photos, plan, portée — tout ce que vous avez.",
@@ -374,7 +371,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.reserveHeadline": "Discutez de votre projet sur place.",
     "price.reserveSub": "Finalisez les détails, obtenez un devis et coordonnez la planification.",
     "price.residenceFinalizing": "Nous confirmons le tarif par ligne avant votre réservation.",
-    "price.textPrivate": "Écrivez-nous pour un devis privé.",
+    "price.textPrivate": "Envoyez un courriel pour un devis privé.",
     "price.selectResidenceFirst": "Sélectionnez votre résidence et ligne d'unité pour voir les tarifs",
     "price.enterUnit": "Saisissez votre unité pour voir le tarif",
     "price.call": "Écrivez ou appelez le 305-414-0305",
@@ -382,8 +379,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     "unit.numberPlaceholder": "2809 ou PHI10",
     "unmatched.kicker": "Bâtiment pas encore vérifié",
     "unmatched.body": "Nous n'avons pas encore vérifié {building}. Preppy peut tout de même évaluer votre logement manuellement.",
-    "unmatched.search": "Recherchez ci-dessus pour trouver votre bâtiment, ou écrivez-nous pour une évaluation manuelle.",
-    "unmatched.cta": "Écrivez-nous pour une évaluation manuelle",
+    "unmatched.search": "Recherchez plus haut pour trouver votre bâtiment, ou envoyez un courriel pour une évaluation manuelle.",
+    "unmatched.cta": "Envoyez un courriel pour une évaluation manuelle.",
     "price.exterior": "Détaillage extérieur",
     "price.interiorAddon": "Verre intérieur (baies coulissantes et fenêtres)",
     "price.estimated": "Total estimé",
@@ -408,10 +405,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     "flyer.zoomOut": "Zoom arrière",
     "flyer.reset": "Ajuster",
     "flyer.hint": "Pincez ou touchez deux fois pour zoomer",
-    "cta.sendImessage": "Envoyer via iMessage",
+    "cta.sendImessage": "Email",
     "cta.checkAvailability": "Vérifier la Disponibilité",
     "cta.reserveConsultation": "Réserver la Visite sur Place",
-    "cta.textSendPhoto": "Écrivez-nous · Envoyez une photo",
+    "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Gant Blanc",
     "trust.whiteGlove.sub": "Service",
     "trust.coverage": "Couverture 2M$",
@@ -419,13 +416,13 @@ const I18N: Record<Lang, Record<string, string>> = {
     "trust.sameWeek": "Même Semaine",
     "trust.sameWeek.sub": "Réservation",
     "footer.region": "Miami · Miami Beach",
-    "support.title": "Envoyez-nous une photo",
+    "support.title": "Envoyez une photo par courriel.",
     "support.sub": "Pour les penthouses, agencements sur mesure ou bâtiments nécessitant une révision rapide de devis. Envoyez des photos pour un devis plus rapide.",
-    "support.copy": "Copier le Numéro",
+    "support.copy": "Copier le courriel",
     "support.close": "Fermer",
     "sched.title": "Choisissez votre rendez-vous",
     "sched.loading": "Chargement des horaires…",
-    "sched.none": "Aucun créneau dans les deux prochaines semaines. Écrivez-nous.",
+    "sched.none": "Aucun créneau dans les deux prochaines semaines. Envoyez un courriel et nous vous placerons.",
     "sched.confirmTitle": "Confirmez votre rendez-vous",
     "sched.namePlaceholder": "Votre nom",
     "sched.phonePlaceholder": "Téléphone",
@@ -442,7 +439,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successBody": "Nous confirmerons les détails de votre rendez-vous sous peu, et nous vous enverrons des avis d'arrivée à l'approche de votre service.",
     "sched.successConfirm": "Nous confirmerons les détails de votre rendez-vous sous peu.",
     "sched.takenMsg": "Ce créneau vient d'être pris. Voici de nouveaux horaires.",
-    "sched.errorMsg": "Réservation impossible. Réessayez ou écrivez-nous.",
+    "sched.errorMsg": "Réservation impossible. Réessayez ou envoyez un courriel.",
     "sched.close": "Fermer",
   },
 };
@@ -553,7 +550,7 @@ export default function PreppyLuxuryWidget() {
 
   const BOOKING_URL = "https://calendar.app.google/97k4hgLwC48JXJJn8";
   const PAINTING_URL = "https://calendar.app.google/J4uMHEH2VTtuw8Xh8";
-  const LIVE_AGENT_NUMBER = "+13054140305";
+  const INFO_EMAIL = "info@preppyservices.com";
 
   const sortLineLabels = (labels: string[]) => {
     const parseLabel = (label: string) => {
@@ -696,7 +693,6 @@ export default function PreppyLuxuryWidget() {
   const flyerAsset = FLYER_ASSETS[initialParams.flyerId];
   const [customDescription, setCustomDescription] = React.useState<string>("");
   const [showSupport, setShowSupport] = React.useState(false);
-  const [isMobile, setIsMobile] = React.useState(false);
   const [buildingQuery, setBuildingQuery] = React.useState("");
   const [showBuildingDropdown, setShowBuildingDropdown] = React.useState(false);
   const buildingInputRef = React.useRef<HTMLInputElement>(null);
@@ -760,12 +756,6 @@ export default function PreppyLuxuryWidget() {
     (key: string, vars?: Record<string, string | number>) => translate(key, lang, vars),
     [lang]
   );
-
-  React.useEffect(() => {
-    if (typeof navigator !== "undefined") {
-      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-    }
-  }, []);
 
   React.useEffect(() => {
     if (!flyerPeek) return;
@@ -878,26 +868,18 @@ export default function PreppyLuxuryWidget() {
     return qs ? `${base}?${qs}` : base;
   }, [serviceType, leadId, building, unitLine, activeUnit, total, customerName, batchUtm]);
 
-  const buildIMessageURL = React.useCallback(
-    (mode: "question" | "photo" | "custom") => {
-      const parts: string[] = ["Hi Preppy —"];
-      const ctx: string[] = [];
-      if (customerName) ctx.push(`this is ${customerName}`);
-      if (building && building !== buildings[0]) ctx.push(`at ${building}`);
-      if (activeUnit) ctx.push(`unit ${activeUnit}`);
-      else if (unitLine) ctx.push(`line ${unitLine}`);
-      if (ctx.length) parts.push(ctx.join(", ") + ".");
-      if (mode === "custom") {
-        parts.push(customDescription.trim() || "I'd like a custom quote — details to follow.");
-      } else if (mode === "photo") {
-        parts.push("Sending photos for a quote.");
-      } else {
-        parts.push("Quick question:");
-      }
-      return `sms:${LIVE_AGENT_NUMBER}?&body=${encodeURIComponent(parts.join(" "))}`;
-    },
-    [customerName, building, buildings, activeUnit, unitLine, customDescription]
-  );
+  const buildCustomEmailURL = React.useCallback(() => {
+    const parts: string[] = ["Hi Preppy."];
+    const ctx: string[] = [];
+    if (customerName) ctx.push(`this is ${customerName}`);
+    if (building && building !== buildings[0]) ctx.push(`at ${building}`);
+    if (activeUnit) ctx.push(`unit ${activeUnit}`);
+    else if (unitLine) ctx.push(`line ${unitLine}`);
+    if (ctx.length) parts.push(ctx.join(", ") + ".");
+    parts.push(customDescription.trim() || "I'd like a custom quote. Details to follow.");
+    const body = parts.join(" ");
+    return `mailto:${INFO_EMAIL}?subject=${encodeURIComponent("Custom quote")}&body=${encodeURIComponent(body)}`;
+  }, [INFO_EMAIL, customerName, building, buildings, activeUnit, unitLine, customDescription]);
 
   const handleBookingClick = React.useCallback(() => {
     if (typeof window === "undefined") return;
@@ -1094,16 +1076,6 @@ export default function PreppyLuxuryWidget() {
             className="mt-2.5 text-[22px] md:text-2xl font-medium tracking-tight text-[#243740]"
           >
             {t("brand.subtitle")}
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            custom={1.45}
-            variants={fadeUp}
-            className="mt-2.5 text-[12px] md:text-sm uppercase tracking-[0.24em] text-[#5B6870]"
-          >
-            {t("brand.insured")}
           </motion.div>
         </div>
         )}
@@ -1602,7 +1574,7 @@ export default function PreppyLuxuryWidget() {
 
             {serviceType === "custom" ? (
               <a
-                href={buildIMessageURL("custom")}
+                href={buildCustomEmailURL()}
                 onClick={handleBookingClick}
                 className="group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D]"
               >
@@ -1643,24 +1615,13 @@ export default function PreppyLuxuryWidget() {
               </button>
             )}
 
-            {isMobile ? (
-              <a
-                href={buildIMessageURL(serviceType === "custom" ? "custom" : "photo")}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#D8CEBF] bg-white px-5 py-3.5 text-[15px] font-medium tracking-tight text-[#0D1B24] transition hover:border-[#C5A572] hover:bg-[#FDFCF9]"
-              >
-                <span className="text-[#0F7C82]">✉</span>
-                {t("cta.textSendPhoto")}
-              </a>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowSupport(true)}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#D8CEBF] bg-white px-5 py-3.5 text-[15px] font-medium tracking-tight text-[#0D1B24] transition hover:border-[#C5A572] hover:bg-[#FDFCF9]"
-              >
-                <span className="text-[#0F7C82]">✉</span>
-                {t("cta.textSendPhoto")}
-              </button>
-            )}
+            <a
+              href="mailto:info@preppyservices.com"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#D8CEBF] bg-white px-5 py-3.5 text-[15px] font-medium tracking-tight text-[#0D1B24] transition hover:border-[#C5A572] hover:bg-[#FDFCF9]"
+            >
+              <span className="text-[#0F7C82]">✉</span>
+              {t("cta.textSendPhoto")}
+            </a>
           </div>
         </div>
 
@@ -1706,13 +1667,16 @@ export default function PreppyLuxuryWidget() {
               {t("support.title")}
             </div>
             <div className="mt-3 text-[#4E5C64]">{t("support.sub")}</div>
-            <div className="mt-5 rounded-2xl border border-[#E7DED3] bg-[#FAF8F4] px-4 py-3 text-lg font-medium">
-              {LIVE_AGENT_NUMBER}
-            </div>
+            <a
+              href={`mailto:${INFO_EMAIL}`}
+              className="mt-5 block rounded-2xl border border-[#E7DED3] bg-[#FAF8F4] px-4 py-3 text-center text-lg font-medium text-[#0D1B24]"
+            >
+              {INFO_EMAIL}
+            </a>
             <div className="mt-5 flex gap-3">
               <button
                 className="flex-1 rounded-2xl border border-[#E7DED3] px-4 py-3 font-medium"
-                onClick={() => navigator.clipboard.writeText(LIVE_AGENT_NUMBER)}
+                onClick={() => navigator.clipboard.writeText(INFO_EMAIL)}
               >
                 {t("support.copy")}
               </button>
