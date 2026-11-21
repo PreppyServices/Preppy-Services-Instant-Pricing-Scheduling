@@ -16,7 +16,6 @@ Insured. Certificate of insurance (COI) on request.
 - Email: info@preppyservices.com
 - Phone: +1-305-414-0305
 - Address: 2915 Biscayne Blvd, Ste 300, Miami, FL 33137, US
-- Hours: Monday to Saturday, 08:00-18:00
 - Area served: Miami, Miami Beach, Brickell, Downtown Miami, Edgewater
 - Instagram: https://instagram.com/preppyservices/
 - Facebook: https://www.facebook.com/profile.php?id=61580467193527

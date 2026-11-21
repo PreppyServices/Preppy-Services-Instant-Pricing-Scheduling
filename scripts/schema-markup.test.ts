@@ -75,12 +75,15 @@ check(!types.includes("AggregateRating"), "JSON-LD must not include AggregateRat
 const graph = businessGraph["@graph"];
 const business = graph[0] as {
   telephone?: string;
+  sameAs?: string[];
   makesOffer?: { name?: string; url?: string; itemOffered?: { url?: string } };
   areaServed?: { name: string }[];
-  openingHoursSpecification?: { opens: string; closes: string; dayOfWeek: string[] }[];
+  openingHoursSpecification?: unknown;
 };
 const faq = graph[1] as { mainEntity?: unknown[] };
 check(business.telephone === "+1-305-414-0305", "telephone must be the number shown on the site");
+check(business.openingHoursSpecification === undefined, "hours are omitted until verified");
+check(!html.includes("openingHoursSpecification"), "JSON-LD must not include opening hours");
 check(business.makesOffer?.name === "Balcony glass cleaning", "makesOffer name");
 check(business.makesOffer?.url === "https://quote.preppyservices.com", "makesOffer must link to the quote page");
 check(
@@ -92,20 +95,12 @@ check(
     "Miami|Miami Beach|Brickell|Downtown Miami|Edgewater",
   "areaServed changed"
 );
-const hours = business.openingHoursSpecification?.[0];
-check(hours?.opens === "08:00" && hours?.closes === "18:00", "hours must be 08:00-18:00");
 check(
-  hours?.dayOfWeek.join("|") ===
-    [
-      "https://schema.org/Monday",
-      "https://schema.org/Tuesday",
-      "https://schema.org/Wednesday",
-      "https://schema.org/Thursday",
-      "https://schema.org/Friday",
-      "https://schema.org/Saturday",
-    ].join("|"),
-  "hours must be Monday through Saturday"
+  business.sameAs?.join("|") ===
+    "https://instagram.com/preppyservices/|https://www.facebook.com/profile.php?id=61580467193527",
+  "sameAs must be Instagram and Facebook only"
 );
+check(!html.toLowerCase().includes("tiktok"), "JSON-LD must not include TikTok");
 check(
   (faq.mainEntity?.length ?? 0) >= 3 && (faq.mainEntity?.length ?? 0) <= 5,
   "FAQPage must have 3 to 5 questions"
@@ -130,6 +125,8 @@ check(llmsBody.includes("https://quote.preppyservices.com"), "/llms.txt missing 
 check(llmsBody.includes("https://preppyservices.com/faq"), "/llms.txt missing FAQ URL");
 check(llmsBody.includes("COI"), "/llms.txt missing COI");
 check(!llmsBody.includes("$"), "/llms.txt must not include prices");
+check(!llmsBody.includes("08:00"), "/llms.txt must not include unverified hours");
+check(!/tiktok/i.test(llmsBody), "/llms.txt must not include TikTok");
 check(!/review count|stars|rating/i.test(llmsBody), "/llms.txt must not include review counts");
 
 const origin = process.env.SCHEMA_ORIGIN;

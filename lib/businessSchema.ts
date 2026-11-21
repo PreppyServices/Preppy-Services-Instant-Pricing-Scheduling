@@ -6,15 +6,6 @@
 const QUOTE_URL = "https://quote.preppyservices.com";
 const BUSINESS_ID = "https://preppyservices.com/#business";
 
-const WEEKDAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-] as const;
-
 const business = {
   "@type": "LocalBusiness",
   "@id": BUSINESS_ID,
@@ -37,14 +28,6 @@ const business = {
     { "@type": "Place", name: "Brickell" },
     { "@type": "Place", name: "Downtown Miami" },
     { "@type": "Place", name: "Edgewater" },
-  ],
-  openingHoursSpecification: [
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: WEEKDAYS.map((day) => `https://schema.org/${day}`),
-      opens: "08:00",
-      closes: "18:00",
-    },
   ],
   sameAs: [
     "https://instagram.com/preppyservices/",
