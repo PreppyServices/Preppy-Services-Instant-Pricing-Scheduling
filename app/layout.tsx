@@ -3,6 +3,7 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { businessJsonLdJson } from "../lib/businessSchema";
 
 const SITE_URL = "https://quote.preppyservices.com";
 const SITE_TITLE = "Preppy Services | Balcony Glass Cleaning Price by Building";
@@ -76,6 +77,18 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link
+          rel="alternate"
+          href="https://quote.preppyservices.com/llms.txt"
+          type="text/plain"
+          title="llms.txt"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: businessJsonLdJson() }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
