@@ -172,6 +172,28 @@ export function quoteInteriorAddOn(exteriorPrice: number, intro: boolean): numbe
   return interiorGlassAddOn(exteriorPrice, intro);
 }
 
+type InteriorQuoteEntry = {
+  interiorOverrides?: Record<string, number>;
+  penthouseDefault?: { regular: number; interior: number };
+};
+
+/** Line interior, including a Hyde penthouse override when one is stored. */
+export function lineInteriorQuote(
+  entry: InteriorQuoteEntry | undefined,
+  line: string,
+  regularBalcony: number,
+  intro: boolean
+): number {
+  const named = line ? entry?.interiorOverrides?.[line] : undefined;
+  const addon =
+    named != null
+      ? named
+      : entry?.penthouseDefault && /^PH/i.test(line) && line.toUpperCase() !== "PH04"
+        ? entry.penthouseDefault.interior
+        : interiorTier(regularBalcony);
+  return intro ? firstServicePrice(addon) : addon;
+}
+
 /**
  * Reflect the first-service toggle in the query string without touching
  * building, line, unit, or name. Canonical on-state is intro=1.

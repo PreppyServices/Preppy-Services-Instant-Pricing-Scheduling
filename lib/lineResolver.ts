@@ -2,6 +2,9 @@
 //
 // Buildings without floorBands or unitOverrides keep the last-two-digits rule
 // and ignore the floor. PH and UPH quote only when that exact line key exists.
+// A building with penthouseDefault also maps PH4 to PH04 when that key exists,
+// and prices any other PH-prefixed code from the default. A PH code never
+// falls through to the numeric line.
 //
 // Buildings that declare them resolve in this order:
 //   1. exact unit override (whitespace ignored, so "PH 3201" matches PH3201)
@@ -13,7 +16,7 @@
 
 import type { BuildingPricing, FloorBand } from "../data/buildings";
 
-export type PricedSource = "exact" | "last2" | "override" | "also" | "floor-band";
+export type PricedSource = "exact" | "last2" | "override" | "also" | "floor-band" | "ph-default";
 
 export type UnitResolution =
   | {
@@ -119,12 +122,38 @@ function resolveFloorBands(entry: BuildingPricing, parsed: ParsedUnit): UnitReso
   return { status: "call", line: parsed.line };
 }
 
+function canonicalPenthouseKey(code: string): string | null {
+  const match = /^PH(\d+)$/.exec(code);
+  if (!match) return null;
+  return `PH${match[1].padStart(2, "0")}`;
+}
+
+function resolvePenthouseCode(entry: BuildingPricing, code: string): UnitResolution {
+  const namedKey = canonicalPenthouseKey(code);
+  if (namedKey && entry.lines[namedKey] !== undefined) {
+    return { status: "priced", line: namedKey, regular: entry.lines[namedKey], source: "exact" };
+  }
+  const fallback = entry.penthouseDefault;
+  if (!fallback) return { status: "none" };
+  return {
+    status: "priced",
+    line: namedKey ?? code,
+    regular: fallback.regular,
+    source: "ph-default",
+  };
+}
+
 function resolveLineKey(entry: BuildingPricing, parsed: ParsedUnit): UnitResolution {
   const lines = entry.lines;
   const code = parsed.code;
   if (!code) return { status: "none" };
   if (lines[code] !== undefined) {
     return { status: "priced", line: code, regular: lines[code], source: "exact" };
+  }
+  // Use the PH code itself. parsed.line is the zero-padded number (PH4 → 04)
+  // and must not become the quote.
+  if (entry.penthouseDefault && /^PH/i.test(code)) {
+    return resolvePenthouseCode(entry, code);
   }
   if (BLOCKED_PREFIX.test(code)) return { status: "none" };
   if (!/^\d+$/.test(code)) return { status: "none" };
