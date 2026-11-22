@@ -1,13 +1,18 @@
 /**
- * Storefront mornings: Sunday is out, under 24 hours is out,
- * Thanksgiving 2026-11-26 is out, and only 8, 9, 10, and 11 AM ET start.
+ * Storefront mornings come from the Apps Script availability list.
+ * Sunday is out, under 24 hours is out, Thanksgiving 2026-11-26 is out,
+ * and only 8, 9, 10, and 11 AM ET starts remain. A time the script omits
+ * is never filled in locally.
  */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   STOREFRONT_EXCLUDED_DATES,
   etWallTimeToUtc,
   isBookableSlot,
   isStorefrontSlot,
   listStorefrontSlots,
+  storefrontSlotsFromAvailability,
 } from "../lib/slotRules.ts";
 
 const failures: string[] = [];
@@ -95,9 +100,25 @@ check(etWallTimeToUtc("2026-11-30", 8) === Date.parse("2026-11-30T13:00:00.000Z"
 check(etWallTimeToUtc("2026-07-15", 8) === Date.parse("2026-07-15T12:00:00.000Z"), "July 8:00 AM is EDT");
 
 const now = Date.parse("2026-11-22T18:47:00.000Z");
-const listed = listStorefrontSlots(now);
-check(listed.length > 0, "the next 14 days include a morning");
-check(listed[0]?.start === "2026-11-24T13:00:00.000Z", "first open morning is Tue Nov 24 8:00 AM ET");
+const nineAm = "2026-11-24T14:00:00.000Z";
+const offered = [
+  { start: "2026-11-24T13:00:00.000Z", label: "Tue Nov 24, 8:00 AM", afterHours: false },
+  { start: "2026-11-24T15:00:00.000Z", label: "Tue Nov 24, 10:00 AM", afterHours: false },
+  { start: "2026-11-24T19:00:00.000Z", label: "Tue Nov 24, 2:00 PM", afterHours: false },
+  { start: "2026-11-29T13:00:00.000Z", label: "Sun Nov 29, 8:00 AM", afterHours: false },
+  { start: "2026-11-26T13:00:00.000Z", label: "Thu Nov 26, 8:00 AM", afterHours: false },
+  { start: "2026-11-23T13:00:00.000Z", label: "Mon Nov 23, 8:00 AM", afterHours: false },
+  { start: "2026-12-07T13:00:00.000Z", label: "Mon Dec 7, 8:00 AM", afterHours: false },
+];
+const availability = { ok: true, slots: offered };
+const loaded = storefrontSlotsFromAvailability(availability, now);
+check(loaded.state === "loaded", "a successful availability payload loads");
+const listed = loaded.state === "loaded" ? loaded.slots : [];
+check(
+  listed.map((slot) => slot.start).join(",") === "2026-11-24T13:00:00.000Z,2026-11-24T15:00:00.000Z",
+  "only offered 8:00 and 10:00 AM mornings remain"
+);
+check(!listed.some((slot) => slot.start === nineAm), "a 9:00 AM the script omits must not appear");
 check(
   listed.every((slot) => isStorefrontSlot(slot.start, now)),
   "listed slots pass the storefront rule"
@@ -106,22 +127,34 @@ check(
   listed.every((slot) => [8, 9, 10, 11].includes(new Date(slot.start).getUTCHours() - 5)),
   "listed hours are 8 through 11 AM ET"
 );
-check(
-  !listed.some((slot) => slot.start.startsWith("2026-11-26")),
-  "Thanksgiving is not listed"
-);
-check(
-  !listed.some((slot) => slot.start.startsWith("2026-11-29")),
-  "Sunday Nov 29 is not listed"
-);
-check(
-  !listed.some((slot) => slot.start.startsWith("2026-11-23T1")),
-  "Monday Nov 23 mornings are under 24 hours"
-);
+check(!listed.some((slot) => slot.start.startsWith("2026-11-26")), "Thanksgiving is not listed");
+check(!listed.some((slot) => slot.start.startsWith("2026-11-29")), "Sunday Nov 29 is not listed");
+check(!listed.some((slot) => slot.start.startsWith("2026-11-23")), "Monday Nov 23 mornings are under 24 hours");
+check(!listed.some((slot) => slot.start.startsWith("2026-11-24T19")), "an afternoon the script offers is dropped");
+check(!listed.some((slot) => slot.start.startsWith("2026-12-07")), "a morning past the 14 day window is dropped");
 check(
   listed.every((slot) => !/[\u002D\u2013\u2014]/.test(slot.day) && !/[\u002D\u2013\u2014]/.test(slot.time)),
   "slot labels have no hyphen or dash"
 );
+
+const failed = storefrontSlotsFromAvailability({ ok: false }, now);
+check(failed.state === "error", "a failed availability read is an error");
+check(!("slots" in failed), "a failed availability read does not invent slots");
+check(storefrontSlotsFromAvailability(null, now).state === "error", "a missing availability payload is an error");
+check(
+  storefrontSlotsFromAvailability({ ok: true, slots: "nope" }, now).state === "error",
+  "a payload without a slot list is an error"
+);
+const empty = storefrontSlotsFromAvailability({ ok: true, slots: [] }, now);
+check(empty.state === "loaded" && empty.slots.length === 0, "an empty calendar is loaded, not invented");
+check(
+  listStorefrontSlots([{ start: nineAm }], now).some((slot) => slot.start === nineAm),
+  "9:00 AM appears only when the script offers it"
+);
+
+const booking = readFileSync(join(process.cwd(), "components/StorefrontBooking.tsx"), "utf8");
+check(booking.includes('"?mode=availability"'), "storefront asks the Apps Script for availability");
+check(!booking.includes("listStorefrontSlots("), "the page does not build a local slot list");
 
 if (failures.length) {
   console.error(failures.join("\n"));

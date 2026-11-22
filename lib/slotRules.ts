@@ -212,23 +212,70 @@ export function formatStorefrontWhen(ms: number): { day: string; time: string; l
   return { day, time, label: `${day}, ${time}` };
 }
 
-/** Morning starts inside the next 14 America/New_York calendar days, including today. */
-export function listStorefrontSlots(nowMs: number): StorefrontSlot[] {
-  const today = etDateString(nowMs);
-  if (!today) return [];
-  const slots: StorefrontSlot[] = [];
-  for (let offset = 0; offset < STOREFRONT_HORIZON_DAYS; offset += 1) {
-    const ymd = addCalendarDays(today, offset);
-    if (!ymd) continue;
-    for (const hour of STOREFRONT_START_HOURS) {
-      const utc = etWallTimeToUtc(ymd, hour, 0);
-      if (utc == null) continue;
-      const start = new Date(utc).toISOString();
-      if (!isStorefrontSlot(start, nowMs)) continue;
-      const formatted = formatStorefrontWhen(utc);
-      if (!formatted) continue;
-      slots.push({ start, ...formatted });
-    }
+export type SchedulerAvailabilitySlot = {
+  start: string;
+  label: string;
+  afterHours: boolean;
+};
+
+/**
+ * Same availability payload the residential widget accepts:
+ * `{ ok: true, slots: [...] }` from `?mode=availability`.
+ * Anything else is a failed read. This does not invent times.
+ */
+export function readSchedulerAvailability(
+  data: unknown
+): { ok: true; slots: SchedulerAvailabilitySlot[] } | { ok: false } {
+  if (!data || typeof data !== "object") return { ok: false };
+  const record = data as { ok?: unknown; slots?: unknown };
+  if (!record.ok || !Array.isArray(record.slots)) return { ok: false };
+  const slots: SchedulerAvailabilitySlot[] = [];
+  for (const item of record.slots) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as { start?: unknown; label?: unknown; afterHours?: unknown };
+    if (typeof row.start !== "string" || !row.start) continue;
+    slots.push({
+      start: row.start,
+      label: typeof row.label === "string" ? row.label : "",
+      afterHours: row.afterHours === true,
+    });
   }
+  return { ok: true, slots };
+}
+
+/**
+ * Keep only the mornings the Apps Script actually offered.
+ * A start the script omitted is never added back.
+ */
+export function listStorefrontSlots(
+  offered: ReadonlyArray<{ start: string }>,
+  nowMs: number
+): StorefrontSlot[] {
+  const today = etDateString(nowMs);
+  const lastDay = today ? addCalendarDays(today, STOREFRONT_HORIZON_DAYS - 1) : null;
+  if (!today || !lastDay) return [];
+  const seen = new Set<string>();
+  const slots: StorefrontSlot[] = [];
+  for (const item of offered) {
+    if (!item || typeof item.start !== "string" || seen.has(item.start)) continue;
+    if (!isStorefrontSlot(item.start, nowMs)) continue;
+    const startMs = Date.parse(item.start);
+    const ymd = etDateString(startMs);
+    if (!ymd || ymd < today || ymd > lastDay) continue;
+    const formatted = formatStorefrontWhen(startMs);
+    if (!formatted) continue;
+    seen.add(item.start);
+    slots.push({ start: item.start, ...formatted });
+  }
+  slots.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
   return slots;
+}
+
+export function storefrontSlotsFromAvailability(
+  data: unknown,
+  nowMs: number
+): { state: "loaded"; slots: StorefrontSlot[] } | { state: "error" } {
+  const read = readSchedulerAvailability(data);
+  if (!read.ok) return { state: "error" };
+  return { state: "loaded", slots: listStorefrontSlots(read.slots, nowMs) };
 }

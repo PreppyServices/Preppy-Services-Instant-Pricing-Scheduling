@@ -21,6 +21,7 @@ export const STOREFRONT_COPY = {
   slotHint: "Morning times, Monday to Saturday.",
   loadingSlots: "Loading mornings",
   noSlots: "No morning is open in the next 14 days. Email us and we will place you.",
+  retry: "Try again",
   yourName: "Your name",
   businessName: "Business name",
   businessAddress: "Business address",

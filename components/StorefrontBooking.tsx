@@ -1,7 +1,7 @@
 "use client";
 
 import { track } from "@vercel/analytics";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import type { UtmParams } from "../lib/batchUtm";
 import { bookFailureReason, preppyJsonp } from "../lib/preppyJsonp";
 import { SCHEDULER_EXEC_URL } from "../lib/schedulerExec";
@@ -20,7 +20,11 @@ import {
   type StorefrontBusinessType,
   type StorefrontPrefill,
 } from "../lib/storefrontPrefill";
-import { isStorefrontSlot, listStorefrontSlots, type StorefrontSlot } from "../lib/slotRules";
+import {
+  isStorefrontSlot,
+  storefrontSlotsFromAvailability,
+  type StorefrontSlot,
+} from "../lib/slotRules";
 
 type TrackData = Record<string, string | number | boolean | null>;
 type Phase = "form" | "done";
@@ -85,7 +89,8 @@ export default function StorefrontBooking({
   const [address, setAddress] = useState(prefill.address);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [nowMs, setNowMs] = useState<number | null>(null);
+  const [slotState, setSlotState] = useState<"loading" | "loaded" | "error">("loading");
+  const [slots, setSlots] = useState<StorefrontSlot[]>([]);
   const [chosen, setChosen] = useState<StorefrontSlot | null>(null);
   const [phase, setPhase] = useState<Phase>("form");
   const [sending, setSending] = useState(false);
@@ -104,12 +109,29 @@ export default function StorefrontBooking({
     document.head.appendChild(link);
   }, []);
 
-  useEffect(() => {
-    setNowMs(Date.now());
-    safeTrack("storefront_view");
+  const loadSlots = useCallback(async () => {
+    setSlotState("loading");
+    setSlots([]);
+    setChosen(null);
+    try {
+      const data = await preppyJsonp(SCHEDULER_EXEC_URL + "?mode=availability");
+      const read = storefrontSlotsFromAvailability(data, Date.now());
+      if (read.state === "error") {
+        setSlotState("error");
+        return;
+      }
+      setSlots(read.slots);
+      setSlotState("loaded");
+    } catch {
+      setSlotState("error");
+    }
   }, []);
 
-  const slots = useMemo(() => (nowMs == null ? [] : listStorefrontSlots(nowMs)), [nowMs]);
+  useEffect(() => {
+    safeTrack("storefront_view");
+    void loadSlots();
+  }, [loadSlots]);
+
   const groups = useMemo(() => {
     const rows: { day: string; slots: StorefrontSlot[] }[] = [];
     for (const slot of slots) {
@@ -161,10 +183,10 @@ export default function StorefrontBooking({
     if (!input || !chosen) return;
     if (!isStorefrontSlot(input.start, Date.now())) {
       setFailedInput(input);
-      setNowMs(Date.now());
       setChosen(null);
       setShowError(true);
       safeTrack("storefront_error", { reason: "not-ok" });
+      void loadSlots();
       return;
     }
     setSending(true);
@@ -285,8 +307,21 @@ export default function StorefrontBooking({
               {STOREFRONT_COPY.firstVisit}
             </legend>
             <p className="mt-1 text-[14px] text-[#5E6C75]">{STOREFRONT_COPY.slotHint}</p>
-            {nowMs == null ? (
+            {slotState === "loading" ? (
               <p className="mt-3 text-[15px] text-[#5E6C75]">{STOREFRONT_COPY.loadingSlots}</p>
+            ) : slotState === "error" ? (
+              <div className="mt-3">
+                <p className="text-[14px] leading-relaxed text-[#5E6C75]">{STOREFRONT_COPY.error}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void loadSlots();
+                  }}
+                  className="mt-3 min-h-11 w-full rounded-2xl border border-[#D8CEBF] px-4 py-3 text-[14px] font-medium"
+                >
+                  {STOREFRONT_COPY.retry}
+                </button>
+              </div>
             ) : groups.length === 0 ? (
               <p className="mt-3 text-[15px] leading-relaxed text-[#5E6C75]">{STOREFRONT_COPY.noSlots}</p>
             ) : (
