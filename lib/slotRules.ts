@@ -56,3 +56,179 @@ export function isBookableSlot(startIso: string, nowMs: number): boolean {
   if (minuteOfDay === LATEST_MINUTE && clock.second > 0) return false;
   return true;
 }
+
+export const STOREFRONT_TIME_ZONE = "America/New_York";
+
+export const STOREFRONT_START_HOURS = [8, 9, 10, 11] as const;
+
+export const STOREFRONT_HORIZON_DAYS = 14;
+
+/** YYYY-MM-DD in America/New_York. Add dates here for later holidays. */
+export const STOREFRONT_EXCLUDED_DATES = ["2026-11-26", "2026-12-25", "2027-01-01"] as const;
+
+const STOREFRONT_EXCLUDED = new Set<string>(STOREFRONT_EXCLUDED_DATES);
+
+export type EtParts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+  weekday: string;
+};
+
+export function etParts(ms: number): EtParts | null {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: STOREFRONT_TIME_ZONE,
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(ms));
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  const weekday = read("weekday");
+  let hour = Number(read("hour"));
+  const minute = Number(read("minute"));
+  const second = Number(read("second"));
+  const year = Number(read("year"));
+  const month = Number(read("month"));
+  const day = Number(read("day"));
+  if (
+    !weekday ||
+    [hour, minute, second, year, month, day].some((value) => !Number.isFinite(value))
+  ) {
+    return null;
+  }
+  if (hour === 24) hour = 0;
+  return { year, month, day, hour, minute, second, weekday };
+}
+
+export function etDateString(ms: number): string | null {
+  const parts = etParts(ms);
+  if (!parts) return null;
+  const month = String(parts.month).padStart(2, "0");
+  const day = String(parts.day).padStart(2, "0");
+  return `${parts.year}-${month}-${day}`;
+}
+
+function addCalendarDays(ymd: string, days: number): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  return shifted.toISOString().slice(0, 10);
+}
+
+/** UTC millis for a wall clock time in America/New_York. */
+export function etWallTimeToUtc(ymd: string, hour: number, minute = 0): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  let utc = Date.UTC(year, month - 1, day, hour + 5, minute, 0);
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const parts = etParts(utc);
+    if (!parts) return null;
+    const got = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+    const want = Date.UTC(year, month - 1, day, hour, minute, 0);
+    const diff = want - got;
+    if (diff === 0) return utc;
+    utc += diff;
+  }
+  const parts = etParts(utc);
+  if (
+    parts &&
+    parts.year === year &&
+    parts.month === month &&
+    parts.day === day &&
+    parts.hour === hour &&
+    parts.minute === minute &&
+    parts.second === 0
+  ) {
+    return utc;
+  }
+  return null;
+}
+
+/**
+ * A first visit start is bookable only when the residential rule accepts it,
+ * the America/New_York time is exactly 8:00, 9:00, 10:00, or 11:00 AM,
+ * and the America/New_York date is not on the holiday list.
+ */
+export function isStorefrontSlot(startIso: string, nowMs: number): boolean {
+  if (!isBookableSlot(startIso, nowMs)) return false;
+  const startMs = Date.parse(startIso);
+  if (!Number.isFinite(startMs)) return false;
+  const clock = etParts(startMs);
+  if (!clock) return false;
+  if (clock.minute !== 0 || clock.second !== 0) return false;
+  if (!STOREFRONT_START_HOURS.includes(clock.hour as (typeof STOREFRONT_START_HOURS)[number])) {
+    return false;
+  }
+  const ymd = etDateString(startMs);
+  if (!ymd || STOREFRONT_EXCLUDED.has(ymd)) return false;
+  return true;
+}
+
+export type StorefrontSlot = {
+  start: string;
+  day: string;
+  time: string;
+  label: string;
+};
+
+function plainSpace(value: string): string {
+  return value.replace(/[\u202f\u00a0]/g, " ");
+}
+
+export function formatStorefrontWhen(ms: number): { day: string; time: string; label: string } | null {
+  const day = plainSpace(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: STOREFRONT_TIME_ZONE,
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }).format(new Date(ms))
+  );
+  const time = plainSpace(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: STOREFRONT_TIME_ZONE,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(new Date(ms))
+  );
+  if (!day || !time) return null;
+  return { day, time, label: `${day}, ${time}` };
+}
+
+/** Morning starts inside the next 14 America/New_York calendar days, including today. */
+export function listStorefrontSlots(nowMs: number): StorefrontSlot[] {
+  const today = etDateString(nowMs);
+  if (!today) return [];
+  const slots: StorefrontSlot[] = [];
+  for (let offset = 0; offset < STOREFRONT_HORIZON_DAYS; offset += 1) {
+    const ymd = addCalendarDays(today, offset);
+    if (!ymd) continue;
+    for (const hour of STOREFRONT_START_HOURS) {
+      const utc = etWallTimeToUtc(ymd, hour, 0);
+      if (utc == null) continue;
+      const start = new Date(utc).toISOString();
+      if (!isStorefrontSlot(start, nowMs)) continue;
+      const formatted = formatStorefrontWhen(utc);
+      if (!formatted) continue;
+      slots.push({ start, ...formatted });
+    }
+  }
+  return slots;
+}
