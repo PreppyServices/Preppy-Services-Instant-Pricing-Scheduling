@@ -42,6 +42,13 @@ export type BuildingPricing = {
   unitOverrides?: Record<string, number>;
   /** Floors inside a band range that stay unquoted. */
   skipFloors?: number[];
+  /** Regular interior dollars that replace interiorTier() for this line key. */
+  interiorOverrides?: Record<string, number>;
+  /**
+   * Price for a PH-prefixed code that is not its own line key.
+   * Never applied by using the numeric line.
+   */
+  penthouseDefault?: { regular: number; interior: number };
 };
 
 function twoDigitLines(min: number, max: number, extras: number[] = []): string[] {
@@ -243,26 +250,39 @@ export const pricing: Record<string, BuildingPricing> = {
       },
       penthouse: false,
     },
+    // Joe approved these Hyde Midtown balcony prices Thursday 11/19/26
+    // afternoon (America/New_York). The approved table pack was written at
+    // about 4:55 PM ET that afternoon at
+    // /workspace/preppy/outreach/hyde-2026-11-19/PROPOSED-PRICES.md.
+    // 03, 05, 06, 06A, 10, 11, 12, 14, and 15 are 180.
+    // 01 and 09 stay 220. 16 stays 240. 02 and 07 stay 260.
+    // 04 stays 280. 08 stays 320.
+    // PH04 is 1350 with an 850 interior override. Any other PH-prefixed
+    // input is 950 with a 650 interior override. Those interiors are not
+    // interiorTier() values.
     "Hyde Midtown Miami": {
       lines: {
         "01": 220,
         "02": 260,
-        "03": 150,
+        "03": 180,
         "04": 280,
-        "05": 160,
-        "06": 150,
-        "06A": 150,
+        "05": 180,
+        "06": 180,
+        "06A": 180,
         "07": 260,
         "08": 320,
         "09": 220,
-        "10": 150,
-        "11": 150,
-        "12": 160,
-        "14": 160,
-        "15": 160,
-        "16": 240
+        "10": 180,
+        "11": 180,
+        "12": 180,
+        "14": 180,
+        "15": 180,
+        "16": 240,
+        "PH04": 1350
       },
       penthouse: false,
+      interiorOverrides: { PH04: 850 },
+      penthouseDefault: { regular: 950, interior: 650 }
     },
     "Four Midtown": {
       lines: {

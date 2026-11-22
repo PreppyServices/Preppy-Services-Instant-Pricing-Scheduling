@@ -20,6 +20,7 @@ import {
   firstServicePrice,
   interiorTier,
   INTRO_RATE,
+  lineInteriorQuote,
   quoteInteriorAddOn,
 } from "../lib/introPricing.ts";
 
@@ -341,8 +342,8 @@ const movedLines: MovedLine[] = [
   ...locks("Elysee Miami", elyseeLocks),
 ];
 
-function interiorQuote(_building: string, _line: string, exterior: number, intro: boolean): number {
-  return quoteInteriorAddOn(exterior, intro);
+function interiorQuote(building: string, line: string, exterior: number, intro: boolean): number {
+  return lineInteriorQuote(pricing[building], line, exterior, intro);
 }
 
 check("moved lines keep the original regular interior quote", () => {
@@ -400,7 +401,7 @@ check("every line uses the balcony-price interior tier", () => {
       scanned += 1;
       const regular = interiorQuote(building, line, exterior, false);
       const intro = interiorQuote(building, line, exterior, true);
-      const expected = interiorTier(exterior);
+      const expected = entry.interiorOverrides?.[line] ?? interiorTier(exterior);
       if (regular !== expected) {
         throw new Error(`${building} ${line} interior ${regular}, tier ${expected}`);
       }

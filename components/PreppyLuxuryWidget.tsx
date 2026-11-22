@@ -20,8 +20,8 @@ import {
 import {
   FLYER_ASSETS,
   firstServicePrice,
-  quoteInteriorAddOn,
   isIntroRequest,
+  lineInteriorQuote,
   readFlyerLanding,
   setIntroSearch,
   type HolidayFlyerId,
@@ -34,11 +34,12 @@ import HolidayFlyer from "./HolidayFlyer";
  *
  * URL PARAMETERS (all optional) — used for personalized SMS deep-links:
  *   ?b=Paraiso+Bay         Building name (case-insensitive, URL-encoded)
- *   ?line=04               Unit line within the building (must exist in pricing)
- *   ?unit=3204             Unit number — if ?line= omitted, widget attempts
- *                          a CONSERVATIVE derivation (last-two-digits rule
- *                          for standard floorplans only; PH / UPH / LPH / TH
- *                          and irregular units never auto-map).
+ *   ?line=04               Unit line within the building (must exist in pricing).
+ *                          A PH code such as PH4 quotes that penthouse line
+ *                          when the building has it, and never the numeric line.
+ *   ?unit=3204             Unit number. If line is omitted, a numeric unit
+ *                          uses the last two digits. PH, UPH, LPH, and TH
+ *                          codes never use that numeric line.
  *                          Neo Vertika and Chateau Beach price from the floor
  *                          plus the line, after an exact unit override.
  *   ?lead=A1042            Lead ID for conversion tracking (stored locally + forwarded)
@@ -629,13 +630,30 @@ export default function PreppyLuxuryWidget() {
     let bandPrice: number | null = null;
     let callForQuote = false;
 
+    if (!resolvedLine && matchedB && /^ph/i.test(rawLine.trim())) {
+      const lineAttempt = resolveUnitQuote(matchedB, rawLine, pricing);
+      if (lineAttempt.status === "priced") {
+        resolvedLine = lineAttempt.line;
+        const catalogHit = pricing[matchedB]?.lines[lineAttempt.line];
+        if (catalogHit !== undefined) {
+          lineSource = "url";
+        } else {
+          lineSource = lineAttempt.source;
+          bandPrice = lineAttempt.regular;
+        }
+      }
+    }
+
     const rawUnit = p.get("unit") || p.get("u");
     if (!resolvedLine && matchedB && rawUnit) {
       const attempt = resolveUnitQuote(matchedB, rawUnit, pricing);
       if (attempt.status === "priced") {
         resolvedLine = attempt.line;
         lineSource = attempt.source;
-        if (quotesByUnit(pricing[matchedB])) bandPrice = attempt.regular;
+        const catalogHit = pricing[matchedB]?.lines[attempt.line];
+        if (quotesByUnit(pricing[matchedB]) || catalogHit === undefined) {
+          bandPrice = attempt.regular;
+        }
       } else if (attempt.status === "call" && quotesByUnit(pricing[matchedB])) {
         callForQuote = true;
       }
@@ -823,13 +841,13 @@ export default function PreppyLuxuryWidget() {
       return;
     }
 
-    setBandPrice(null);
-    setCallForQuote(false);
     // ?line= is applied as initial state. Clearing it on mount left
     // ?b=Gran%20Paraiso&line=01 with an empty quote. Re-sync only after the
     // resident changes building, or when a unit number can derive a line.
     if (building === deepLinkBuildingRef.current && !unitNumber) return;
 
+    setBandPrice(null);
+    setCallForQuote(false);
     setIncludeInterior(false);
 
     if (unitNumber) {
@@ -837,6 +855,8 @@ export default function PreppyLuxuryWidget() {
       if (attempt.status === "priced") {
         setUnitLine(attempt.line);
         setLineSource(attempt.source);
+        const catalogHit = pricing[building]?.lines[attempt.line];
+        setBandPrice(catalogHit === undefined ? attempt.regular : null);
         return;
       }
     }
@@ -849,16 +869,17 @@ export default function PreppyLuxuryWidget() {
     if (serviceType !== "glass") setIncludeInterior(false);
   }, [serviceType]);
 
-  const regularPrice = usesUnitQuote
-    ? bandPrice
-    : unitLine && currentBuilding
-      ? currentBuilding.lines[unitLine] ?? null
+  const catalogPrice =
+    !usesUnitQuote && unitLine && currentBuilding && currentBuilding.lines[unitLine] !== undefined
+      ? currentBuilding.lines[unitLine]
       : null;
+  const regularPrice = usesUnitQuote ? bandPrice : catalogPrice ?? bandPrice;
   const introPrice = regularPrice != null ? firstServicePrice(regularPrice) : null;
   // The 20% first-service rate applies to the balcony and to interior glass.
   const glassIntro = introPricing && serviceType === "glass";
   const chargedPrice = glassIntro && introPrice != null ? introPrice : regularPrice;
-  const interiorAddOn = regularPrice != null ? quoteInteriorAddOn(regularPrice, glassIntro) : 0;
+  const interiorAddOn =
+    regularPrice != null ? lineInteriorQuote(currentBuilding, unitLine, regularPrice, glassIntro) : 0;
   const total =
     chargedPrice != null ? chargedPrice + (includeInterior ? interiorAddOn : 0) : null;
   const quoteLabel =
@@ -1347,12 +1368,26 @@ export default function PreppyLuxuryWidget() {
                     className="w-full rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-4 py-3 text-[18px] font-medium outline-none focus:border-[#0F7C82]"
                     value={unitLine}
                     onChange={(e) => {
-                      setUnitLine(e.target.value);
-                      setLineSource(e.target.value ? "url" : "none");
+                      const next = e.target.value;
+                      setUnitLine(next);
+                      const catalogHit = next ? currentBuilding?.lines[next] : undefined;
+                      if (catalogHit !== undefined) {
+                        setLineSource("url");
+                        setBandPrice(null);
+                      } else if (next && currentBuilding?.penthouseDefault && /^PH/i.test(next)) {
+                        setLineSource("ph-default");
+                        setBandPrice(currentBuilding.penthouseDefault.regular);
+                      } else {
+                        setLineSource(next ? "url" : "none");
+                        setBandPrice(null);
+                      }
                     }}
                     disabled={!hasLines}
                   >
                     <option value="">{hasLines ? t("unit.chooseLine") : t("unit.pending")}</option>
+                    {unitLine && !lineOptions.includes(unitLine) ? (
+                      <option value={unitLine}>{unitLine}</option>
+                    ) : null}
                     {lineOptions.map((line) => (
                       <option key={line} value={line}>
                         {line}
@@ -1528,6 +1563,7 @@ export default function PreppyLuxuryWidget() {
                   <div
                     className="space-y-3"
                     data-pricing-mode={glassIntro ? "intro" : "regular"}
+                    data-quote-line={unitLine}
                     data-regular-price={regularPrice ?? ""}
                     data-charged-price={chargedPrice ?? ""}
                     data-interior-addon={interiorAddOn}
