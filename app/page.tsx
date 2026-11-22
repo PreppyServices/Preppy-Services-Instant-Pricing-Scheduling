@@ -4,9 +4,11 @@
 // and image.
 
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import QuoteCrawl from "../components/QuoteCrawl";
 import WidgetShell from "./WidgetShell";
 import { resolveVerifiedBuilding } from "../lib/ogBuilding";
+import { searchParamsFromRecord, storefrontHomeRedirect } from "../lib/storefrontPrefill";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -124,7 +126,14 @@ export async function generateMetadata({
   };
 }
 
-export default function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const resolved = await searchParams;
+  const storefrontTarget = storefrontHomeRedirect(searchParamsFromRecord(resolved));
+  if (storefrontTarget) redirect(storefrontTarget);
   return (
     <>
       <QuoteCrawl />

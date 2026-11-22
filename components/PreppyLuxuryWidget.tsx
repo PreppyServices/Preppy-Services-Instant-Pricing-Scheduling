@@ -27,6 +27,7 @@ import {
   type HolidayFlyerId,
 } from "../lib/introPricing";
 import { quotesByUnit, resolveUnitQuote, type PricedSource } from "../lib/lineResolver";
+import { SCHEDULER_EXEC_URL } from "../lib/schedulerExec";
 import HolidayFlyer from "./HolidayFlyer";
 /**
  * Preppy Services — Luxury Quote Widget
@@ -822,8 +823,6 @@ export default function PreppyLuxuryWidget() {
 
   // ── Inline residential scheduler — books against the shared /exec engine ──
   // Same calendar (info@preprock.com) and same contract as the commercial page.
-  const SCHEDULER_EXEC_URL =
-    "https://script.google.com/macros/s/AKfycbzD4dusH3GuPPMbDkCAysmUGNszMaDPRTZpyhOYror3JjSJTbmScRpYpnFED0nPJ-UQ3w/exec";
   const [schedOpen, setSchedOpen] = React.useState(false);
   const [slotState, setSlotState] = React.useState<"idle" | "loading" | "loaded" | "error">("idle");
   const [slots, setSlots] = React.useState<SchedSlot[]>([]);
@@ -1411,6 +1410,17 @@ export default function PreppyLuxuryWidget() {
                       </button>
                     );
                   })}
+                  <a
+                    href="/storefront"
+                    className="col-span-3 flex min-h-11 flex-col items-center justify-center rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-3 py-3 text-center transition hover:border-[#D8CEBF]"
+                  >
+                    <div className="text-[14px] font-semibold tracking-tight text-[#4A5A64]">
+                      Storefront
+                    </div>
+                    <div className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-[#8B9399]">
+                      Plan
+                    </div>
+                  </a>
                 </div>
               </div>
 
