@@ -1,5 +1,15 @@
 const QUOTE_ORIGIN = "https://quote.preppyservices.com";
+const TEAM_SLUG = "preppyservices-projects";
 const PROJECT_SLUG = "preppy-services-instant-pricing-scheduling";
+// Vercel shortens the project name on git branch aliases. Observed alias:
+// preppy-services-instant-pric-git-22b98f-preppyservices-projects.vercel.app
+const BRANCH_ALIAS_PREFIX = "preppy-services-instant-pric-git-";
+const TEAM_HASH_PREVIEW = new RegExp(
+  `^https://${PROJECT_SLUG}-[a-z0-9]+-${TEAM_SLUG}\\.vercel\\.app$`
+);
+const TEAM_BRANCH_ALIAS = new RegExp(
+  `^https://${BRANCH_ALIAS_PREFIX}[a-z0-9-]+-${TEAM_SLUG}\\.vercel\\.app$`
+);
 const MAX_BODY_BYTES = 8192;
 const TOKEN_URL = "https://api.getjobber.com/api/oauth/token";
 const GRAPHQL_URL = "https://api.getjobber.com/api/graphql";
@@ -18,6 +28,8 @@ export type JobberEnv = {
   JOBBER_REFRESH_TOKEN?: string;
   JOBBER_API_VERSION?: string;
   BOOKING_ALERT_WEBHOOK_URL?: string;
+  VERCEL_URL?: string;
+  VERCEL_BRANCH_URL?: string;
 };
 
 export type JobberDeps = {
@@ -70,7 +82,30 @@ function isBookingStatus(value: string): value is BookingStatus {
   return value === "ok" || value === "error" || value === "timeout";
 }
 
-export function isAllowedBookingOrigin(origin: string | null): boolean {
+function httpsOriginFromHost(value: string | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed || /\s/.test(trimmed)) return null;
+  const withProtocol = /^https:\/\//i.test(trimmed)
+    ? trimmed
+    : /^http:\/\//i.test(trimmed)
+      ? ""
+      : `https://${trimmed}`;
+  if (!withProtocol) return null;
+  try {
+    const url = new URL(withProtocol);
+    if (url.protocol !== "https:" || url.username || url.password) return null;
+    if (url.pathname !== "/" || url.search || url.hash) return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+export function isAllowedBookingOrigin(
+  origin: string | null,
+  env: Pick<JobberEnv, "VERCEL_URL" | "VERCEL_BRANCH_URL"> = {}
+): boolean {
   if (!origin) return false;
   let url: URL;
   try {
@@ -78,8 +113,14 @@ export function isAllowedBookingOrigin(origin: string | null): boolean {
   } catch {
     return false;
   }
+  if (url.protocol !== "https:" || url.origin !== origin) return false;
   if (url.origin === QUOTE_ORIGIN) return true;
-  return url.protocol === "https:" && url.hostname.endsWith(".vercel.app") && url.hostname.includes(PROJECT_SLUG);
+  if (TEAM_HASH_PREVIEW.test(url.origin) || TEAM_BRANCH_ALIAS.test(url.origin)) return true;
+  const own = httpsOriginFromHost(env.VERCEL_URL);
+  const branch = httpsOriginFromHost(env.VERCEL_BRANCH_URL);
+  if (own && url.origin === own) return true;
+  if (branch && url.origin === branch) return true;
+  return false;
 }
 
 function syncConfigured(env: JobberEnv): boolean {
@@ -352,7 +393,7 @@ async function createClient(
     input.emails = [{ description: "MAIN", primary: true, address: booking.email }];
   }
   if (booking.phone) {
-    input.phones = [{ description: "MAIN", primary: true, number: booking.phone, smsAllowed: true }];
+    input.phones = [{ description: "MAIN", primary: true, number: booking.phone, smsAllowed: false }];
   }
   const data = await graphql(fetchImpl, token, version, CREATE_CLIENT, { input });
   const payload = data?.clientCreate as { client?: { id?: string }; userErrors?: unknown[] } | undefined;
@@ -490,7 +531,7 @@ async function pushToJobber(
 export async function handleJobberBooking(request: Request, deps: JobberDeps): Promise<Response> {
   const log = deps.log ?? (() => {});
   try {
-    if (!isAllowedBookingOrigin(request.headers.get("origin"))) {
+    if (!isAllowedBookingOrigin(request.headers.get("origin"), deps.env)) {
       return json(403, { synced: false, reason: "origin" });
     }
     const declared = Number(request.headers.get("content-length") || "0");

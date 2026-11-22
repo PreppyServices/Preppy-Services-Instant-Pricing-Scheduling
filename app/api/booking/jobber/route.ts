@@ -10,6 +10,8 @@ function readEnv(): JobberEnv {
     JOBBER_REFRESH_TOKEN: process.env.JOBBER_REFRESH_TOKEN,
     JOBBER_API_VERSION: process.env.JOBBER_API_VERSION,
     BOOKING_ALERT_WEBHOOK_URL: process.env.BOOKING_ALERT_WEBHOOK_URL,
+    VERCEL_URL: process.env.VERCEL_URL,
+    VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL,
   };
 }
 

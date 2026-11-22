@@ -90,7 +90,7 @@ import HolidayFlyer from "./HolidayFlyer";
  */
 
 import { resolveLandingBuilding } from "../lib/catalogBuilding";
-import { isBookableSlot } from "../lib/slotRules";
+import { isBookableSlot, reserveDecision } from "../lib/slotRules";
 import { track } from "@vercel/analytics";
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -214,6 +214,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successBody": "We'll confirm your appointment details shortly, and we'll send arrival updates closer to your service time.",
     "sched.successConfirm": "We'll confirm your appointment details shortly.",
     "sched.takenMsg": "That time was just taken. Here are fresh times.",
+    "sched.closedMsg": "That time just closed. Here are the latest open times.",
     "sched.errorMsg": "Could not reserve. Please try again, or email us.",
     "sched.emailBooking": "Email my booking to info@preppyservices.com",
     "sched.close": "Close",
@@ -331,6 +332,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successBody": "Confirmaremos los detalles de su cita en breve, y le enviaremos avisos de llegada cuando se acerque la fecha de su servicio.",
     "sched.successConfirm": "Confirmaremos los detalles de su cita en breve.",
     "sched.takenMsg": "Ese horario se acaba de ocupar. Aquí hay nuevos horarios.",
+    "sched.closedMsg": "Ese horario acaba de cerrar. Aquí están los horarios más recientes.",
     "sched.errorMsg": "No se pudo reservar. Intente de nuevo o escríbanos por correo.",
     "sched.emailBooking": "Enviar mi reserva por correo a info@preppyservices.com",
     "sched.close": "Cerrar",
@@ -448,6 +450,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successBody": "Nous confirmerons les détails de votre rendez-vous sous peu, et nous vous enverrons des avis d'arrivée à l'approche de votre service.",
     "sched.successConfirm": "Nous confirmerons les détails de votre rendez-vous sous peu.",
     "sched.takenMsg": "Ce créneau vient d'être pris. Voici de nouveaux horaires.",
+    "sched.closedMsg": "Ce créneau vient de fermer. Voici les derniers horaires ouverts.",
     "sched.errorMsg": "Réservation impossible. Réessayez ou envoyez un courriel.",
     "sched.emailBooking": "Envoyer ma réservation par courriel à info@preppyservices.com",
     "sched.close": "Fermer",
@@ -828,7 +831,9 @@ export default function PreppyLuxuryWidget() {
   const [signer, setSigner] = React.useState<string>("");
   const [contactEmail, setContactEmail] = React.useState<string>("");
   const [contactPhone, setContactPhone] = React.useState<string>("");
-  const [bookState, setBookState] = React.useState<"idle" | "booking" | "done" | "taken" | "error">(
+  const [bookState, setBookState] = React.useState<
+    "idle" | "booking" | "done" | "taken" | "closed" | "error"
+  >(
     "idle"
   );
   const [confirmedLabel, setConfirmedLabel] = React.useState<string>("");
@@ -1008,11 +1013,11 @@ export default function PreppyLuxuryWidget() {
     }
   }, [leadId, customerName, building, unitLine, activeUnit, serviceType, total, glassIntro, includeInterior, lang, batchUtm]);
 
-  const loadSlots = React.useCallback(async () => {
+  const loadSlots = React.useCallback(async (notice?: "closed") => {
     setSlotState("loading");
     setSlots([]);
     setChosenSlot(null);
-    setBookState("idle");
+    setBookState(notice === "closed" ? "closed" : "idle");
     try {
       const data = await preppyJsonp(SCHEDULER_EXEC_URL + "?mode=availability");
       if (data && data.ok && Array.isArray(data.slots)) {
@@ -1050,9 +1055,20 @@ export default function PreppyLuxuryWidget() {
 
   const reserveSlot = React.useCallback(async () => {
     if (!chosenSlot || !canBook) return;
-    if (!building.trim() || !isBookableSlot(chosenSlot.start, Date.now())) {
-      setBookState("error");
-      return;
+    const decision = reserveDecision(building, chosenSlot.start, Date.now());
+    switch (decision) {
+      case "missing-building":
+        setBookState("error");
+        return;
+      case "closed":
+        void loadSlots("closed");
+        return;
+      case "send":
+        break;
+      default: {
+        const neverDecision: never = decision;
+        return neverDecision;
+      }
     }
     setBookState("booking");
     const name = signer.trim();
@@ -1929,6 +1945,11 @@ export default function PreppyLuxuryWidget() {
                     {t("sched.takenMsg")}
                   </div>
                 )}
+                {bookState === "closed" && (
+                  <div className="mt-3 rounded-xl bg-[#FBF1E7] px-3 py-2 text-[13px] text-[#9A5B2E]">
+                    {t("sched.closedMsg")}
+                  </div>
+                )}
                 {bookState === "error" && (
                   <div className="mt-3 rounded-xl bg-[#FBE9E9] px-3 py-2 text-[13px] text-[#9A2E2E]">
                     <div>{t("sched.errorMsg")}</div>
@@ -1955,7 +1976,9 @@ export default function PreppyLuxuryWidget() {
                         <button
                           type="button"
                           className="mt-3 w-full rounded-2xl border border-[#D8CEBF] px-4 py-3 text-[14px] font-medium"
-                          onClick={loadSlots}
+                          onClick={() => {
+                            void loadSlots();
+                          }}
                         >
                           {t("sched.retry")}
                         </button>
@@ -1981,6 +2004,7 @@ export default function PreppyLuxuryWidget() {
                                   onClick={() => {
                                     if (!isBookableSlot(s.start, Date.now())) return;
                                     safeTrack("slot_selected");
+                                    setBookState((current) => (current === "closed" ? "idle" : current));
                                     setChosenSlot({ start: s.start, label: s.label });
                                   }}
                                   className={

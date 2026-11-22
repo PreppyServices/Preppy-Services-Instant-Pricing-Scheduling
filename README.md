@@ -23,4 +23,4 @@ When sync is on, the route refreshes an access token, finds the client by email 
 
 A Jobber failure still returns HTTP 202 `{ synced: false, reason }` and a log line. Tokens, secrets, and contact details are not logged.
 
-The route accepts only `https://quote.preppyservices.com` and `https://*.vercel.app` hosts for this project (`preppy-services-instant-pricing-scheduling`). The JSON body is capped at 8 KB. A name plus a phone or an email is required.
+The route accepts `https://quote.preppyservices.com`, this team's preview hosts (`preppy-services-instant-pricing-scheduling-<hash>-preppyservices-projects.vercel.app` and the shortened git alias `preppy-services-instant-pric-git-<branch>-preppyservices-projects.vercel.app`), and the deployment that is actually serving the request when its origin is `https://${VERCEL_URL}` or `https://${VERCEL_BRANCH_URL}`. Vercel sets those two host variables. This repo does not create them. A lookalike host without that team suffix is rejected. The JSON body is capped at 8 KB. A name plus a phone or an email is required. New clients are created with SMS permission off.
