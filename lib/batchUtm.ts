@@ -177,7 +177,8 @@ export function buildResidentialBookQuery(input: ResidentialBookInput): URLSearc
       (input.unitLine ? " · line " + input.unitLine : "") +
       (input.unit ? " · Unit " + input.unit : "") +
       (input.total ? " · $" + input.total + (input.glassIntro ? " first service" : "") : "") +
-      (input.note ? " · Notes: " + input.note : ""),
+      (input.note ? " · Notes: " + input.note : "") +
+      (!input.unitLine && !input.total ? " · Line not picked, price to confirm" : ""),
     utm
   );
   const addr = [input.building, input.unit ? "Unit " + input.unit : ""].filter(Boolean).join(" · ");

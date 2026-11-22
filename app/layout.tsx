@@ -3,6 +3,7 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { businessJsonLdJson } from "../lib/businessSchema";
 
 const SITE_URL = "https://quote.preppyservices.com";
@@ -89,7 +90,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: businessJsonLdJson() }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
