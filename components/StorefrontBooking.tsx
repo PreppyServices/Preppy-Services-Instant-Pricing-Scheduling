@@ -22,12 +22,64 @@ import {
 } from "../lib/storefrontPrefill";
 import {
   isStorefrontSlot,
+  splitStorefrontSlotWindow,
   storefrontSlotsFromAvailability,
   type StorefrontSlot,
 } from "../lib/slotRules";
 
 type TrackData = Record<string, string | number | boolean | null>;
 type Phase = "form" | "done";
+
+function groupStorefrontDays(list: StorefrontSlot[]) {
+  const rows: { day: string; slots: StorefrontSlot[] }[] = [];
+  for (const slot of list) {
+    const last = rows[rows.length - 1];
+    if (!last || last.day !== slot.day) rows.push({ day: slot.day, slots: [slot] });
+    else last.slots.push(slot);
+  }
+  return rows;
+}
+
+function SlotDays({
+  groups,
+  chosenStart,
+  onChoose,
+}: {
+  groups: { day: string; slots: StorefrontSlot[] }[];
+  chosenStart: string | null;
+  onChoose: (slot: StorefrontSlot) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {groups.map((group) => (
+        <div key={group.day}>
+          <p className="text-[13px] font-medium text-[#5A6972]">{group.day}</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {group.slots.map((slot) => {
+              const selected = chosenStart === slot.start;
+              return (
+                <button
+                  key={slot.start}
+                  type="button"
+                  data-slot-start={slot.start}
+                  aria-pressed={selected}
+                  onClick={() => onChoose(slot)}
+                  className={`min-h-11 rounded-xl border px-3 text-[15px] font-medium ${
+                    selected
+                      ? "border-[#0F7C82] bg-white text-[#0D1B24]"
+                      : "border-[#E7DED3] bg-[#FBFAF8] text-[#0D1B24]"
+                  }`}
+                >
+                  {slot.time}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function safeTrack(name: string, data?: TrackData) {
   try {
@@ -91,6 +143,8 @@ export default function StorefrontBooking({
   const [phone, setPhone] = useState("");
   const [slotState, setSlotState] = useState<"loading" | "loaded" | "error">("loading");
   const [slots, setSlots] = useState<StorefrontSlot[]>([]);
+  const [slotNowMs, setSlotNowMs] = useState<number | null>(null);
+  const [showLaterTimes, setShowLaterTimes] = useState(false);
   const [chosen, setChosen] = useState<StorefrontSlot | null>(null);
   const [phase, setPhase] = useState<Phase>("form");
   const [sending, setSending] = useState(false);
@@ -113,13 +167,17 @@ export default function StorefrontBooking({
     setSlotState("loading");
     setSlots([]);
     setChosen(null);
+    setShowLaterTimes(false);
     try {
+      const nowMs = Date.now();
       const data = await preppyJsonp(SCHEDULER_EXEC_URL + "?mode=availability");
-      const read = storefrontSlotsFromAvailability(data, Date.now());
+      const read = storefrontSlotsFromAvailability(data, nowMs);
       if (read.state === "error") {
+        setSlotNowMs(null);
         setSlotState("error");
         return;
       }
+      setSlotNowMs(nowMs);
       setSlots(read.slots);
       setSlotState("loaded");
     } catch {
@@ -132,15 +190,12 @@ export default function StorefrontBooking({
     void loadSlots();
   }, [loadSlots]);
 
-  const groups = useMemo(() => {
-    const rows: { day: string; slots: StorefrontSlot[] }[] = [];
-    for (const slot of slots) {
-      const last = rows[rows.length - 1];
-      if (!last || last.day !== slot.day) rows.push({ day: slot.day, slots: [slot] });
-      else last.slots.push(slot);
-    }
-    return rows;
-  }, [slots]);
+  const slotWindow = useMemo(
+    () => (slotNowMs == null ? { visible: slots, later: [] as StorefrontSlot[] } : splitStorefrontSlotWindow(slots, slotNowMs)),
+    [slots, slotNowMs]
+  );
+  const groups = useMemo(() => groupStorefrontDays(slotWindow.visible), [slotWindow.visible]);
+  const laterGroups = useMemo(() => groupStorefrontDays(slotWindow.later), [slotWindow.later]);
 
   const draft = (): StorefrontBookInput | null => {
     const name = storefrontText(yourName);
@@ -322,40 +377,39 @@ export default function StorefrontBooking({
                   {STOREFRONT_COPY.retry}
                 </button>
               </div>
-            ) : groups.length === 0 ? (
+            ) : groups.length === 0 && laterGroups.length === 0 ? (
               <p className="mt-3 text-[15px] leading-relaxed text-[#5E6C75]">{STOREFRONT_COPY.noSlots}</p>
             ) : (
               <div className="mt-3 space-y-4">
-                {groups.map((group) => (
-                  <div key={group.day}>
-                    <p className="text-[13px] font-medium text-[#5A6972]">{group.day}</p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      {group.slots.map((slot) => {
-                        const selected = chosen?.start === slot.start;
-                        return (
-                          <button
-                            key={slot.start}
-                            type="button"
-                            data-slot-start={slot.start}
-                            aria-pressed={selected}
-                            onClick={() => {
-                              setChosen(slot);
-                              setShowError(false);
-                              safeTrack("storefront_slot_selected");
-                            }}
-                            className={`min-h-11 rounded-xl border px-3 text-[15px] font-medium ${
-                              selected
-                                ? "border-[#0F7C82] bg-white text-[#0D1B24]"
-                                : "border-[#E7DED3] bg-[#FBFAF8] text-[#0D1B24]"
-                            }`}
-                          >
-                            {slot.time}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                <SlotDays
+                  groups={groups}
+                  chosenStart={chosen?.start ?? null}
+                  onChoose={(slot) => {
+                    setChosen(slot);
+                    setShowError(false);
+                    safeTrack("storefront_slot_selected");
+                  }}
+                />
+                {laterGroups.length > 0 && !showLaterTimes ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowLaterTimes(true)}
+                    className="min-h-11 w-full rounded-2xl border border-[#D8CEBF] px-4 py-3 text-[15px] font-medium"
+                  >
+                    {STOREFRONT_COPY.moreTimes}
+                  </button>
+                ) : null}
+                {showLaterTimes ? (
+                  <SlotDays
+                    groups={laterGroups}
+                    chosenStart={chosen?.start ?? null}
+                    onChoose={(slot) => {
+                      setChosen(slot);
+                      setShowError(false);
+                      safeTrack("storefront_slot_selected");
+                    }}
+                  />
+                ) : null}
               </div>
             )}
           </fieldset>

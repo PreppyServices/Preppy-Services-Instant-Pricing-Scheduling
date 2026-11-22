@@ -1,6 +1,6 @@
 // Storefront booking uses the same Apps Script mode=book request as the
-// residential widget. Plan stays the approved line. The free text the
-// residential path appends as Notes rides on service, and also on notes.
+// residential widget. The script builds the calendar title from `service`.
+// `plan` stays the approved line. The full request summary rides on `notes`.
 
 import type { UtmParams } from "./batchUtm";
 
@@ -27,6 +27,11 @@ export function storefrontCalendarTitle(business: string): string {
   return `STOREFRONT: ${business}`;
 }
 
+/** Calendar title source. The script uses service, then name, then address. */
+export function storefrontServiceTitle(business: string): string {
+  return `${business} · Storefront $240 · Flag to Geoffrey for Jobber`;
+}
+
 export function storefrontSummary(input: StorefrontBookInput): string {
   return [
     "STOREFRONT REQUEST. Flag to Geoffrey for Jobber.",
@@ -51,7 +56,7 @@ export function buildStorefrontBookQuery(input: StorefrontBookInput): URLSearchP
   params.set("phone", input.phone);
   params.set("address", input.address);
   params.set("plan", STOREFRONT_PLAN);
-  params.set("service", `${STOREFRONT_PLAN} · Notes: ${summary}`);
+  params.set("service", storefrontServiceTitle(input.business));
   params.set("notes", summary);
   params.set("signer", input.name);
   params.set("signedType", "typed");
@@ -73,7 +78,15 @@ export function isStorefrontPhone(raw: string): boolean {
 }
 
 export function storefrontMailto(input: StorefrontBookInput): string {
-  const body = [storefrontSummary(input), `Plan: ${STOREFRONT_PLAN}`, `Date: ${input.slotLabel}`].join("\n");
+  const body = [
+    storefrontSummary(input),
+    `Service: ${storefrontServiceTitle(input.business)}`,
+    `Plan: ${STOREFRONT_PLAN}`,
+    `Date: ${input.slotLabel}`,
+    `Name: ${input.name}`,
+    `Email: ${input.email}`,
+    `Phone: ${input.phone}`,
+  ].join("\n");
   const params = new URLSearchParams();
   params.set("subject", "Booking request");
   params.set("body", body);

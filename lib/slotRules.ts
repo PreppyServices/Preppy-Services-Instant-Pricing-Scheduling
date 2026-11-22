@@ -63,6 +63,9 @@ export const STOREFRONT_START_HOURS = [8, 9, 10, 11] as const;
 
 export const STOREFRONT_HORIZON_DAYS = 14;
 
+/** Days shown before the visitor asks for the rest of the 14 day window. */
+export const STOREFRONT_PREVIEW_DAYS = 7;
+
 /** YYYY-MM-DD in America/New_York. Add dates here for later holidays. */
 export const STOREFRONT_EXCLUDED_DATES = ["2026-11-26", "2026-12-25", "2027-01-01"] as const;
 
@@ -269,6 +272,24 @@ export function listStorefrontSlots(
   }
   slots.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
   return slots;
+}
+
+/** First 7 America/New_York days stay visible. The rest of the 14 day window waits. */
+export function splitStorefrontSlotWindow<T extends { start: string }>(
+  slots: readonly T[],
+  nowMs: number
+): { visible: T[]; later: T[] } {
+  const today = etDateString(nowMs);
+  const end = today ? addCalendarDays(today, STOREFRONT_PREVIEW_DAYS - 1) : null;
+  if (!today || !end) return { visible: [...slots], later: [] };
+  const visible: T[] = [];
+  const later: T[] = [];
+  for (const slot of slots) {
+    const ymd = etDateString(Date.parse(slot.start));
+    if (ymd && ymd > end) later.push(slot);
+    else visible.push(slot);
+  }
+  return { visible, later };
 }
 
 export function storefrontSlotsFromAvailability(

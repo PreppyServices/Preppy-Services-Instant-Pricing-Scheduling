@@ -12,6 +12,7 @@ import {
   isBookableSlot,
   isStorefrontSlot,
   listStorefrontSlots,
+  splitStorefrontSlotWindow,
   storefrontSlotsFromAvailability,
 } from "../lib/slotRules.ts";
 
@@ -152,7 +153,25 @@ check(
   "9:00 AM appears only when the script offers it"
 );
 
+const week = splitStorefrontSlotWindow(
+  [
+    { start: "2026-11-24T13:00:00.000Z" },
+    { start: "2026-11-28T13:00:00.000Z" },
+    { start: "2026-12-01T13:00:00.000Z" },
+  ],
+  now
+);
+check(
+  week.visible.map((slot) => slot.start).join(",") === "2026-11-24T13:00:00.000Z,2026-11-28T13:00:00.000Z",
+  "the first 7 days stay visible"
+);
+check(
+  week.later.map((slot) => slot.start).join(",") === "2026-12-01T13:00:00.000Z",
+  "the rest of the 14 day window waits behind more times"
+);
+
 const booking = readFileSync(join(process.cwd(), "components/StorefrontBooking.tsx"), "utf8");
+check(booking.includes("More times") || booking.includes("moreTimes"), "the later mornings use a More times control");
 check(booking.includes('"?mode=availability"'), "storefront asks the Apps Script for availability");
 check(!booking.includes("listStorefrontSlots("), "the page does not build a local slot list");
 
