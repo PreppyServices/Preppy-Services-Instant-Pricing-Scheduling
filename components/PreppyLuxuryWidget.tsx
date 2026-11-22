@@ -89,6 +89,9 @@ import HolidayFlyer from "./HolidayFlyer";
  *   updated `pricing` object and `verifiedBuildings` array — nothing else."
  */
 
+import { resolveLandingBuilding } from "../lib/catalogBuilding";
+import { isBookableSlot } from "../lib/slotRules";
+import { track } from "@vercel/analytics";
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -178,6 +181,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "flyer.hint": "Pinch or double-tap to zoom",
     "cta.sendImessage": "Email",
     "cta.checkAvailability": "Check Availability",
+    "cta.pickBuilding": "Pick your building to see open times.",
     "cta.reserveConsultation": "Reserve On-Site Walkthrough",
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "White Glove",
@@ -211,6 +215,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successConfirm": "We'll confirm your appointment details shortly.",
     "sched.takenMsg": "That time was just taken. Here are fresh times.",
     "sched.errorMsg": "Could not reserve. Please try again, or email us.",
+    "sched.emailBooking": "Email my booking to info@preppyservices.com",
     "sched.close": "Close",
   },
   es: {
@@ -293,6 +298,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "flyer.hint": "Pellizque o toque dos veces para ampliar",
     "cta.sendImessage": "Email",
     "cta.checkAvailability": "Ver Disponibilidad",
+    "cta.pickBuilding": "Elija su edificio para ver los horarios libres.",
     "cta.reserveConsultation": "Reservar Visita en Sitio",
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Guante Blanco",
@@ -326,6 +332,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successConfirm": "Confirmaremos los detalles de su cita en breve.",
     "sched.takenMsg": "Ese horario se acaba de ocupar. Aquí hay nuevos horarios.",
     "sched.errorMsg": "No se pudo reservar. Intente de nuevo o escríbanos por correo.",
+    "sched.emailBooking": "Enviar mi reserva por correo a info@preppyservices.com",
     "sched.close": "Cerrar",
   },
   fr: {
@@ -408,6 +415,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "flyer.hint": "Pincez ou touchez deux fois pour zoomer",
     "cta.sendImessage": "Email",
     "cta.checkAvailability": "Vérifier la Disponibilité",
+    "cta.pickBuilding": "Choisissez votre bâtiment pour voir les horaires ouverts.",
     "cta.reserveConsultation": "Réserver la Visite sur Place",
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Gant Blanc",
@@ -441,6 +449,7 @@ const I18N: Record<Lang, Record<string, string>> = {
     "sched.successConfirm": "Nous confirmerons les détails de votre rendez-vous sous peu.",
     "sched.takenMsg": "Ce créneau vient d'être pris. Voici de nouveaux horaires.",
     "sched.errorMsg": "Réservation impossible. Réessayez ou envoyez un courriel.",
+    "sched.emailBooking": "Envoyer ma réservation par courriel à info@preppyservices.com",
     "sched.close": "Fermer",
   },
 };
@@ -452,6 +461,59 @@ function translate(key: string, lang: Lang, vars?: Record<string, string | numbe
     (s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, "g"), String(v)),
     tmpl
   );
+}
+
+type TrackData = Record<string, string | number | boolean | null>;
+
+function safeTrack(name: string, data?: TrackData) {
+  try {
+    const result = track(name, data) as unknown;
+    if (result && typeof (result as Promise<unknown>).catch === "function") {
+      void (result as Promise<unknown>).catch(() => {});
+    }
+  } catch {
+    // Analytics must never block a booking.
+  }
+}
+
+function bookFailureReason(err: unknown): "timeout" | "script-error" | "not-ok" {
+  const message = err instanceof Error ? err.message : "";
+  switch (message) {
+    case "timeout":
+      return "timeout";
+    case "script-error":
+      return "script-error";
+    default:
+      return "not-ok";
+  }
+}
+
+function jobberStatusFor(reason: "timeout" | "script-error" | "not-ok"): "timeout" | "error" {
+  switch (reason) {
+    case "timeout":
+      return "timeout";
+    case "script-error":
+    case "not-ok":
+      return "error";
+    default: {
+      const neverReason: never = reason;
+      return neverReason;
+    }
+  }
+}
+
+function notifyJobber(payload: Record<string, unknown>) {
+  try {
+    const pending = fetch("/api/booking/jobber", {
+      method: "POST",
+      keepalive: true,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    void pending.catch(() => {});
+  } catch {
+    // The visitor never sees a sync error.
+  }
 }
 
 type WidgetLineSource = "none" | "url" | PricedSource;
@@ -613,19 +675,18 @@ export default function PreppyLuxuryWidget() {
     }
 
     const p = new URLSearchParams(window.location.search);
-    const rawB = p.get("b") || p.get("building");
-    const buildingParamRaw = (rawB || "").trim();
-    const matchedB = matchCatalogBuilding(buildings, buildingParamRaw);
-
-    // A building param was supplied but matched no priced building. Flag it so
-    // the widget shows a neutral unmatched state instead of silently falling
-    // back to buildings[0] (which would render the first building, "1 Hotel &
-    // Homes", with verified pricing).
-    const buildingUnmatched = buildingParamRaw.length > 0 && !matchedB;
-
+    const picked = resolveLandingBuilding(
+      buildings,
+      window.location.search,
+      (name, line) => pricing[name]?.lines[line] !== undefined
+    );
+    const buildingParamRaw = picked.buildingParamRaw;
+    const matchedB = matchCatalogBuilding(buildings, picked.buildingParamRaw);
+    // A building param that matches no priced building stays empty. An organic
+    // visit also starts empty, so the first catalog building is never assumed.
+    const buildingUnmatched = picked.buildingUnmatched;
     const rawLine = p.get("line") || p.get("l") || "";
-    let resolvedLine =
-      matchedB && rawLine && pricing[matchedB]?.lines[rawLine] !== undefined ? rawLine : "";
+    let resolvedLine = picked.line;
     let lineSource: WidgetLineSource = resolvedLine ? "url" : "none";
     let bandPrice: number | null = null;
     let callForQuote = false;
@@ -703,13 +764,9 @@ export default function PreppyLuxuryWidget() {
         : "glass";
 
   const [serviceType, setServiceType] = React.useState<ServiceType>(resolvedService);
-  // Core fix: only fall back to buildings[0] for an organic visit with no
-  // building param. When a building param was supplied but did not match, keep
-  // the selection empty and surface a neutral unmatched state — never default
-  // to "1 Hotel & Homes" verified pricing.
-  const [building, setBuilding] = React.useState<string>(
-    initialParams.building || (initialParams.buildingUnmatched ? "" : buildings[0] || "")
-  );
+  // No catalog building is selected until the visitor picks one, or a deep
+  // link names one. An unmatched param stays empty.
+  const [building, setBuilding] = React.useState<string>(initialParams.building || "");
   const [unmatched, setUnmatched] = React.useState<boolean>(initialParams.buildingUnmatched);
   const unmatchedName = initialParams.buildingParamRaw.slice(0, 48);
   const [unitLine, setUnitLine] = React.useState<string>(initialParams.line);
@@ -889,6 +946,16 @@ export default function PreppyLuxuryWidget() {
         : `$${total}`
       : "";
 
+  React.useEffect(() => {
+    if (!building) return;
+    safeTrack("building_selected", { building });
+  }, [building]);
+
+  React.useEffect(() => {
+    if (!building || total == null) return;
+    safeTrack("price_shown", { building, line: unitLine || "", intro: glassIntro });
+  }, [building, unitLine, glassIntro, total]);
+
   const scheduleUrl = React.useMemo(() => {
     const base = serviceType === "painting" ? PAINTING_URL : BOOKING_URL;
     const p = new URLSearchParams();
@@ -907,14 +974,14 @@ export default function PreppyLuxuryWidget() {
     const parts: string[] = ["Hi Preppy."];
     const ctx: string[] = [];
     if (customerName) ctx.push(`this is ${customerName}`);
-    if (building && building !== buildings[0]) ctx.push(`at ${building}`);
+    if (building) ctx.push(`at ${building}`);
     if (activeUnit) ctx.push(`unit ${activeUnit}`);
     else if (unitLine) ctx.push(`line ${unitLine}`);
     if (ctx.length) parts.push(ctx.join(", ") + ".");
     parts.push(customDescription.trim() || "I'd like a custom quote. Details to follow.");
     const body = parts.join(" ");
     return `mailto:${INFO_EMAIL}?subject=${encodeURIComponent("Custom quote")}&body=${encodeURIComponent(body)}`;
-  }, [INFO_EMAIL, customerName, building, buildings, activeUnit, unitLine, customDescription]);
+  }, [INFO_EMAIL, customerName, building, activeUnit, unitLine, customDescription]);
 
   const handleBookingClick = React.useCallback(() => {
     if (typeof window === "undefined") return;
@@ -960,6 +1027,8 @@ export default function PreppyLuxuryWidget() {
   }, [SCHEDULER_EXEC_URL]);
 
   const openScheduler = React.useCallback(() => {
+    if (!building) return;
+    safeTrack("check_availability", { building });
     setSchedOpen(true);
     setBookState("idle");
     setChosenSlot(null);
@@ -967,7 +1036,7 @@ export default function PreppyLuxuryWidget() {
     setFullUnit((prev) => prev || activeUnit || "");
     handleBookingClick();
     loadSlots();
-  }, [customerName, activeUnit, handleBookingClick, loadSlots]);
+  }, [building, customerName, activeUnit, handleBookingClick, loadSlots]);
 
   // Required-contact validation before a residential booking is allowed.
   const phoneDigits = contactPhone.replace(/\D/g, "");
@@ -981,6 +1050,10 @@ export default function PreppyLuxuryWidget() {
 
   const reserveSlot = React.useCallback(async () => {
     if (!chosenSlot || !canBook) return;
+    if (!building.trim() || !isBookableSlot(chosenSlot.start, Date.now())) {
+      setBookState("error");
+      return;
+    }
     setBookState("booking");
     const name = signer.trim();
     const unit = fullUnit.trim();
@@ -1004,19 +1077,49 @@ export default function PreppyLuxuryWidget() {
       leadId,
       utm: batchUtm,
     });
+    const jobberBase = {
+      bookingId: null as string | null,
+      start: chosenSlot.start,
+      slot: chosenSlot.label,
+      building,
+      line: unitLine,
+      unit,
+      priceShown: total,
+      intro: glassIntro,
+      name,
+      email,
+      phone,
+      notes: note,
+      utm: batchUtm,
+    };
+    safeTrack("booking_submitted");
     try {
       const res = await preppyJsonp(SCHEDULER_EXEC_URL + "?" + p.toString());
       if (res && res.ok) {
+        const bookingId = typeof res.bookingId === "string" ? res.bookingId : "";
+        safeTrack("booking_ok", { bookingId });
+        notifyJobber({
+          ...jobberBase,
+          bookingId: bookingId || null,
+          status: "ok",
+          slot: typeof res.label === "string" && res.label ? res.label : chosenSlot.label,
+        });
         setConfirmedLabel(res.label || chosenSlot.label);
         setBookState("done");
       } else if (res && res.reason === "slot_taken") {
+        safeTrack("booking_taken");
         setBookState("taken");
         setChosenSlot(null);
         loadSlots();
       } else {
+        safeTrack("booking_error", { reason: "not-ok" });
+        notifyJobber({ ...jobberBase, status: "error" });
         setBookState("error");
       }
-    } catch {
+    } catch (err) {
+      const reason = bookFailureReason(err);
+      safeTrack("booking_error", { reason });
+      notifyJobber({ ...jobberBase, status: jobberStatusFor(reason) });
       setBookState("error");
     }
   }, [
@@ -1045,6 +1148,20 @@ export default function PreppyLuxuryWidget() {
 
   const showAutoDetectedHint =
     !!unitLine && lineSource !== "none" && lineSource !== "url";
+  const visibleSlots = slots.filter((slot) => isBookableSlot(slot.start, Date.now()));
+  const bookingMailto = `mailto:${INFO_EMAIL}?subject=${encodeURIComponent("Booking request")}&body=${encodeURIComponent(
+    [
+      `Slot: ${chosenSlot?.label || ""}`,
+      `Building: ${building}`,
+      `Line: ${unitLine}`,
+      `Unit: ${fullUnit}`,
+      `Price shown: ${total != null ? "$" + total : ""}`,
+      `Name: ${signer}`,
+      `Phone: ${contactPhone}`,
+      `Email: ${contactEmail}`,
+      `Notes: ${notes}`,
+    ].join("\n")
+  )}`;
 
   return (
     <div
@@ -1651,18 +1768,24 @@ export default function PreppyLuxuryWidget() {
                 {t("cta.reserveConsultation")}
               </a>
             ) : (
-              <button
-                type="button"
-                onClick={openScheduler}
-                className="group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D]"
-              >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-3 top-0 h-px opacity-70"
-                  style={{ background: "linear-gradient(90deg, transparent, #C5A572, transparent)" }}
-                />
-                {t("cta.checkAvailability")}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={openScheduler}
+                  disabled={!building}
+                  className="group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-3 top-0 h-px opacity-70"
+                    style={{ background: "linear-gradient(90deg, transparent, #C5A572, transparent)" }}
+                  />
+                  {t("cta.checkAvailability")}
+                </button>
+                {!building && (
+                  <p className="mt-2 text-center text-[13px] text-[#5E6C75]">{t("cta.pickBuilding")}</p>
+                )}
+              </>
             )}
 
             <a
@@ -1808,7 +1931,14 @@ export default function PreppyLuxuryWidget() {
                 )}
                 {bookState === "error" && (
                   <div className="mt-3 rounded-xl bg-[#FBE9E9] px-3 py-2 text-[13px] text-[#9A2E2E]">
-                    {t("sched.errorMsg")}
+                    <div>{t("sched.errorMsg")}</div>
+                    <a
+                      href={bookingMailto}
+                      onClick={() => safeTrack("fallback_email_click")}
+                      className="mt-2 flex w-full items-center justify-center rounded-xl border border-[#E4C8C8] bg-white px-3 py-2 text-center font-medium text-[#9A2E2E]"
+                    >
+                      {t("sched.emailBooking")}
+                    </a>
                   </div>
                 )}
 
@@ -1831,14 +1961,14 @@ export default function PreppyLuxuryWidget() {
                         </button>
                       </div>
                     )}
-                    {slotState === "loaded" && slots.length === 0 && (
+                    {slotState === "loaded" && visibleSlots.length === 0 && (
                       <div className="py-4 text-center text-[14px] leading-relaxed text-[#5E6C75]">
                         {t("sched.none")}
                       </div>
                     )}
-                    {slotState === "loaded" && slots.length > 0 && (
+                    {slotState === "loaded" && visibleSlots.length > 0 && (
                       <div className="max-h-[46vh] space-y-4 overflow-y-auto pr-1">
-                        {Object.entries(groupSchedSlots(slots)).map(([day, daySlots]) => (
+                        {Object.entries(groupSchedSlots(visibleSlots)).map(([day, daySlots]) => (
                           <div key={day}>
                             <div className="text-[11px] uppercase tracking-[0.18em] text-[#8B9399]">
                               {day}
@@ -1848,9 +1978,11 @@ export default function PreppyLuxuryWidget() {
                                 <button
                                   key={s.start}
                                   type="button"
-                                  onClick={() =>
-                                    setChosenSlot({ start: s.start, label: s.label })
-                                  }
+                                  onClick={() => {
+                                    if (!isBookableSlot(s.start, Date.now())) return;
+                                    safeTrack("slot_selected");
+                                    setChosenSlot({ start: s.start, label: s.label });
+                                  }}
                                   className={
                                     "rounded-xl border px-3 py-2 text-[13px] transition " +
                                     (s.afterHours
