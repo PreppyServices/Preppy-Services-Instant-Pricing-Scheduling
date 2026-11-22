@@ -91,6 +91,8 @@ import HolidayFlyer from "./HolidayFlyer";
  */
 
 import { resolveLandingBuilding } from "../lib/catalogBuilding";
+import { loadJobberBusy } from "../lib/jobberBusyClient";
+import { BOOKING_WINDOW_MIN, BUSY_BUFFER_MIN, removeBusySlots } from "../lib/jobberBusy";
 import { isBookableSlot, reserveDecision } from "../lib/slotRules";
 import { track } from "@vercel/analytics";
 import * as React from "react";
@@ -1018,9 +1020,17 @@ export default function PreppyLuxuryWidget() {
     setChosenSlot(null);
     setBookState(notice === "closed" ? "closed" : "idle");
     try {
-      const data = await preppyJsonp(SCHEDULER_EXEC_URL + "?mode=availability");
+      const [data, busyBlocks] = await Promise.all([
+        preppyJsonp(SCHEDULER_EXEC_URL + "?mode=availability"),
+        loadJobberBusy("/api/availability/busy"),
+      ]);
       if (data && data.ok && Array.isArray(data.slots)) {
-        setSlots(data.slots as SchedSlot[]);
+        const offered = data.slots as SchedSlot[];
+        setSlots(
+          busyBlocks
+            ? removeBusySlots(offered, busyBlocks, BOOKING_WINDOW_MIN, BUSY_BUFFER_MIN)
+            : offered
+        );
         setSlotState("loaded");
       } else {
         setSlotState("error");
