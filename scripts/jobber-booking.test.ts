@@ -2,7 +2,12 @@
  * Jobber booking sync stays inert until configured, rejects a foreign origin
  * and a lead with no contact, and never writes secrets or email into logs.
  */
-import { handleJobberBooking, type JobberDeps, type JobberEnv } from "../lib/jobberBooking.ts";
+import {
+  handleJobberBooking,
+  isAllowedBookingOrigin,
+  type JobberDeps,
+  type JobberEnv,
+} from "../lib/jobberBooking.ts";
 
 const failures: string[] = [];
 
@@ -133,23 +138,49 @@ check(disabledLog.building === "Gran Paraiso", "disabled log keeps building");
 check(disabledLog.status === "ok", "disabled log keeps status");
 check(!logsHaveSecrets(disabled.lines), "disabled log has no secret or email");
 
-const preview = await run(
-  bookingRequest(lead, "https://preppy-services-instant-pricing-scheduling-git-cursor-team.vercel.app"),
-  {},
-  disabledFetch
+const teamPreview = "https://preppy-services-instant-pricing-scheduling-9csauqiz5-preppyservices-projects.vercel.app";
+const branchAlias = "https://preppy-services-instant-pric-git-22b98f-preppyservices-projects.vercel.app";
+const lookalike = "https://preppy-services-instant-pricing-scheduling-evil.vercel.app";
+const otherTeam = "https://preppy-services-instant-pricing-scheduling-abc123-another-team.vercel.app";
+
+check(isAllowedBookingOrigin(teamPreview), "team hash preview is allowed");
+check(isAllowedBookingOrigin(branchAlias), "team branch alias is allowed");
+check(!isAllowedBookingOrigin(lookalike), "lookalike without the team suffix is rejected");
+check(!isAllowedBookingOrigin(otherTeam), "another team's domain is rejected");
+check(
+  isAllowedBookingOrigin("https://preppy-services-instant-pricing-scheduling-9csauqiz5.vercel.app", {
+    VERCEL_URL: "preppy-services-instant-pricing-scheduling-9csauqiz5.vercel.app",
+  }),
+  "the deployment's own VERCEL_URL is allowed"
 );
+check(
+  isAllowedBookingOrigin(branchAlias, {
+    VERCEL_BRANCH_URL: "preppy-services-instant-pric-git-22b98f-preppyservices-projects.vercel.app",
+  }),
+  "the deployment's own VERCEL_BRANCH_URL is allowed"
+);
+check(
+  !isAllowedBookingOrigin(lookalike, {
+    VERCEL_URL: "preppy-services-instant-pricing-scheduling-9csauqiz5.vercel.app",
+  }),
+  "a lookalike is not allowed just because some other VERCEL_URL is set"
+);
+
+const preview = await run(bookingRequest(lead, teamPreview), {}, disabledFetch);
 check(preview.response.status === 202 && preview.body.reason === "disabled", "project preview origin is allowed");
 
 const foreign = await run(bookingRequest(lead, "https://evil.example"), enabledEnv, disabledFetch);
 check(foreign.response.status === 403 && foreign.body.reason === "origin", "bad origin is rejected");
 check(foreign.lines.length === 0, "bad origin writes no log");
 
-const otherProject = await run(
-  bookingRequest(lead, "https://not-this-project.vercel.app"),
-  enabledEnv,
-  disabledFetch
-);
+const otherProject = await run(bookingRequest(lead, "https://not-this-project.vercel.app"), enabledEnv, disabledFetch);
 check(otherProject.response.status === 403, "another vercel.app project is rejected");
+
+const evilPreview = await run(bookingRequest(lead, lookalike), enabledEnv, disabledFetch);
+check(evilPreview.response.status === 403, "lookalike preview origin is rejected");
+
+const otherTeamRequest = await run(bookingRequest(lead, otherTeam), enabledEnv, disabledFetch);
+check(otherTeamRequest.response.status === 403, "another team's preview origin is rejected");
 
 const noContact = await run(
   bookingRequest({ ...lead, email: "  ", phone: "", name: "Ada" }),
@@ -185,6 +216,18 @@ check(
 );
 check(!Object.prototype.hasOwnProperty.call(createInput, "source"), "requestCreate does not send a source field");
 check(calls.some((call) => classify(call) === "requestCreateNote"), "details are sent as a request note");
+const clientCall = calls.find((call) => classify(call) === "clientCreate");
+const clientInput =
+  (clientCall &&
+    (JSON.parse(clientCall.body) as { variables?: { input?: { phones?: Array<{ smsAllowed?: boolean }> } } })
+      .variables?.input) ||
+  {};
+const phones = clientInput.phones || [];
+check(phones.length > 0, "clientCreate sends the phone");
+for (const phone of phones) {
+  check(phone.smsAllowed !== true, "clientCreate never sets smsAllowed true");
+  check(phone.smsAllowed === false, "clientCreate sets smsAllowed false");
+}
 check(!logsHaveSecrets(happy.lines), "happy path log has no secret or email");
 
 const failed = await run(bookingRequest(lead), enabledEnv, async (input) => {

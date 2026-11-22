@@ -30,6 +30,15 @@ function etClock(ms: number): EtClock | null {
   return { weekday, hour, minute, second };
 }
 
+export type ReserveDecision = "send" | "missing-building" | "closed";
+
+/** What reserveSlot should do before it talks to Apps Script. */
+export function reserveDecision(building: string, startIso: string, nowMs: number): ReserveDecision {
+  if (!building.trim()) return "missing-building";
+  if (!isBookableSlot(startIso, nowMs)) return "closed";
+  return "send";
+}
+
 /**
  * A slot can be shown and booked only when all of these hold:
  * the start is at least 24 hours after now (absolute time),

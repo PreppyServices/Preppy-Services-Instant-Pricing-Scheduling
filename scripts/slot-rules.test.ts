@@ -2,7 +2,7 @@
  * Appointment slots: no Sundays in America/New_York, at least 24 hours out,
  * and no start after 4:00 PM America/New_York.
  */
-import { isBookableSlot } from "../lib/slotRules.ts";
+import { isBookableSlot, reserveDecision } from "../lib/slotRules.ts";
 
 const failures: string[] = [];
 
@@ -77,6 +77,30 @@ check(
 );
 
 check(!isBookableSlot("not-a-time", Date.now()), "an unparseable start is rejected");
+
+const bookableMonday = new Date(monday4).toISOString();
+const nowForMonday = monday4 - 24 * HOUR - 60 * 1000;
+check(
+  reserveDecision("Gran Paraiso", bookableMonday, nowForMonday) === "send",
+  "a bookable slot is sent"
+);
+check(
+  reserveDecision("  ", bookableMonday, nowForMonday) === "missing-building",
+  "an empty building is not refreshed as a closed slot"
+);
+check(
+  reserveDecision("Gran Paraiso", new Date(saturday10).toISOString(), saturday10 - 23 * HOUR - 59 * 60 * 1000) ===
+    "closed",
+  "a slot that dropped under 24h refreshes the list"
+);
+check(
+  reserveDecision("Gran Paraiso", new Date(sunday10).toISOString(), farBefore(sunday10)) === "closed",
+  "a Sunday slot refreshes the list instead of the generic error"
+);
+check(
+  reserveDecision("Gran Paraiso", new Date(monday430).toISOString(), farBefore(monday430)) === "closed",
+  "a start after 4:00 PM ET refreshes the list"
+);
 
 if (failures.length) {
   console.error(failures.join("\n"));
