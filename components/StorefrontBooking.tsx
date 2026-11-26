@@ -3,6 +3,8 @@
 import { track } from "@vercel/analytics";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import type { UtmParams } from "../lib/batchUtm";
+import { loadJobberBusy } from "../lib/jobberBusyClient";
+import { BOOKING_WINDOW_MIN, BUSY_BUFFER_MIN, removeBusySlots } from "../lib/jobberBusy";
 import { bookFailureReason, preppyJsonp } from "../lib/preppyJsonp";
 import { SCHEDULER_EXEC_URL } from "../lib/schedulerExec";
 import {
@@ -176,7 +178,10 @@ export default function StorefrontBooking({
     setShowLaterTimes(false);
     try {
       const nowMs = Date.now();
-      const data = await preppyJsonp(SCHEDULER_EXEC_URL + "?mode=availability");
+      const [data, busyBlocks] = await Promise.all([
+        preppyJsonp(SCHEDULER_EXEC_URL + "?mode=availability"),
+        loadJobberBusy("/api/availability/busy"),
+      ]);
       const read = storefrontSlotsFromAvailability(data, nowMs);
       if (read.state === "error") {
         setSlotNowMs(null);
@@ -184,7 +189,11 @@ export default function StorefrontBooking({
         return;
       }
       setSlotNowMs(nowMs);
-      setSlots(read.slots);
+      setSlots(
+        busyBlocks
+          ? removeBusySlots(read.slots, busyBlocks, BOOKING_WINDOW_MIN, BUSY_BUFFER_MIN)
+          : read.slots
+      );
       setSlotState("loaded");
     } catch {
       setSlotState("error");
