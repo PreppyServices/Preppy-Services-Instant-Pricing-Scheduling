@@ -5,7 +5,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { SITEMAP_URLS } from "../lib/sitemapUrls.ts";
-import { STOREFRONT_COPY, STOREFRONT_DESCRIPTION, STOREFRONT_TITLE } from "../lib/storefrontCopy.ts";
+import {
+  STOREFRONT_COPY,
+  STOREFRONT_DESCRIPTION,
+  STOREFRONT_TIER_LIST,
+  STOREFRONT_TITLE,
+} from "../lib/storefrontCopy.ts";
 import { STOREFRONT_BUSINESS_TYPES } from "../lib/storefrontPrefill.ts";
 import {
   readStorefrontPrefill,
@@ -91,6 +96,7 @@ const visible = [
   STOREFRONT_DESCRIPTION,
   STOREFRONT_TITLE,
   ...STOREFRONT_BUSINESS_TYPES.map((type) => type.label),
+  ...STOREFRONT_TIER_LIST.flatMap((tier) => [tier.name, tier.detail, tier.priceLabel ?? ""]),
 ];
 for (const line of visible) {
   check(!DASH.test(line), `visible copy has a hyphen or dash: ${JSON.stringify(line)}`);
@@ -102,6 +108,23 @@ check(!/\bbonded\b/i.test(blob), "no bonded claim");
 check(!/\blicen[sc]ed\b/i.test(blob), "no license claim");
 check(!/workers/i.test(blob), "no workers comp claim");
 check(!/inside and outside every visit/i.test(blob), "visits are not inside and outside every time");
+check(!/inside and out every visit/i.test(blob), "visits are not inside and out every time");
+check(blob.includes("3 exterior only and 1 inside and out"), "the visit mix says exterior only");
+check(blob.includes("$240 a month"), "tiny storefront stays $240 a month");
+check(blob.includes("$400 a month"), "medium storefront is $400 a month");
+check(blob.includes("$600 a month"), "large storefront is $600 a month");
+check(blob.includes("Not sure / larger, price after a walk by"), "unclear sizes have a walk by option");
+check(blob.includes("under about 22 ft of glass"), "tiny size is on the page");
+check(blob.includes("about 25 to 45 ft of glass"), "medium size is on the page");
+check(blob.includes("about 50 ft of glass or more"), "large size is on the page");
+check(!blob.includes("20%"), "storefront copy has no percent discount");
+check(!blob.includes("$192"), "tiny storefront is not shown at a discount");
+check(!blob.includes("$320"), "medium storefront is not shown at a discount");
+check(!blob.includes("$480"), "large storefront is not shown at a discount");
+check(
+  blob.includes("Work is done from the ground with water fed poles, no ladders, lifts or rope."),
+  "the service line names ground work with water fed poles"
+);
 check((blob.match(/insured/gi) ?? []).length === 1, "Insured. is the only insurance wording");
 check(!/\d(?:\.\d)?\s*stars?/i.test(blob), "no star rating");
 check(!/review/i.test(blob), "no review count");
