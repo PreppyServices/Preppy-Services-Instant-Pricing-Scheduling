@@ -12,7 +12,12 @@ import {
   storefrontMailto,
   type StorefrontBookInput,
 } from "../lib/storefrontBooking";
-import { STOREFRONT_COPY } from "../lib/storefrontCopy";
+import {
+  STOREFRONT_COPY,
+  STOREFRONT_TIER_LIST,
+  storefrontTierById,
+  type StorefrontTierId,
+} from "../lib/storefrontCopy";
 import {
   STOREFRONT_BUSINESS_TYPES,
   businessTypeLabel,
@@ -136,6 +141,7 @@ export default function StorefrontBooking({
   utm: UtmParams;
 }) {
   const [businessType, setBusinessType] = useState<StorefrontBusinessType | "">(prefill.businessType);
+  const [tierId, setTierId] = useState<StorefrontTierId | "">("");
   const [yourName, setYourName] = useState("");
   const [businessName, setBusinessName] = useState(prefill.business);
   const [address, setAddress] = useState(prefill.address);
@@ -202,7 +208,7 @@ export default function StorefrontBooking({
     const business = storefrontText(businessName);
     const street = storefrontText(address);
     const typeLabel = businessTypeLabel(businessType);
-    if (!chosen || !businessType || !typeLabel || !name || !business || !street) return null;
+    if (!chosen || !businessType || !tierId || !typeLabel || !name || !business || !street) return null;
     if (!isStorefrontEmail(email) || !isStorefrontPhone(phone)) return null;
     return {
       start: chosen.start,
@@ -213,6 +219,7 @@ export default function StorefrontBooking({
       name,
       email: email.trim(),
       phone: phone.trim(),
+      tierId,
       utm,
     };
   };
@@ -220,6 +227,7 @@ export default function StorefrontBooking({
   const problems: string[] = [];
   if (attempted) {
     if (!businessType) problems.push(STOREFRONT_COPY.pickType);
+    if (!tierId) problems.push(STOREFRONT_COPY.pickTier);
     if (!chosen) problems.push(STOREFRONT_COPY.pickSlot);
     if (!storefrontText(yourName)) problems.push(STOREFRONT_COPY.needName);
     if (!storefrontText(businessName)) problems.push(STOREFRONT_COPY.needBusiness);
@@ -268,7 +276,9 @@ export default function StorefrontBooking({
     }
   }
 
-  if (phase === "done" && chosen) {
+  const selectedTier = tierId ? storefrontTierById(tierId) : null;
+
+  if (phase === "done" && chosen && selectedTier) {
     return (
       <main className="min-h-screen overflow-x-clip bg-[#F5F1EA] px-4 py-8 text-[#0D1B24]">
         <div className="mx-auto w-full max-w-[460px]">
@@ -285,8 +295,16 @@ export default function StorefrontBooking({
             <p className="text-[22px] leading-snug text-[#0D1B24]">{STOREFRONT_COPY.confirmation}</p>
             <p className="mt-4 text-[18px] font-medium">{chosen.day}</p>
             <p className="mt-1 text-[18px] font-medium">{chosen.time}</p>
-            <p className="mt-4 text-[16px] text-[#243740]">{STOREFRONT_COPY.price}</p>
-            <p className="mt-1 text-[16px] text-[#243740]">{STOREFRONT_COPY.planLine}</p>
+            <p className="mt-4 text-[16px] font-medium text-[#243740]">{selectedTier.name}</p>
+            {selectedTier.detail ? (
+              <p className="mt-1 text-[15px] text-[#243740]">{selectedTier.detail}</p>
+            ) : null}
+            {selectedTier.priceLabel ? (
+              <p data-storefront-price className="mt-2 text-[16px] text-[#243740]">
+                {selectedTier.priceLabel}
+              </p>
+            ) : null}
+            <p className="mt-1 text-[16px] text-[#243740]">{STOREFRONT_COPY.visitMix}</p>
           </div>
         </div>
       </main>
@@ -307,6 +325,9 @@ export default function StorefrontBooking({
             {STOREFRONT_COPY.title}
           </h1>
           <p className="mt-1 text-[15px] text-[#5E6C75]">{STOREFRONT_COPY.subtitle}</p>
+          <p className="mx-auto mt-2 max-w-[34rem] text-[15px] leading-snug text-[#243740]">
+            {STOREFRONT_COPY.method}
+          </p>
         </header>
 
         <form
@@ -346,16 +367,67 @@ export default function StorefrontBooking({
             </div>
           </fieldset>
 
-          <section data-storefront-plan className="rounded-2xl border border-[#EAE1D7] bg-[#FCFAF7] px-4 py-4">
-            <p data-storefront-price className="text-[28px] font-medium leading-tight text-[#0D1B24]">
-              {STOREFRONT_COPY.price}{" "}
-              <span className="text-[16px] font-medium leading-snug text-[#243740]">
-                {STOREFRONT_COPY.planLine}
-              </span>
-            </p>
-            <p className="mt-2 text-[15px] leading-snug text-[#243740]">{STOREFRONT_COPY.larger}</p>
-            <p className="mt-2 text-[15px] font-medium text-[#0D1B24]">{STOREFRONT_COPY.insured}</p>
-          </section>
+          <fieldset data-storefront-plan>
+            <legend className="mb-2 text-[12px] uppercase tracking-[0.18em] text-[#5A6972]">
+              {STOREFRONT_COPY.sizeLabel}
+            </legend>
+            <div className="space-y-2" role="radiogroup" aria-label={STOREFRONT_COPY.sizeLabel}>
+              {STOREFRONT_TIER_LIST.map((tier) => {
+                const selected = tierId === tier.id;
+                return (
+                  <label
+                    key={tier.id}
+                    data-storefront-tier={tier.id}
+                    className={`flex min-h-11 cursor-pointer gap-3 rounded-2xl border px-3 py-3 ${
+                      selected
+                        ? "border-[#0F7C82] bg-white shadow-[0_6px_20px_rgba(15,124,130,0.12)]"
+                        : "border-[#E6DED4] bg-[#FBFAF8]"
+                    }`}
+                  >
+                    <input
+                      className="sr-only"
+                      type="radio"
+                      name="storefrontSize"
+                      value={tier.id}
+                      checked={selected}
+                      onChange={() => {
+                        setTierId(tier.id);
+                        setShowError(false);
+                      }}
+                    />
+                    <span
+                      aria-hidden
+                      className={`mt-1 h-4 w-4 shrink-0 rounded-full border ${
+                        selected ? "border-[#0F7C82] bg-[#0F7C82]" : "border-[#C9BDB0] bg-white"
+                      }`}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[16px] font-medium leading-snug text-[#0D1B24]">
+                        {tier.name}
+                      </span>
+                      {tier.detail ? (
+                        <span className="mt-0.5 block text-[14px] leading-snug text-[#5E6C75]">
+                          {tier.detail}
+                        </span>
+                      ) : null}
+                      {tier.priceLabel ? (
+                        <span
+                          data-storefront-price
+                          className="mt-1 block text-[22px] font-medium leading-tight text-[#0D1B24]"
+                        >
+                          {tier.priceLabel}
+                        </span>
+                      ) : null}
+                      <span className="mt-1 block text-[15px] leading-snug text-[#243740]">
+                        {STOREFRONT_COPY.visitMix}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-[15px] font-medium text-[#0D1B24]">{STOREFRONT_COPY.insured}</p>
+          </fieldset>
 
           <fieldset>
             <legend className="text-[12px] uppercase tracking-[0.18em] text-[#5A6972]">
