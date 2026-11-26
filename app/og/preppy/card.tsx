@@ -18,6 +18,7 @@
 // absent name leads with neutral Preppy branding.
 
 import type { ReactElement } from "react";
+import { OG_SERVICE_LINE } from "../../../lib/ogServiceLine";
 
 // ---- Palette — premium navy / ivory / gold identity ------------------------
 const IVORY = "#F7F2E8"; // hero name — warm near-white, max legible contrast
@@ -346,7 +347,7 @@ export function PreppyOgCard({ name, building, unit, lang }: CardParams): ReactE
           whiteSpace: "nowrap",
         }}
       >
-        Balcony Glass · Interior Paint · Custom Home Care
+        {OG_SERVICE_LINE}
       </div>
 
       {/* Editorial divider */}
