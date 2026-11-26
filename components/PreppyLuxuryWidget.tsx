@@ -9,9 +9,12 @@ import {
   safeMappedPricing,
   provisionalBuildings,
 } from "../data/buildings";
-import { matchCatalogBuilding } from "../lib/catalogBuilding";
 import {
-  applyUtmToParams,
+  matchCatalogBuilding,
+  resolveDeepLinkLanding,
+  resolveLandingBuilding,
+} from "../lib/catalogBuilding";
+import {
   buildResidentialBookQuery,
   captureLandingUtm,
   utmSafeForRecord,
@@ -34,7 +37,11 @@ import HolidayFlyer from "./HolidayFlyer";
  * =====================================
  *
  * URL PARAMETERS (all optional) — used for personalized SMS deep-links:
- *   ?b=Paraiso+Bay         Building name (case-insensitive, URL-encoded)
+ *   ?b=Paraiso+Bay         Building name (case-insensitive, URL-encoded).
+ *                          A catalog match skips the landing card, locks that
+ *                          building, and opens the line picker. Change building
+ *                          returns to the landing flow. An unknown name keeps
+ *                          the normal flow.
  *   ?line=04               Unit line within the building (must exist in pricing).
  *                          A PH code such as PH4 quotes that penthouse line
  *                          when the building has it, and never the numeric line.
@@ -55,7 +62,6 @@ import HolidayFlyer from "./HolidayFlyer";
  *                          applied. ?flyer=1, ?flyer=november, ?promo=november,
  *                          and ?promo=holiday do the same. ?view=daylight or
  *                          ?view=sunset swaps in the other real Edgewater photo.
- *   ?service=painting      Land on painting consultation mode instead of glass
  *   ?service=custom        Land on custom job mode
  *   ?lang=en|es|fr         Override display language. Falls back to navigator.language.
  *   ?utm_source=           Batch attribution. Also utm_medium, utm_campaign,
@@ -67,7 +73,6 @@ import HolidayFlyer from "./HolidayFlyer";
  * Example morning-text links:
  *   Glass:   https://preppyservices.com/?b=Paraiso+Bay&line=04&unit=3204&lead=A1042&name=Alex
  *   Intro:   https://quote.preppyservices.com/?b=Gran%20Paraiso&intro=1&line=01&name=Joe
- *   Paint:   https://preppyservices.com/?service=painting&b=Paraiso+Bay&unit=3204&lead=A1042&name=Alex
  *   Custom:  https://preppyservices.com/?service=custom&b=Paraiso+Bay&unit=3204&lead=A1042&name=Alex
  *
  * DATA NOTES (for ChatGPT and future maintainers):
@@ -90,15 +95,27 @@ import HolidayFlyer from "./HolidayFlyer";
  *   updated `pricing` object and `verifiedBuildings` array — nothing else."
  */
 
-import { resolveLandingBuilding } from "../lib/catalogBuilding";
 import { isBookableSlot, reserveDecision } from "../lib/slotRules";
 import { track } from "@vercel/analytics";
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type BuildingStatus = "raw" | "researched" | "mapped" | "priced" | "verified";
-type ServiceType = "glass" | "painting" | "custom";
+type ServiceType = "glass" | "custom";
 type Lang = "en" | "es" | "fr";
+
+function serviceBadgeKey(serviceType: ServiceType): "badge.glass" | "badge.custom" {
+  switch (serviceType) {
+    case "glass":
+      return "badge.glass";
+    case "custom":
+      return "badge.custom";
+    default: {
+      const neverService: never = serviceType;
+      return neverService;
+    }
+  }
+}
 
 const I18N: Record<Lang, Record<string, string>> = {
   en: {
@@ -108,14 +125,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.label": "Service",
     "service.glass.title": "Balcony Glass",
     "service.glass.sub": "Detailing",
-    "service.painting.title": "Interior Paint",
-    "service.painting.sub": "Quote",
     "service.custom.title": "Custom Job",
     "service.custom.sub": "Pics | Chat",
     "badge.glass": "Balcony Glass Detailing",
-    "badge.painting": "Interior Painting Consultation",
     "badge.custom": "Custom Job — Direct Quote",
     "selectResidence": "Select Residence",
+    "building.change": "Change building",
     "search.placeholder": "Search by building name…",
     "search.footer": "{count} residences · Type to filter",
     "unit.labelWithUnit": "Unit {unit} — Line",
@@ -131,10 +146,6 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.interior": "Interior glass (sliders and windows)",
     "glass.addon": "Add-on",
     "glass.selectUnitFirst": "Select unit first",
-    "paint.header": "Consultation",
-    "paint.title": "Interior Paint Consultation",
-    "paint.walkthrough": "15-minute walkthrough",
-    "paint.schedule": "Schedule",
     "custom.header": "Tell us what you need",
     "custom.placeholder":
       "Describe your job — install window treatments, change light fixtures, change out all light bulbs to a warmer color, sync smart home automations, pressure washing, floor polishing, specialty cleaning, post-construction detailing, maintenance scheduling while traveling, and more. Send pics and schedule an on-site walkthrough.",
@@ -142,9 +153,6 @@ const I18N: Record<Lang, Record<string, string>> = {
     "price.directQuote": "Direct quote",
     "price.directHeadline": "Send your details — we'll reply with a tailored quote.",
     "price.directSub": "Photos, floor plan, scope — whatever you have.",
-    "price.private": "Private consultation",
-    "price.reserveHeadline": "Discuss your project on-site.",
-    "price.reserveSub": "Finalize details, get quote and coordinate scheduling.",
     "price.residenceFinalizing": "We'll confirm line-specific pricing before you book.",
     "price.textPrivate": "Email us for a private quote.",
     "price.selectResidenceFirst": "Select your residence and unit line to view pricing",
@@ -183,7 +191,6 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.sendImessage": "Email",
     "cta.checkAvailability": "Check Availability",
     "cta.pickBuilding": "Pick your building to see open times.",
-    "cta.reserveConsultation": "Reserve On-Site Walkthrough",
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "White Glove",
     "trust.whiteGlove.sub": "Service",
@@ -227,14 +234,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.label": "Servicio",
     "service.glass.title": "Cristal de Balcón",
     "service.glass.sub": "Detallado",
-    "service.painting.title": "Pintura Interior",
-    "service.painting.sub": "Cotizar",
     "service.custom.title": "Trabajo a Medida",
     "service.custom.sub": "Fotos | Chat",
     "badge.glass": "Detallado de Cristal de Balcón",
-    "badge.painting": "Consulta de Pintura Interior",
     "badge.custom": "Trabajo a Medida — Cotización Directa",
     "selectResidence": "Seleccione Residencia",
+    "building.change": "Cambiar edificio",
     "search.placeholder": "Buscar por nombre del edificio…",
     "search.footer": "{count} residencias · Escriba para filtrar",
     "unit.labelWithUnit": "Unidad {unit} — Línea",
@@ -250,19 +255,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.interior": "Cristal interior (correderas y ventanas)",
     "glass.addon": "Complemento",
     "glass.selectUnitFirst": "Seleccione unidad primero",
-    "paint.header": "Consulta",
-    "paint.title": "Consulta de Pintura Interior",
-    "paint.walkthrough": "Recorrido de 15 minutos",
-    "paint.schedule": "Agendar",
     "custom.header": "Cuéntenos qué necesita",
     "custom.placeholder": "Describa el trabajo — habitaciones, superficies, estado, fechas. Fotos bienvenidas por mensaje.",
     "custom.tappingSend": "El correo se abre con su edificio y unidad ya completados.",
     "price.directQuote": "Cotización directa",
     "price.directHeadline": "Envíenos los detalles — responderemos con una cotización personalizada.",
     "price.directSub": "Fotos, plano, alcance — lo que tenga.",
-    "price.private": "Consulta privada",
-    "price.reserveHeadline": "Converse sobre su proyecto en sitio.",
-    "price.reserveSub": "Finalize detalles, reciba una cotización y coordine la programación.",
     "price.residenceFinalizing": "Confirmamos el precio por línea antes de reservar.",
     "price.textPrivate": "Escríbanos por correo para una cotización privada.",
     "price.selectResidenceFirst": "Seleccione residencia y línea de unidad para ver precios",
@@ -301,7 +299,6 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.sendImessage": "Email",
     "cta.checkAvailability": "Ver Disponibilidad",
     "cta.pickBuilding": "Elija su edificio para ver los horarios libres.",
-    "cta.reserveConsultation": "Reservar Visita en Sitio",
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Guante Blanco",
     "trust.whiteGlove.sub": "Servicio",
@@ -345,14 +342,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "service.label": "Service",
     "service.glass.title": "Verre de Balcon",
     "service.glass.sub": "Détaillage",
-    "service.painting.title": "Peinture Intérieure",
-    "service.painting.sub": "Devis",
     "service.custom.title": "Travail Sur Mesure",
     "service.custom.sub": "Photos | Chat",
     "badge.glass": "Détaillage du Verre de Balcon",
-    "badge.painting": "Consultation de Peinture Intérieure",
     "badge.custom": "Travail Sur Mesure — Devis Direct",
     "selectResidence": "Sélectionner la Résidence",
+    "building.change": "Changer de bâtiment",
     "search.placeholder": "Rechercher par nom de bâtiment…",
     "search.footer": "{count} résidences · Tapez pour filtrer",
     "unit.labelWithUnit": "Unité {unit} — Ligne",
@@ -368,19 +363,12 @@ const I18N: Record<Lang, Record<string, string>> = {
     "glass.interior": "Verre intérieur (baies coulissantes et fenêtres)",
     "glass.addon": "Option",
     "glass.selectUnitFirst": "Sélectionnez l'unité d'abord",
-    "paint.header": "Consultation",
-    "paint.title": "Consultation de Peinture Intérieure",
-    "paint.walkthrough": "Visite de 15 minutes",
-    "paint.schedule": "Planifier",
     "custom.header": "Dites-nous ce dont vous avez besoin",
     "custom.placeholder": "Décrivez le travail — pièces, surfaces, état, délais. Photos bienvenues par message.",
     "custom.tappingSend": "Le courriel s'ouvre avec votre bâtiment et votre unité déjà remplis.",
     "price.directQuote": "Devis direct",
     "price.directHeadline": "Envoyez vos détails — nous répondrons avec un devis sur mesure.",
     "price.directSub": "Photos, plan, portée — tout ce que vous avez.",
-    "price.private": "Consultation privée",
-    "price.reserveHeadline": "Discutez de votre projet sur place.",
-    "price.reserveSub": "Finalisez les détails, obtenez un devis et coordonnez la planification.",
     "price.residenceFinalizing": "Nous confirmons le tarif par ligne avant votre réservation.",
     "price.textPrivate": "Envoyez un courriel pour un devis privé.",
     "price.selectResidenceFirst": "Sélectionnez votre résidence et ligne d'unité pour voir les tarifs",
@@ -419,7 +407,6 @@ const I18N: Record<Lang, Record<string, string>> = {
     "cta.sendImessage": "Email",
     "cta.checkAvailability": "Vérifier la Disponibilité",
     "cta.pickBuilding": "Choisissez votre bâtiment pour voir les horaires ouverts.",
-    "cta.reserveConsultation": "Réserver la Visite sur Place",
     "cta.textSendPhoto": "Email info@preppyservices.com",
     "trust.whiteGlove": "Gant Blanc",
     "trust.whiteGlove.sub": "Service",
@@ -629,8 +616,6 @@ export default function PreppyLuxuryWidget() {
     document.head.appendChild(link);
   }, []);
 
-  const BOOKING_URL = "https://calendar.app.google/97k4hgLwC48JXJJn8";
-  const PAINTING_URL = "https://calendar.app.google/J4uMHEH2VTtuw8Xh8";
   const INFO_EMAIL = "info@preppyservices.com";
 
   const sortLineLabels = (labels: string[]) => {
@@ -675,6 +660,7 @@ export default function PreppyLuxuryWidget() {
         flyerNewsletter: false,
         flyerImpliesIntro: false,
         flyerId: "mirrored" as HolidayFlyerId,
+        deepLinkLocked: false,
       };
     }
 
@@ -757,17 +743,14 @@ export default function PreppyLuxuryWidget() {
       flyerNewsletter: landing.newsletter,
       flyerImpliesIntro: landing.impliesIntro,
       flyerId: landing.flyerId,
+      deepLinkLocked: resolveDeepLinkLanding(window.location.search, buildings).mode === "locked",
     };
   }, [buildings]);
 
-  const resolvedService: ServiceType =
-    initialParams.service === "painting"
-      ? "painting"
-      : initialParams.service === "custom"
-        ? "custom"
-        : "glass";
+  const resolvedService: ServiceType = initialParams.service === "custom" ? "custom" : "glass";
 
   const [serviceType, setServiceType] = React.useState<ServiceType>(resolvedService);
+  const [buildingLocked, setBuildingLocked] = React.useState(initialParams.deepLinkLocked);
   // No catalog building is selected until the visitor picks one, or a deep
   // link names one. An unmatched param stays empty.
   const [building, setBuilding] = React.useState<string>(initialParams.building || "");
@@ -804,7 +787,7 @@ export default function PreppyLuxuryWidget() {
       return {};
     }
   });
-  // Building captured on first paint, including a ?b= / ?building= deep link.
+  // Building captured on first render, including a ?b= / ?building= deep link.
   // The line-sync effect must not clear that selection on mount.
   const deepLinkBuildingRef = React.useRef(building);
 
@@ -960,19 +943,11 @@ export default function PreppyLuxuryWidget() {
     safeTrack("price_shown", { building, line: unitLine || "", intro: glassIntro });
   }, [building, unitLine, glassIntro, total]);
 
-  const scheduleUrl = React.useMemo(() => {
-    const base = serviceType === "painting" ? PAINTING_URL : BOOKING_URL;
-    const p = new URLSearchParams();
-    if (leadId) p.set("lead", leadId);
-    if (building) p.set("building", building);
-    if (unitLine) p.set("line", unitLine);
-    if (activeUnit) p.set("unit", activeUnit);
-    if (total) p.set("quote", String(total));
-    if (customerName) p.set("name", customerName);
-    applyUtmToParams(p, utmSafeForRecord(batchUtm, [customerName]));
-    const qs = p.toString();
-    return qs ? `${base}?${qs}` : base;
-  }, [serviceType, leadId, building, unitLine, activeUnit, total, customerName, batchUtm]);
+  const unlockBuilding = React.useCallback(() => {
+    setBuildingLocked(false);
+    setBuildingQuery("");
+    setShowBuildingDropdown(false);
+  }, []);
 
   const buildCustomEmailURL = React.useCallback(() => {
     const parts: string[] = ["Hi Preppy."];
@@ -1185,6 +1160,7 @@ export default function PreppyLuxuryWidget() {
       }`}
       data-flyer-landing={showFlyer ? "open" : "closed"}
       data-intro-pricing={introPricing ? "on" : "off"}
+      data-landing-mode={buildingLocked ? "line" : "landing"}
     >
       <div
         aria-hidden="true"
@@ -1327,9 +1303,10 @@ export default function PreppyLuxuryWidget() {
                   </p>
                 </div>
               </div>
-              {!initialParams.flyerShow && (
+              {!initialParams.flyerShow && !buildingLocked && (
                 <button
                   type="button"
+                  data-holiday-flyer="toggle"
                   onClick={() => setFlyerPeek((open) => !open)}
                   className="mt-2.5 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#E7D6AE] underline decoration-[#C5A572]/70 underline-offset-4"
                 >
@@ -1361,24 +1338,22 @@ export default function PreppyLuxuryWidget() {
                   </button>
                 </div>
               )}
-              <div className="rounded-2xl border border-[#EAE1D7] bg-[#FCFAF7] px-4 py-3 text-center">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-[#5A6972]">
-                  {serviceType === "painting"
-                    ? t("badge.painting")
-                    : serviceType === "custom"
-                      ? t("badge.custom")
-                      : t("badge.glass")}
+              {!buildingLocked && (
+                <div className="rounded-2xl border border-[#EAE1D7] bg-[#FCFAF7] px-4 py-3 text-center">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-[#5A6972]">
+                    {t(serviceBadgeKey(serviceType))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div>
+              {!buildingLocked && (
+              <div data-service-tiles="visible">
                 <label className="mb-2 block text-[12px] uppercase tracking-[0.22em] text-[#5A6972]">
                   {t("service.label")}
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {([
                     { id: "glass" as const, label: t("service.glass.title"), sub: t("service.glass.sub") },
-                    { id: "painting" as const, label: t("service.painting.title"), sub: t("service.painting.sub") },
                     { id: "custom" as const, label: t("service.custom.title"), sub: t("service.custom.sub") },
                   ]).map((s) => {
                     const active = serviceType === s.id;
@@ -1386,15 +1361,16 @@ export default function PreppyLuxuryWidget() {
                       <button
                         key={s.id}
                         type="button"
+                        data-service-tile={s.id}
                         onClick={() => setServiceType(s.id)}
-                        className={`rounded-2xl border px-3 py-3 text-center transition ${
+                        className={`min-w-0 rounded-2xl border px-3 py-3 text-center transition ${
                           active
                             ? "border-[#0F7C82] bg-white shadow-[0_6px_20px_rgba(15,124,130,0.12)]"
                             : "border-[#E6DED4] bg-[#FBFAF8] hover:border-[#D8CEBF]"
                         }`}
                       >
                         <div
-                          className={`text-[14px] font-semibold tracking-tight ${
+                          className={`text-[14px] font-semibold leading-tight tracking-tight ${
                             active ? "text-[#0D1B24]" : "text-[#4A5A64]"
                           }`}
                         >
@@ -1412,7 +1388,8 @@ export default function PreppyLuxuryWidget() {
                   })}
                   <a
                     href="/storefront"
-                    className="col-span-3 flex min-h-11 flex-col items-center justify-center rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-3 py-3 text-center transition hover:border-[#D8CEBF]"
+                    data-service-tile="storefront"
+                    className="col-span-2 flex min-h-11 flex-col items-center justify-center rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-3 py-3 text-center transition hover:border-[#D8CEBF]"
                   >
                     <div className="text-[14px] font-semibold tracking-tight text-[#4A5A64]">
                       Storefront
@@ -1423,7 +1400,34 @@ export default function PreppyLuxuryWidget() {
                   </a>
                 </div>
               </div>
+              )}
 
+              {buildingLocked ? (
+                <div data-building-lock="locked">
+                  <div className="text-[12px] uppercase tracking-[0.22em] text-[#5A6972]">
+                    {t("selectResidence")}
+                  </div>
+                  <div
+                    className="mt-2 text-[18px] font-semibold tracking-tight text-[#0D1B24]"
+                    data-locked-building={building}
+                  >
+                    {building}
+                  </div>
+                  {currentBuilding?.address ? (
+                    <div className="mt-1 text-[13px] text-[#5E6C75]" data-building-address={currentBuilding.address}>
+                      {currentBuilding.address}
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    data-change-building="true"
+                    onClick={unlockBuilding}
+                    className="mt-1.5 text-[13px] font-medium text-[#0F7C82] underline decoration-[#B7D6D4] underline-offset-4"
+                  >
+                    {t("building.change")}
+                  </button>
+                </div>
+              ) : (
               <div className="relative">
                 <label className="mb-2 block text-[12px] uppercase tracking-[0.22em] text-[#5A6972]">
                   {t("selectResidence")}
@@ -1488,8 +1492,9 @@ export default function PreppyLuxuryWidget() {
                   </div>
                 )}
               </div>
+              )}
 
-              <div>
+              <div id="line-picker">
                 <label className="mb-2 block text-[12px] uppercase tracking-[0.22em] text-[#5A6972]">
                   {usesUnitQuote
                     ? t("unit.number")
@@ -1502,12 +1507,14 @@ export default function PreppyLuxuryWidget() {
                     type="text"
                     value={unitDraft}
                     data-unit-input="true"
+                    data-line-picker="unit"
                     placeholder={t("unit.numberPlaceholder")}
                     onChange={(e) => setUnitDraft(e.target.value)}
                     className="w-full rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-4 py-3 text-[18px] font-medium outline-none focus:border-[#0F7C82]"
                   />
                 ) : (
                   <select
+                    data-line-picker="line"
                     className="w-full rounded-2xl border border-[#E6DED4] bg-[#FBFAF8] px-4 py-3 text-[18px] font-medium outline-none focus:border-[#0F7C82]"
                     value={unitLine}
                     onChange={(e) => {
@@ -1593,25 +1600,6 @@ export default function PreppyLuxuryWidget() {
                     </div>
                   </button>
                 </div>
-              ) : serviceType === "painting" ? (
-                <div>
-                  <div className="mb-2 block text-[12px] uppercase tracking-[0.22em] text-[#5A6972]">
-                    {t("paint.header")}
-                  </div>
-                  <div className="rounded-2xl border border-[#ECE5DB] bg-[#FFFEFC] px-4 py-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="text-[18px] font-semibold">{t("paint.title")}</div>
-                        <div className="mt-1 text-[12px] uppercase tracking-[0.2em] text-[#6B7880]">
-                          {t("paint.walkthrough")}
-                        </div>
-                      </div>
-                      <div className="pt-1 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#0F7C82]">
-                        {t("paint.schedule")}
-                      </div>
-                    </div>
-                  </div>
-                </div>
               ) : (
                 <div>
                   <div className="mb-2 block text-[12px] uppercase tracking-[0.22em] text-[#5A6972]">
@@ -1673,19 +1661,7 @@ export default function PreppyLuxuryWidget() {
                     </span>
                   </button>
                 )}
-                {serviceType === "painting" ? (
-                  <div className="text-center">
-                    <div className="text-[13px] uppercase tracking-[0.22em] text-[#6B7880]">
-                      {t("price.private")}
-                    </div>
-                    <div className="mt-2 text-[24px] font-semibold tracking-tight leading-tight">
-                      {t("price.reserveHeadline")}
-                    </div>
-                    <div className="mt-2 text-[14px] leading-relaxed text-[#5E6C75]">
-                      {t("price.reserveSub")}
-                    </div>
-                  </div>
-                ) : usesUnitQuote && callForQuote ? (
+                {usesUnitQuote && callForQuote ? (
                   <div className="text-center" data-quote-call="true">
                     <a href="tel:+13054140305" className="text-[18px] font-semibold text-[#0F7C82]">
                       <CallLabel label={t("price.call")} />
@@ -1777,21 +1753,6 @@ export default function PreppyLuxuryWidget() {
                   style={{ background: "linear-gradient(90deg, transparent, #C5A572, transparent)" }}
                 />
                 {t("cta.sendImessage")}
-              </a>
-            ) : serviceType === "painting" ? (
-              <a
-                href={scheduleUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleBookingClick}
-                className="group relative mt-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#103845] px-5 py-4 text-[18px] font-semibold tracking-tight text-white shadow-[0_12px_28px_rgba(16,56,69,0.18)] transition duration-200 hover:bg-[#123F4D]"
-              >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-3 top-0 h-px opacity-70"
-                  style={{ background: "linear-gradient(90deg, transparent, #C5A572, transparent)" }}
-                />
-                {t("cta.reserveConsultation")}
               </a>
             ) : (
               <>

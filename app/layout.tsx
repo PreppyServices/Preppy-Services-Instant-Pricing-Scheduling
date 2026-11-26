@@ -25,7 +25,6 @@ export const metadata: Metadata = {
     "Miami balcony glass cleaning",
     "balcony glass",
     "high rise window cleaning",
-    "interior painting",
     "condominium concierge",
   ],
   openGraph: {

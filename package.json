@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/exterior-line-rates.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/batch-utm.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/price-floor.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/neo-vertika.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/schema-markup.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/widget-copy.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/hyde-midtown-prices.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/book-query.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/initial-building.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/slot-rules.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/jobber-booking.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/storefront-slots.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/storefront-prefill.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/storefront-booking.test.ts"
+    "test": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/exterior-line-rates.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/batch-utm.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/price-floor.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/neo-vertika.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/schema-markup.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/widget-copy.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/hyde-midtown-prices.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/book-query.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/initial-building.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/slot-rules.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/jobber-booking.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/storefront-slots.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/storefront-prefill.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/storefront-booking.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/deep-link-landing.test.ts && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/public-surface.test.ts && npx next build && node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/og-png.test.ts && playwright test"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
@@ -17,12 +17,13 @@
     "react-dom": "19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "3.4.19",
-    "typescript": "^5.8.3",
-    "@types/node": "^22.13.10",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4"
+    "typescript": "^5.8.3"
   }
 }

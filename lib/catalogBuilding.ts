@@ -37,3 +37,23 @@ export function resolveLandingBuilding(
     line,
   };
 }
+
+export type DeepLinkLanding =
+  | { mode: "locked"; building: string }
+  | { mode: "landing" };
+
+/**
+ * A `?b=` value that matches a catalog building skips the landing card and
+ * locks that building on the line picker. An unknown `?b=`, a `?building=`
+ * alias, or no building param keeps the normal landing flow.
+ */
+export function resolveDeepLinkLanding(
+  search: string,
+  names: readonly string[]
+): DeepLinkLanding {
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  if (!params.has("b")) return { mode: "landing" };
+  const matched = matchCatalogBuilding(names, params.get("b"));
+  if (!matched) return { mode: "landing" };
+  return { mode: "locked", building: matched };
+}
