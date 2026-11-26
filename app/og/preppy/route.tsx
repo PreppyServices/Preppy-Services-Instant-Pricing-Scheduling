@@ -17,6 +17,27 @@ function clean(value: string | null, fallback = "") {
   }
 }
 
+/** TrueType fonts start with 0x00010000. An HTML login page starts with "<!DO". */
+function assertTrueType(bytes: ArrayBuffer, label: string) {
+  const view = new Uint8Array(bytes);
+  const truetype =
+    view.length > 4 && view[0] === 0x00 && view[1] === 0x01 && view[2] === 0x00 && view[3] === 0x00;
+  if (!truetype) {
+    const head = new TextDecoder().decode(view.slice(0, 4));
+    throw new Error(`Playfair font ${label} is not a TrueType file (got ${JSON.stringify(head)})`);
+  }
+}
+
+async function loadBundledFont(fileUrl: URL): Promise<ArrayBuffer> {
+  const response = await fetch(fileUrl);
+  if (!response.ok) {
+    throw new Error(`Font file ${fileUrl.pathname} returned ${response.status}`);
+  }
+  const bytes = await response.arrayBuffer();
+  assertTrueType(bytes, fileUrl.pathname);
+  return bytes;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
@@ -40,14 +61,16 @@ export async function GET(request: Request) {
   const unit = building ? clean(searchParams.get("unit"), "") : "";
   const lang = clean(searchParams.get("lang"), "EN").toUpperCase();
 
-  // Self-hosted serif — same origin, no external dep
-  const playfairRegular = await fetch(
-    new URL("/fonts/PlayfairDisplay-Regular.ttf", request.url)
-  ).then((res) => res.arrayBuffer());
-
-  const playfairMedium = await fetch(
-    new URL("/fonts/PlayfairDisplay-Medium.ttf", request.url)
-  ).then((res) => res.arrayBuffer());
+  // Bundle the font files. Fetching /fonts from request.url hits Vercel
+  // Deployment Protection on previews and returns an HTML page. ImageResponse
+  // then throws "Unsupported OpenType signature <!DO" inside its stream and
+  // the client receives HTTP 200 image/png with an empty body.
+  const playfairRegular = await loadBundledFont(
+    new URL("../../../public/fonts/PlayfairDisplay-Regular.ttf", import.meta.url)
+  );
+  const playfairMedium = await loadBundledFont(
+    new URL("../../../public/fonts/PlayfairDisplay-Medium.ttf", import.meta.url)
+  );
 
   return new ImageResponse(
     <PreppyOgCard name={name} building={building} unit={unit} lang={lang} />,
