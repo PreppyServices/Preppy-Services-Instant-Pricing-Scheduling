@@ -126,7 +126,7 @@ const business = graph[0] as {
 };
 check(
   business.description ===
-    "Preppy Services is a Miami field services company. Core work is balcony glass cleaning for residential towers. Balcony glass is cleaned from inside the unit or on the balcony with water fed poles, never from the building exterior. Interior glass is an add on priced by tier, not included in the balcony price.",
+    "Preppy Services is a Miami field services company. Core work is balcony glass cleaning for residential towers. Trusted, careful glass and home care. Get an instant quote at quote.preppyservices.com. Details on request. Interior glass is an add on priced by tier, not included in the balcony price.",
   "LocalBusiness description"
 );
 check(!business.description?.includes("$"), "description must not include dollar amounts");
@@ -190,19 +190,28 @@ const llmsRes = llmsTxtResponse();
 const llmsBody = await llmsRes.text();
 check(llmsRes.status === 200, `/llms.txt status ${llmsRes.status}, expected 200`);
 check(llmsBody.includes("# Preppy Services: unit pricing"), "/llms.txt H1 must use a colon");
-check(
-  llmsBody.includes("building exterior high rise window cleaning"),
-  "/llms.txt notes must not hyphenate building exterior or high rise"
-);
 check(llmsBody.includes("Preppy Services"), "/llms.txt must contain Preppy Services");
 check(llmsBody.includes("https://quote.preppyservices.com"), "/llms.txt missing quote URL");
+check(llmsBody.includes("Get an instant quote at quote.preppyservices.com."), "/llms.txt missing the quote line");
+check(llmsBody.includes("Trusted, careful glass and home care."), "/llms.txt missing the care line");
+check(llmsBody.includes("Details on request."), "/llms.txt missing details on request");
 check(llmsBody.includes("info@preppyservices.com"), "/llms.txt missing email");
-check(
-  llmsBody.includes(
-    "cleaned from inside the unit or on the balcony with water fed poles, never from the building exterior"
-  ),
-  "/llms.txt missing the work method"
-);
+check(!/water[\s-]*fed/i.test(llmsBody), "/llms.txt must not say water fed");
+check(!/\bladders?\b/i.test(llmsBody), "/llms.txt must not say ladders");
+check(!/\blifts?\b/i.test(llmsBody), "/llms.txt must not say lifts");
+check(!/\brope\b/i.test(llmsBody), "/llms.txt must not say rope");
+check(!/from the ground/i.test(llmsBody), "/llms.txt must not say from the ground");
+check(!/from inside the unit/i.test(llmsBody), "/llms.txt must not describe cleaning from inside the unit");
+check(!/on the balcony/i.test(llmsBody), "/llms.txt must not describe cleaning on the balcony");
+check(!/building exterior/i.test(llmsBody), "/llms.txt must not mention the building exterior");
+check(!/water[\s-]*fed/i.test(html), "JSON-LD must not say water fed");
+check(!/\bladders?\b/i.test(html), "JSON-LD must not say ladders");
+check(!/\blifts?\b/i.test(html), "JSON-LD must not say lifts");
+check(!/\brope\b/i.test(html), "JSON-LD must not say rope");
+check(!/from the ground/i.test(html), "JSON-LD must not say from the ground");
+check(!/from inside the unit/i.test(html), "JSON-LD must not describe cleaning from inside the unit");
+check(!/on the balcony/i.test(html), "JSON-LD must not describe cleaning on the balcony");
+check(!/building exterior/i.test(html), "JSON-LD must not mention the building exterior");
 check(
   llmsBody.includes("Monday through Saturday, 8:00 a.m. to 6:00 p.m. ET, closed Sunday"),
   "/llms.txt missing hours"
