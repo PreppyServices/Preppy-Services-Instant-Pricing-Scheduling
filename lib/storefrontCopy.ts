@@ -1,5 +1,5 @@
 // Customer facing storefront copy and the mode=book payload.
-// No hyphens, dashes, ratings, or insurance wording beyond "Insured."
+// No hyphens, dashes, ratings, or insurance wording beyond "Certificate of insurance on request."
 // Monthly amounts are the approved tier prices. They are never discounted.
 // The Apps Script builds the calendar title from `service`. `plan` is the
 // chosen tier and price. The full request summary rides on `notes`.
@@ -9,7 +9,7 @@ import type { UtmParams } from "./batchUtm";
 export const STOREFRONT_TITLE = "Storefront Glass Cleaning Plan | Preppy Services";
 
 export const STOREFRONT_DESCRIPTION =
-  "Monthly storefront glass cleaning in Miami. Work is done from the ground with water fed poles, no ladders, lifts or rope. Tiny storefronts are $240 a month, medium storefronts are $400 a month, and large or flagship storefronts are $600 a month. Each plan is 4 visits a month, 3 exterior only and 1 inside and out. Larger or unclear sizes are priced after a walk by.";
+  "Monthly storefront glass cleaning in Miami. Tiny storefronts are $240 a month, medium storefronts are $400 a month, and large or flagship storefronts are $600 a month. Each plan is 4 visits a month, 3 exterior only and 1 inside and out. Larger or unclear sizes are priced after a walk by.";
 
 export const STOREFRONT_CANONICAL = "https://quote.preppyservices.com/storefront";
 
@@ -78,11 +78,11 @@ export const STOREFRONT_COPY = {
   brand: "Preppy Services",
   title: "Storefront glass",
   subtitle: "Monthly glass cleaning for your shop.",
-  method: "Work is done from the ground with water fed poles, no ladders, lifts or rope.",
+  method: "Trusted, careful glass and home care.",
   businessTypeLabel: "Business type",
   sizeLabel: "Storefront size",
   visitMix: STOREFRONT_VISIT_MIX,
-  insured: "Insured.",
+  insured: "Certificate of insurance on request.",
   firstVisit: "First visit",
   slotHint: "Morning times, Monday to Saturday.",
   loadingSlots: "Loading mornings",

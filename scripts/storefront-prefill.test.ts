@@ -102,7 +102,7 @@ for (const line of visible) {
   check(!DASH.test(line), `visible copy has a hyphen or dash: ${JSON.stringify(line)}`);
 }
 const blob = visible.join("\n");
-check(blob.includes("Insured."), "the plan says Insured.");
+check(blob.includes("Certificate of insurance on request."), "the plan offers a certificate of insurance on request");
 check(!/fully insured/i.test(blob), "the plan does not say fully insured");
 check(!/\bbonded\b/i.test(blob), "no bonded claim");
 check(!/\blicen[sc]ed\b/i.test(blob), "no license claim");
@@ -121,11 +121,16 @@ check(!blob.includes("20%"), "storefront copy has no percent discount");
 check(!blob.includes("$192"), "tiny storefront is not shown at a discount");
 check(!blob.includes("$320"), "medium storefront is not shown at a discount");
 check(!blob.includes("$480"), "large storefront is not shown at a discount");
-check(
-  blob.includes("Work is done from the ground with water fed poles, no ladders, lifts or rope."),
-  "the service line names ground work with water fed poles"
-);
-check((blob.match(/insured/gi) ?? []).length === 1, "Insured. is the only insurance wording");
+check(blob.includes("Trusted, careful glass and home care."), "the service line is plain care copy");
+check(!/water[\s-]*fed/i.test(blob), "visible copy does not say water fed");
+check(!/\bladders?\b/i.test(blob), "visible copy does not say ladders");
+check(!/\blifts?\b/i.test(blob), "visible copy does not say lifts");
+check(!/\brope\b/i.test(blob), "visible copy does not say rope");
+check(!/from the ground/i.test(blob), "visible copy does not say from the ground");
+check(!/from inside the unit/i.test(blob), "visible copy does not describe cleaning from inside the unit");
+check(!/on the balcony/i.test(blob), "visible copy does not describe cleaning on the balcony");
+check(!/building exterior/i.test(blob), "visible copy does not mention the building exterior");
+check((blob.match(/insured/gi) ?? []).length === 0, "visible copy does not use an insurance shorthand");
 check(!/\d(?:\.\d)?\s*stars?/i.test(blob), "no star rating");
 check(!/review/i.test(blob), "no review count");
 check(!/rating/i.test(blob), "no rating");
