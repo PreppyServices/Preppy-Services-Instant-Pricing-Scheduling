@@ -102,7 +102,7 @@ for (const line of visible) {
   check(!DASH.test(line), `visible copy has a hyphen or dash: ${JSON.stringify(line)}`);
 }
 const blob = visible.join("\n");
-check(blob.includes("Insured."), "the plan says Insured.");
+check(blob.includes("Certificate of insurance on request."), "the plan offers a certificate of insurance on request");
 check(!/fully insured/i.test(blob), "the plan does not say fully insured");
 check(!/\bbonded\b/i.test(blob), "no bonded claim");
 check(!/\blicen[sc]ed\b/i.test(blob), "no license claim");
@@ -125,7 +125,7 @@ check(
   blob.includes("Work is done from the ground with water fed poles, no ladders, lifts or rope."),
   "the service line names ground work with water fed poles"
 );
-check((blob.match(/insured/gi) ?? []).length === 1, "Insured. is the only insurance wording");
+check((blob.match(/insured/gi) ?? []).length === 0, "visible copy does not use an insurance shorthand");
 check(!/\d(?:\.\d)?\s*stars?/i.test(blob), "no star rating");
 check(!/review/i.test(blob), "no review count");
 check(!/rating/i.test(blob), "no rating");

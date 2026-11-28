@@ -1,5 +1,5 @@
 // Customer facing storefront copy and the mode=book payload.
-// No hyphens, dashes, ratings, or insurance wording beyond "Insured."
+// No hyphens, dashes, ratings, or insurance wording beyond "Certificate of insurance on request."
 // Monthly amounts are the approved tier prices. They are never discounted.
 // The Apps Script builds the calendar title from `service`. `plan` is the
 // chosen tier and price. The full request summary rides on `notes`.
@@ -82,7 +82,7 @@ export const STOREFRONT_COPY = {
   businessTypeLabel: "Business type",
   sizeLabel: "Storefront size",
   visitMix: STOREFRONT_VISIT_MIX,
-  insured: "Insured.",
+  insured: "Certificate of insurance on request.",
   firstVisit: "First visit",
   slotHint: "Morning times, Monday to Saturday.",
   loadingSlots: "Loading mornings",
